@@ -9,3 +9,4 @@ Steps to setup and assign Copilot licenses for Teams in a Copilot Business Only 
 	- Using the API
 		- Find external/IDP ids using [API](https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/scim?apiVersion=2022-11-28#list-provisioned-scim-groups-for-an-enterprise)
 		- Update GitHub Enterprise team with group id using [API](https://docs.github.com/en/enterprise-cloud@latest/early-access/admin/articles/rest-api-endpoints-for-enterprise-teams#update-an-enterprise-team)
+			- [Demo script for API](./idp-teams.sh)
