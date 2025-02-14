@@ -3,7 +3,11 @@
 # This script automates the creation and management of GitHub Enterprise teams and their mapping to Identity Provider (IDP) groups.
 # 
 # Prerequisites:
-# - Authenticate with the GitHub CLI using "gh auth login" with a token that has appropriate access. The user must be an enterprise owner.
+# - User must be an Enterprise Owner
+# - Authenticate with the GitHub CLI using "gh auth login" with a token that has appropriate access. 
+# - Classic Personal Access Token
+#   - read:enterprise, scim:enterprise - required for script
+#   - read:org, repo - required for GH CLI - not required if using curl instead of the CLI
 # - Ensure the GitHub CLI (gh) and jq are installed on your system.
 #
 # Variables:
