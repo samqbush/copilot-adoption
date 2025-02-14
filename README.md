@@ -1,6 +1,9 @@
 # copilot-adoption
 
 ## User Management
+> [!IMPORTANT]
+> The following currently requires access to the the "Enterprise Roles, Permissions, Apps, and Teams" private preview feature.
+
 Steps to setup and assign Copilot licenses for Teams in a Copilot Business Only enterprise
 - [Setup IDP integration](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-iam/provisioning-user-accounts-with-scim/configuring-scim-provisioning-for-users#about-provisioning-for-enterprise-managed-users)
 - [Create Enterprise Teams via API](https://docs.github.com/en/enterprise-cloud@latest/early-access/admin/articles/rest-api-endpoints-for-enterprise-teams)
