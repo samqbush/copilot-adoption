@@ -6,14 +6,14 @@ The following checklists are the minimum required steps for a successful Copilot
 ## Setup & Configuration
 ### Configure IDP
 - [ ] [Configure Authentication to GitHub EMU via IDP](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-iam/understanding-iam-for-enterprises/getting-started-with-enterprise-managed-users#configure-authentication)
-- [ ] [Configure SCIM provisioning for EMU](# Configuring SCIM provisioning for Enterprise Managed Users)
+- [ ] [Configure SCIM provisioning for EMU](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-iam/provisioning-user-accounts-with-scim/configuring-scim-provisioning-for-users)
 ### Design organization & team structure
 
 #### GitHub Enterprise Server(GHES)
 - Create production organization
 	- Create teams and map to IDP groups
 - Create test/preview organization
-	- Create teams and map to ldap groups
+	- Create teams and map to LDAP groups
 #### Enterprise Managed Users (EMU)
 - Option 1 - Used existing org/team structure to provide access
 	- This option can be cumbersome if a large number of organizations exist
