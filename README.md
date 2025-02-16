@@ -24,7 +24,7 @@ The following checklists are the minimum required steps for a successful Copilot
 
 > [!NOTE]
 > - Login via SSO and [requesting access to copilot](https://github.com/settings/copilot) is not recommended for large scale rollouts
-> - See [add link here]() for script examples of creating & mapping teams to IDPs 
+> - See the [user management](./user-mgmt/) folder for script examples of creating & mapping teams to IDPs 
 ### Copilot Policies
 #### Enterprise configuration
 - [ ] Assign each organization ability to assign Business or Enterprise licenses
