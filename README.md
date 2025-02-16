@@ -2,14 +2,14 @@ The following checklists are the minimum required steps for a successful Copilot
 
 # Phase 1 - Pilot
 > [!TIP]
-> For any security questions or requirements it is recommend to first check [GitHub Copilot Trust Center](https://resources.github.com/copilot-trust-center/#privacy) and the Compliance tab in GitHub under Your Enterprise > Compliance
+> For any security questions or requirements it is recommended to first check [GitHub Copilot Trust Center](https://resources.github.com/copilot-trust-center/#privacy) and the Compliance tab in GitHub under Your Enterprise > Compliance
 ## Setup & Configuration
 ### Configure IDP
 - [ ] [Configure Authentication to GitHub EMU via IDP](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-iam/understanding-iam-for-enterprises/getting-started-with-enterprise-managed-users#configure-authentication)
 - [ ] [Configure SCIM provisioning for EMU](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-iam/provisioning-user-accounts-with-scim/configuring-scim-provisioning-for-users)
 ### Design organization & team structure
 
-#### GitHub Enterprise Server(GHES)
+#### GitHub Enterprise Server (GHES)
 - Create production organization
 	- Create teams and map to IDP groups
 - Create test/preview organization
