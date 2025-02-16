@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # The following script exports issues from a GitHub project to a CSV file for import into JIRA.
+# This script can be used to export the GitHub Copilot Adoption Blueprint project.
 # Map the title to summary and map the body to description.
 
 # Replace these variables with your actual values

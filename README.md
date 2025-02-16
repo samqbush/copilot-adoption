@@ -32,8 +32,8 @@ The following checklists are the minimum required steps for a successful Copilot
 - [ ] Enable the desired models at the Enterprise level
 	- Use No Policy if enabling in test/preview organization
 #### Organization configuration
-- [ ] [Enabled the desired policies on the production org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
-- [ ] [Enabled the desired policies on the test/preview org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
+- [ ] [Enable the desired policies on the production org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
+- [ ] [Enable the desired policies on the test/preview org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
 - [ ] [Install desired extensions at the org level](https://docs.github.com/en/copilot/customizing-copilot/extending-the-capabilities-of-github-copilot-in-your-organization)
 - [ ] Add teams to appropriate organization
 
