@@ -1,4 +1,4 @@
-The following checklists are the minimum required steps for a successful Copilot rollout.  Please refer to your GitHub Copilot Adoption Blueprint for a comprehensive list of rollout details.
+These checklists outline the essential steps for a successful large-scale Copilot rollout.  While numerous Copilot resources exist, these checklists focus on the minimum requirements to avoid overwhelming users with too much information at once.  They are not exhaustive, but they represent the critical elements for initial success.
 
 # Phase 1 - Pilot
 > [!TIP]
@@ -83,16 +83,23 @@ Ensure that users are aware of the support resources available to them and provi
 
 #### Baseline
 - [ ] Read [Research: quantifying GitHub Copilot’s impact on developer productivity and happiness](https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/)
+- [ ] Read [Why developer satisfaction is your best productivity metric](https://resources.github.com/developer-productivity/why-developer-satisfaction-is-your-best-productivity-metric/)
 - [ ] Define trackable key performance indicators (KPIs) that reflect the goals and expected benefits of using GitHub Copilot.
 - [ ] Conduct a baseline measurement of development metrics prior to introducing GitHub Copilot.
 #### Copilot Metrics
-- Use one of the following for a dashboard
-	- [NodeJS Copilot Metrics Viewer](https://github.com/github-copilot-resources/copilot-metrics-viewer)
+- [ ] Use one of the following for a dashboard
 	- [Power BI App](https://appsource.microsoft.com/en-us/product/power-bi/github.github-copilot-metrics)
+	- [NodeJS Copilot Metrics Viewer](https://github.com/github-copilot-resources/copilot-metrics-viewer)
+	- [Grafana Metrics Viewer](https://github.com/kleeadrian/Grafana-Copilot-Metrics)
 	- Create your own using [API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics?apiVersion=2022-11-28)
-- Focus on engagement metrics like total_active_users vs total_engaged_users
-- Acceptance metrics can be a red herring and should be avoided
-- Add qualitative metrics by implementing [pull request surveys]( https://github.com/github/copilot-survey-engine)
+		- [Getting started with Copilot Metrics APIs](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/analyzing-usage-over-time-with-the-copilot-metrics-api)
+		- [Copilot Usage GitHub Action](https://github.com/marketplace/actions/copilot-usage-action) - Get Copilot usage data as .md, CSV, XML, JSON, or emailed PDF report
+		- [Copilot Metrics Retention GitHub Action](https://github.com/marketplace/actions/copilot-metrics-retention) - GitHub Action designed to persistently store Copilot Usage Metrics data over time in a JSON file format.
+- Focus on engagement metrics like total_active_users vs total_engaged_users as acceptance metrics can be a red herring and should be avoided
+- [ ] Add qualitative metrics by implementing surveys
+	- [Pull Request Survey Engine]( https://github.com/github/copilot-survey-engine)
+	- [Survey Guide](https://docs.google.com/document/d/1IJasrJNkM3GE9a6a25DfU5DrXrtr4I6OYl6WUYIS0sE/edit?tab=t.0)
+		- [Google Forms Survey Template](https://docs.google.com/forms/d/1HVPK1OjOYV-y5ZUcHWB_qvUhiVssHchh6LdiEyBXeD4/edit)
 
 
 # Phase 2 - Early Adopters & Early Majority
@@ -106,8 +113,8 @@ Ensure that users are aware of the support resources available to them and provi
 - [ ] Add additional teams based on the rollout plan
 
 # Phase 3 - Enterprise-wide
-- Mandate Usage from Executive Leadership using success stories gathered from advocates and the internal community
-- Add remaining teams via IDP group
+- [ ] Mandate Usage from Executive Leadership using success stories gathered from advocates, the internal community, and metrics gathered if implemented
+- [ ] Add remaining teams via IDP group
 
 
 # Appendix
@@ -115,8 +122,15 @@ Ensure that users are aware of the support resources available to them and provi
 ## Word-of-mouth evangelism
 - Organize training sessions to demonstrate GitHub Copilot’s features and benefits.
 - [Conduct hands-on / hackathon to let people feel the latest AI coding](https://github.com/users/samqbush/projects/2/views/1?pane=issue&itemId=98034156)
+
 ## Phase 4 - Maintain & Improve
 - Analyze usage data to pinpoint patterns that suggest underutilization
 - Conduct a survey to identify the gaps in knowledge or barriers to effective GitHub Copilot use
 - Organize focus groups with developers to discuss challenges and solicit suggestions
 - Formulate a plan to address identified issues and improve enablement resources
+	- [Remind inactivate users](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/reminding-inactive-users)
+
+## Additional Reading
+- [Taking GitHub Copilot to the stars, not just the skies](https://resources.github.com/artificial-intelligence/scaling-github-copilot-across-your-organization/) - a detailed whitepaper on GitHub & Accenture's rollouts of Copilot with implementation advice
+- [Advice on Driving Adoption](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/driving-copilot-adoption-in-your-company) - GitHub official documentation on adoption
+- GitHub Copilot Adoption Blueprint - ask your Customer Success Manager for a company specific GitHub Project.  If you prefer to export this project's issues, you can run the [plan export](./plan-export.sh) script
