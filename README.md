@@ -46,6 +46,7 @@ Configure GitHub Enterprise settings to align with your organization's security 
 
 ## Provide Self Serve Training
 - [ ] Bundle training and provide a distribution method using the content below
+	- [Example](https://github.com/maxmash1/copilot-intro) of how this can be bundled together
 ### Copilot Fundamentals
 - Install the Copilot extension in your IDE of choice from the IDE marketplace or organization-specific installation  
 	- VS Code is recommended for the latest features
@@ -58,10 +59,17 @@ Configure GitHub Enterprise settings to align with your organization's security 
 - [Customize Copilot with personal custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-personal-custom-instructions-for-github-copilot)
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
 	- https://github.com/maxmash1/copilot-workshop
+- [Copilot Extensions](https://resources.github.com/learn/pathways/copilot/extensions/essentials-of-github-copilot-extensions/)
 ### GitHub Specific Fundamentals
 - [Chat in GitHub or with @github extension](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-github)
 - [Code Review](https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review)
-### [Copilot Certification](https://github.com/orgs/community/discussions/144443)
+### Additional Training
+- [Copilot Certification](https://github.com/orgs/community/discussions/144443)
+	- The official GitHub Copilot certification
+- [GitHub Copilot - Training, Tips, & Tricks](https://www.youtube.com/playlist?list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D)
+	- A comprehensive playlist for those that prefer to learn by watching versus reading.
+- [Microsoft Learning Training](https://learn.microsoft.com/en-us/training/browse/?products=github&terms=GitHub%20Copilot)
+	- For those that prefer training module style learning from Microsoft on Generally Available features
 
 ### Troubleshooting
 Ensure that users are aware of the support resources available to them and providing common troubleshooting links.
