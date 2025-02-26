@@ -49,11 +49,11 @@ Configure GitHub Enterprise settings to align with your organization's security 
 	- [Example](https://github.com/maxmash1/copilot-intro) of how this can be bundled together
 ### Copilot Fundamentals
 - Install the Copilot extension in your IDE of choice from the IDE marketplace or organization-specific installation  
-	- VS Code is recommended for the latest features
+	- VS Code is recommended for the latest preview features
 - [Getting code suggestions in your IDE with GitHub Copilot](https://docs.github.com/en/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot)
 - [Chat in the IDE](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide)
 - [Prompt Engineering](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/prompt-engineering-for-copilot-chat)
-- [Getting started with Copilot by the GitHub field](https://github.com/maxmash1/copilot-intro)
+	- If [public code suggestions](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise#suggestions-matching-public-code) are disabled then prompt engineering should be a required training.  See [examples](./prompt-engineering-for-disabled-public-code.md)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
 ### Advanced
 - [Customize Copilot with personal custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-personal-custom-instructions-for-github-copilot)
