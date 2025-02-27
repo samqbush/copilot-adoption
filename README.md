@@ -142,7 +142,7 @@ Ensure that users are aware of the support resources available to them and provi
     - [Copilot Usage GitHub Action](https://github.com/marketplace/actions/copilot-usage-action) - Get Copilot usage data as .md, CSV, XML, JSON, or emailed PDF report
     - [Copilot Metrics Retention GitHub Action](https://github.com/marketplace/actions/copilot-metrics-retention) - GitHub Action designed to persistently store Copilot Usage Metrics data over time in a JSON file format.
 - Focus on engagement metrics vs acceptance metrics that can be a red herring and should be avoided in the beginning
-  - Licensed users vs total_engaged_users vs developer population
+  - Compare the number of licensed users, total engaged users, and the overall developer population
 - [ ] Add qualitative metrics by implementing surveys
   - [Pull Request Survey Engine]( https://github.com/github/copilot-survey-engine)
   - [Survey Guide](https://docs.google.com/document/d/1IJasrJNkM3GE9a6a25DfU5DrXrtr4I6OYl6WUYIS0sE/edit?tab=t.0)
@@ -180,7 +180,7 @@ Ensure that users are aware of the support resources available to them and provi
 - Conduct a survey to identify the gaps in knowledge or barriers to effective GitHub Copilot use
 - Organize focus groups with developers to discuss challenges and solicit suggestions
 - Formulate a plan to address identified issues and improve enablement resources
-  - [Remind inactivate users](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/reminding-inactive-users)
+  - [Remind inactive users](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/reminding-inactive-users)
 
 ### Additional Reading
 
@@ -191,4 +191,4 @@ Ensure that users are aware of the support resources available to them and provi
 
 ### [Requesting Access to Copilot](https://docs.github.com/en/enterprise-cloud@latest/copilot/rolling-out-github-copilot-at-scale/setting-up-a-self-serve-process-for-github-copilot-licenses#approach-1-use-githubs-request-access-feature)
 
-While this method will slow down your adoption rate of Copilot, it can be [automated](https://docs.github.com/en/enterprise-cloud@latest/copilot/rolling-out-github-copilot-at-scale/setting-up-a-self-serve-process-for-github-copilot-licenses#example-implementations) if this approach is required due to regulation requirements such as self attestion.
+While this method will slow down your adoption rate of Copilot, it can be [automated](https://docs.github.com/en/enterprise-cloud@latest/copilot/rolling-out-github-copilot-at-scale/setting-up-a-self-serve-process-for-github-copilot-licenses#example-implementations) if this approach is required due to regulation requirements such as self attestation.
