@@ -66,6 +66,7 @@ Configure GitHub Enterprise settings to align with your organization's security 
 
 - [ ] Bundle training and provide a distribution method using the content below
   - [Example](https://github.com/maxmash1/copilot-intro) of how this can be bundled together
+  - [Training by Feature](./training-by-feature.md)
 
 #### Copilot Fundamentals
 
@@ -131,7 +132,7 @@ Ensure that users are aware of the support resources available to them and provi
 - [ ] Define trackable key performance indicators (KPIs) that reflect the goals and expected benefits of using GitHub Copilot.
 - [ ] Conduct a baseline measurement of development metrics prior to introducing GitHub Copilot.
 
-#### Copilot Metrics
+##### Copilot Metrics
 
 - [ ] Use one of the following for a dashboard
   - [Power BI App](https://appsource.microsoft.com/en-us/product/power-bi/github.github-copilot-metrics)
