@@ -42,9 +42,8 @@ These checklists outline the essential steps for a successful large-scale Copilo
 ##### Enterprise configuration
 
 - [ ] Assign each organization ability to assign Business or Enterprise licenses and grant all users in the organization a license
-- [ ] [Enable the desired policies at the Enterprise level](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise)
-- [ ] Enable the desired models at the Enterprise level
-  - Use No Policy if enabling in test/preview organization
+- [ ] [Enable the desired policies & models at the Enterprise level](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise)
+  - Use No Policy if configuring differently at the organization level
 
 ##### Organization configuration
 
