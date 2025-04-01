@@ -1,0 +1,14 @@
+title: GitHub Copilot Adoption Guide
+description: A comprehensive guide for rolling out GitHub Copilot at scale
+theme: jekyll-theme-cayman
+baseurl: "/copilot-adoption"
+url: "https://<your-username>.github.io"
+
+# Plugins
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# GitHub Pages settings
+markdown: kramdown
+permalink: pretty

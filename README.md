@@ -35,7 +35,7 @@ These checklists outline the essential steps for a successful large-scale Copilo
 - Map teams to IDP groups
 
 > [!NOTE]
-> See the [user management](./user-mgmt/) folder for script examples of creating & mapping teams to IDPs
+> See the [user management](./user-mgmt/user-mgmt.md) folder for script examples of creating & mapping teams to IDPs
 
 #### Copilot Policies
 
@@ -186,7 +186,7 @@ Ensure that users are aware of the support resources available to them and provi
 
 - [Taking GitHub Copilot to the stars, not just the skies](https://resources.github.com/artificial-intelligence/scaling-github-copilot-across-your-organization/) - a detailed whitepaper on GitHub & Accenture's rollouts of Copilot with implementation advice
 - [Advice on Driving Adoption](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/driving-copilot-adoption-in-your-company) - GitHub official documentation on adoption
-- GitHub Copilot Adoption Blueprint - ask your Customer Success Manager for a company specific GitHub Project.  If you prefer to export this project's issues, you can run the [plan export](./plan-export.sh) script
+- GitHub Copilot Adoption Blueprint - ask your Customer Success Manager for a company specific GitHub Project. If you prefer to export this project's issues, you can run the [plan export](./plan-export.sh) script
 - [GitHub Learning Pathways](https://resources.github.com/learn/pathways/copilot/essentials/essentials-of-github-copilot/)
 
 ### [Requesting Access to Copilot](https://docs.github.com/en/enterprise-cloud@latest/copilot/rolling-out-github-copilot-at-scale/setting-up-a-self-serve-process-for-github-copilot-licenses#approach-1-use-githubs-request-access-feature)

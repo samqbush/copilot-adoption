@@ -1,3 +1,8 @@
+---
+layout: default
+title: Prompt Engineering Examples
+---
+
 The following examples show how to prompt Copilot chat when public code suggestions are disabled in an enterprise/organization.
 
 ## Example 1 - pom.xml
