@@ -72,7 +72,7 @@ Configure GitHub Enterprise settings to align with your organization's security 
 
 - [ ] Bundle training and provide a distribution method using the content sections below.
   - Examples of how this can be bundled
-    - [Training by Feature](./training-by-feature-sorted)
+    - [Training by Feature](./training-by-feature-sort)
     - [Copilot-Intro](https://github.com/maxmash1/copilot-intro)
   
 

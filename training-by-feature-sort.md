@@ -16,46 +16,67 @@ description: This matrix provides a curated list of GitHub Copilot features, the
   .sortable {
     border-collapse: collapse;
     width: 100%;
-    min-width: 1100px; /* Increased minimum width for better display */
+    min-width: 1100px; /* Ensures table has a minimum width */
     table-layout: fixed; /* Ensures consistent column widths */
   }
   .sortable th, .sortable td {
-    padding: 8px;
+    padding: 12px; /* Increased padding for better spacing */
     text-align: left;
-    border-top: 1px solid #ddd;
+    border: 1px solid #ddd; /* Added border for better separation */
     overflow-wrap: break-word;
     word-wrap: break-word;
     hyphens: auto;
   }
   .sortable th {
     cursor: pointer;
-    background-color: #f2f2f2;
-    position: relative;
+    background-color: #f9f9f9; /* Lighter background for headers */
+    position: sticky; /* Keeps headers visible when scrolling */
+    top: 0;
+    z-index: 1;
+    text-align: left; /* Ensures proper alignment */
+    padding-right: 25px; /* Add space for sort icon */
+    position: relative; /* For positioning the icon */
   }
   .sortable th:hover {
     background-color: #e2e2e2;
+    color: #0078d4; /* Highlight color for better visibility */
   }
-  .sortable th.asc:after {
-    content: ' ↑';
+  
+  /* Add clear sort icons that indicate sortability */
+  .sortable th::after {
+    content: "↕";
     position: absolute;
     right: 8px;
+    color: #999;
+    font-size: 0.85em;
   }
-  .sortable th.desc:after {
-    content: ' ↓';
-    position: absolute;
-    right: 8px;
+  
+  /* Change icon based on sort state */
+  .sortable th.asc::after {
+    content: "↑";
+    color: #0078d4;
   }
+  .sortable th.desc::after {
+    content: "↓";
+    color: #0078d4;
+  }
+  
+  /* Additional visual cue on hover */
+  .sortable th:hover::after {
+    color: #0078d4;
+  }
+  
   .sortable td {
     white-space: normal;
   }
   
-  /* Adjusted column widths - giving more space to GA Date */
-  .sortable th:nth-child(1), .sortable td:nth-child(1) { width: 16%; }  /* Feature */
-  .sortable th:nth-child(2), .sortable td:nth-child(2) { width: 13%; }  /* IDEs */
+  /* Adjusted column widths */
+  .sortable th:nth-child(1), .sortable td:nth-child(1) { width: 18%; }  /* Feature */
+  .sortable th:nth-child(2), .sortable td:nth-child(2) { width: 14%; }  /* IDEs */
   .sortable th:nth-child(3), .sortable td:nth-child(3) { width: 10%; }  /* Release Stage */
-  .sortable th:nth-child(4), .sortable td:nth-child(4) { width: 12%; }  /* GA Date - increased width */
-  .sortable th:nth-child(5), .sortable td:nth-child(5) { width: 24%; }  /* Video */
-  .sortable th:nth-child(6), .sortable td:nth-child(6) { width: 25%; }  /* Policy Toggle */
+  .sortable th:nth-child(4), .sortable td:nth-child(4) { width: 12%; }  /* GA Date */
+  .sortable th:nth-child(5), .sortable td:nth-child(5) { width: 22%; }  /* Video */
+  .sortable th:nth-child(6), .sortable td:nth-child(6) { width: 24%; }  /* Policy Toggle */
   
   /* Special handling for GA Date column */
   .sortable td:nth-child(4), .sortable th:nth-child(4) {
@@ -63,12 +84,24 @@ description: This matrix provides a curated list of GitHub Copilot features, the
   }
   
   .sortable tr:hover {
-    background-color: #f9f9f9;
+    background-color: #f1f1f1; /* Subtle hover effect for rows */
   }
   
   /* For better link display */
   .sortable td a {
     word-break: break-word;
+    color: #0078d4; /* Consistent link color */
+    text-decoration: none;
+  }
+  .sortable td a:hover {
+    text-decoration: underline;
+  }
+
+  /* Add a note above the table about sorting */
+  .sort-note {
+    margin-bottom: 10px;
+    font-style: italic;
+    color: #555;
   }
   
   /* Make page container wider if theme supports it */
@@ -83,6 +116,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     }
   }
 </style>
+
+<p class="sort-note">Click on any column header to sort the table. Click again to reverse the sort order.</p>
 
 <div class="table-container">
 <table id="featureTable" class="sortable">
@@ -157,7 +192,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://docs.github.com/en/codespaces/reference/using-github-copilot-in-github-codespaces">Codespaces</a></td>
       <td>GitHub.com, VS Code</td>
       <td>GA</td>
-      <td><a href="https://github.blog/changelog/2021-10-27-new-codespaces-features-launching-at-universe-2021/">October 27, 2021</a></td>
+      <td><a href="https://github.blog/changelog/2021-08-11-codespaces-is-generally-available-for-team-and-enterprise/">August 11, 2021</a></td>
       <td><a href="https://www.youtube.com/watch?v=Lseaqxg8NaY">Build faster with GitHub Copilot & Codespaces</a></td>
       <td>N/A</td>
     </tr>
@@ -179,7 +214,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/github-copilot-chat-cheat-sheet?tool=vscode">Chat Context Variables</a></td>
-      <td>JetBrains, VS Code</td>
+      <td>VS Code, Jet Brains</td>
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/#context-variables">January 2024</a></td>
       <td><a href="https://youtu.be/N62d9PgiqoY">More Context == Better GitHub Copilot Responses in Visual Studio</a></td>
@@ -196,7 +231,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot">Copilot Code Completion</a></td>
       <td>VS Code, JetBrains, Visual Studio, <a href="https://github.blog/changelog/2025-02-14-code-completion-in-github-copilot-for-xcode-is-now-generally-available">Xcode</a>, <a href="https://github.blog/changelog/2025-03-11-code-completion-in-github-copilot-for-eclipse-is-now-generally-available">Eclipse</a>, Neovim</td>
       <td>GA</td>
-      <td>See IDE Link</td>
+      <td>See IDE links</td>
       <td><a href="https://www.youtube.com/watch?v=EsRPYoXY9IA&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=57&pp=iAQB">Rewriting your Java code with Copilot-based suggestions in VS Code</a></td>
       <td>N/A</td>
     </tr>
@@ -237,8 +272,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>GitHub.com, @github skill in IDEs</td>
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2024-12-18-copilot-chat-on-github-is-now-generally-available-for-all-users">December 18, 2024</a></td>
+      <td></td>
       <td>Copilot in GitHub.com</td>
-      <td>N/A</td>
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/indexing-repositories-for-copilot-chat">Indexing Repositories</a></td>
@@ -252,7 +287,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#additional-ways-to-access-copilot-chat">Inline Chat</a></td>
       <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/">VS Code</a>, Visual Studio, <a href="https://github.blog/changelog/2024-09-11-inline-chat-is-now-available-in-github-copilot-in-jetbrains">JetBrains</a></td>
       <td>GA</td>
-      <td>See IDE Links</td>
+      <td>See IDE links</td>
       <td></td>
       <td>N/A</td>
     </tr>
@@ -356,7 +391,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://docs.github.com/en/copilot/about-github-copilot/github-copilot-features#policy-management">Organization-wide policy management</a></td>
       <td>N/A</td>
       <td>GA</td>
-      <td></td>
+      <td><a href="https://github.blog/news-insights/product-news/github-copilot-is-generally-available-for-businesses/">December 7, 2022</a></td>
       <td></td>
       <td>N/A</td>
     </tr>
@@ -366,7 +401,6 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2024-07-31-github-copilot-chat-and-pull-request-summaries-are-now-powered-by-gpt-4o/">July 31, 2024</a></td>
       <td><a href="https://www.youtube.com/watch?v=BVX074EMnds">Copilot Pull Request Summaries</a></td>
-      <td></td>
       <td>Copilot in GitHub.com</td>
     </tr>
     <tr>

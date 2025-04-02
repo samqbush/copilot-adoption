@@ -8,6 +8,7 @@ url: "https://samqbush.github.io"
 plugins:
   - jekyll-sitemap
   - jekyll-seo-tag
+  - jekyll-mentions
 
 # GitHub Pages settings
 markdown: kramdown
