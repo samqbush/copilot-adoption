@@ -134,7 +134,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
   <tbody>
     <tr>
       <td><a href="https://code.visualstudio.com/docs/copilot/copilot-edits#_use-agent-mode-preview">Agent mode in the IDE</a></td>
-      <td>VS Code, VS Code Insider</td>
+      <td>VS Code</td>
       <td>Public Preview</td>
       <td>TBD</td>
       <td><a href="https://www.youtube.com/watch?v=sYepbevm8TY&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=2&pp=iAQB0gcJCTgDd0p55Nqk">Use GitHub Copilot agent mode to create an application from scratch</a></td>
@@ -183,8 +183,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review">Code review</a></td>
       <td>GitHub.com, VS Code</td>
-      <td>Public Preview</td>
-      <td>TBD</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-04-copilot-code-review-now-generally-available/">April 4, 2025</a></td>
       <td><a href="https://youtu.be/cyPaAkRfEBQ">GitHub Copilot code review</a></td>
       <td>Copilot in GitHub.com</td>
     </tr>
@@ -317,8 +317,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">MCP servers</a></td>
-      <td>VS Code Insider</td>
-      <td>Internal</td>
+      <td>VS Code</td>
+      <td><a href="https://github.blog/changelog/2025-04-04-github-mcp-server-public-preview/">Public Preview</a></td>
       <td>TBD</td>
       <td><a href="https://www.youtube.com/watch?v=WySJOAlVpQ0">Tug on Dev! - GitHub Copilot Agent Mode with MCP</a></td>
       <td>N/A</td>
@@ -366,8 +366,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/ai-models/changing-the-ai-model-for-copilot-chat">Model picker</a></td>
       <td>GitHub.com, VS Code, Visual Studio, Xcode, Eclipse, JetBrains</td>
-      <td>Public Preview</td>
-      <td>TBD</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-04-multiple-new-models-are-now-generally-available-in-github-copilot/">April 4, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=d1nyiOPBO04">Configuring and Using Multiple AI Models with GitHub Copilot</a></td>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise#copilot-access-to-alternative-ai-models">Access to alternative models</a></td>
     </tr>
@@ -382,8 +382,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot#about-next-edit-suggestions">Next Edit Suggestions</a></td>
       <td>VS Code</td>
-      <td>Public Preview</td>
-      <td>TBD</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/">April 4, 2024</a></td>
       <td><a href="https://www.youtube.com/watch?v=zPUvU6XYhpw&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=6&pp=iAQB">Next Edit Suggestions for GitHub Copilot in action</a></td>
       <td>Editor preview features</td>
     </tr>
