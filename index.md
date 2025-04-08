@@ -12,7 +12,6 @@ These checklists outline the essential steps for a successful large-scale Copilo
 > For any security questions or requirements it is recommended to first check [GitHub Copilot Trust Center](https://resources.github.com/copilot-trust-center/#privacy) and the [Compliance tab](https://docs.github.com/en/enterprise-cloud@latest/admin/overview/accessing-compliance-reports-for-your-enterprise) in GitHub under Your Enterprise > Compliance
 
 <!-- Add the table of contents -->
-# Table of Contents
 * 
 {:toc}
 
