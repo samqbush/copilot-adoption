@@ -411,6 +411,14 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://www.youtube.com/watch?v=cu9zZAFmoDg&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=41&pp=iAQB">Using Custom Instructions with Copilot to enhance our prompts</a></td>
       <td>N/A</td>
     </tr>
+        <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/adding-organization-custom-instructions-for-github-copilot">Organization Custom Instructions</a></td>
+      <td>N/A</td>
+      <td>Public Preview</td>
+      <td></td>
+      <td></td>
+      <td>N/A</td>
+    </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#vision">Vision</a></td>
       <td>VS Code</td>

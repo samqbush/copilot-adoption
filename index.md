@@ -155,7 +155,8 @@ Ensure that users are aware of the support resources available to them and provi
 - Focus on engagement metrics vs acceptance metrics that can be a red herring and should be avoided in the beginning
   - Compare the number of licensed users, total engaged users, and the overall developer population
 - Add qualitative metrics by implementing surveys
-  - [Pull Request Survey Engine]( https://github.com/github/copilot-survey-engine)
+  - [GitHub Value](https://github.com/austenstone/github-value) - provides a combined survey engine and value dashboard via GitHub Application
+  - [Pull Request Survey Engine]( https://github.com/github/copilot-survey-engine) - a GitHub App built on Probot that will prompt developers during PRs about their Copilot experience
   - [Survey Guide](https://docs.google.com/document/d/1IJasrJNkM3GE9a6a25DfU5DrXrtr4I6OYl6WUYIS0sE/edit?tab=t.0)
     - [Google Forms Survey Template](https://docs.google.com/forms/d/1HVPK1OjOYV-y5ZUcHWB_qvUhiVssHchh6LdiEyBXeD4/edit)
 
