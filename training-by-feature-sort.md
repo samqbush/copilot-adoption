@@ -133,12 +133,12 @@ description: This matrix provides a curated list of GitHub Copilot features, the
   </thead>
   <tbody>
     <tr>
-      <td><a href="https://code.visualstudio.com/docs/copilot/copilot-edits#_use-agent-mode-preview">Agent mode in the IDE</a></td>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-agent-mode">Agent mode in the IDE</a></td>
       <td>VS Code</td>
-      <td>Public Preview</td>
-      <td>TBD</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/#agent-mode-is-now-available-in-vs-code-stable">April 4, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=sYepbevm8TY&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=2&pp=iAQB0gcJCTgDd0p55Nqk">Use GitHub Copilot agent mode to create an application from scratch</a></td>
-      <td>Editor preview features</td>
+      <td>N/A</td>
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/reviewing-activity-related-to-github-copilot-in-your-organization/reviewing-audit-logs-for-copilot-business">Audit logs</a></td>
@@ -197,6 +197,14 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>N/A</td>
     </tr>
     <tr>
+      <td><a href="https://docs.github.com/en/codespaces/reference/using-github-copilot-in-github-codespaces">Codespaces Agent Mode</a></td>
+      <td>GitHub.com, VS Code</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-11-vscode-copilot-agent-mode-in-codespaces/">April 11, 2025</a></td>
+      <td></td>
+      <td>N/A</td>
+    </tr>
+    <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/configuring-coding-guidelines">Coding guidelines</a> (Enterprise Only)</td>
       <td>GitHub.com</td>
       <td>Public Preview</td>
@@ -222,7 +230,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide">Copilot Chat</a></td>
-      <td><a href="https://github.blog/news-insights/product-news/github-copilot-chat-now-generally-available-for-organizations-and-individuals/">VS Code & Visual Studio</a>, <a href="https://github.blog/changelog/2024-03-07-github-copilot-chat-general-availability-in-jetbrains-ide">JetBrains</a>, <a href="https://github.blog/changelog/2025-03-11-github-copilot-for-xcode-chat-is-now-generally-available/">Xcode</a>, <a href="https://github.blog/changelog/2025-03-11-github-copilot-chat-for-eclipse-now-in-public-preview">Eclipse</a></td>    <td>GA/Public Preview</td>
+      <td><a href="https://github.blog/news-insights/product-news/github-copilot-chat-now-generally-available-for-organizations-and-individuals/">VS Code & Visual Studio</a>, <a href="https://github.blog/changelog/2024-03-07-github-copilot-chat-general-availability-in-jetbrains-ide">JetBrains</a>, <a href="https://github.blog/changelog/2025-03-11-github-copilot-for-xcode-chat-is-now-generally-available/">Xcode</a>, <a href="https://github.blog/changelog/2025-04-15-github-copilot-chat-for-eclipse-is-now-generally-available/">Eclipse</a></td>    <td>GA</td>
       <td>See IDE links</td>
       <td><a href="https://www.youtube.com/watch?v=P3Q5wa0mI_0&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=58&pp=iAQB">Copilot Chat - Power User</a></td>
       <td>N/A</td>
@@ -246,7 +254,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/copilot-chat-cookbook/documenting-code">Document & Explain Code</a></td>
       <td>VS Code, Visual Studio, JetBrains, Xcode, Eclipse</td>
-      <td>GA/Public Preview</td>
+      <td>GA</td>
       <td>See Copilot Chat IDE Links</td>
       <td><a href="https://youtu.be/fm4JCyXbWPo?feature=shared">Using GitHub Copilot to write documentation for you!</a></td>
       <td>N/A</td>
@@ -262,7 +270,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/copilot-chat-cookbook/testing-code/generate-unit-tests">Generate Unit Tests</a></td>
       <td>VS Code, Visual Studio, JetBrains, Xcode, Eclipse</td>
-      <td>GA/Public Preview</td>
+      <td>GA</td>
       <td>See Copilot Chat IDE links</td>
       <td><a href="https://github.blog/ai-and-ml/github-copilot/how-to-generate-unit-tests-with-github-copilot-tips-and-examples/">How to generate unit tests with GitHub Copilot: Tips and examples</a></td>
       <td>N/A</td>
@@ -422,7 +430,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#vision">Vision</a></td>
       <td>VS Code</td>
-      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-04-16-using-vision-input-in-copilot-chat-with-claude-and-gemini-is-now-in-public-preview/">Public Preview</a></td>
       <td>TBD</td>
       <td><a href="https://www.youtube.com/watch?v=pEEw7BvaK50">Copilot Vision is HERE! Watch It Turn Images into Code!</a></td>
       <td>Editor preview features</td>
