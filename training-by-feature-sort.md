@@ -201,7 +201,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>GitHub.com, VS Code</td>
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2025-04-11-vscode-copilot-agent-mode-in-codespaces/">April 11, 2025</a></td>
-      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=XnC6cF1v5OY">Building applications with GitHub Copilot agent mode</a></td>
       <td>N/A</td>
     </tr>
     <tr>
