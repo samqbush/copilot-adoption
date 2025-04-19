@@ -165,6 +165,14 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>Suggestions matching public code (duplication detection filter)</td>
     </tr>
     <tr>
+      <td><a href="https://code.visualstudio.com/docs/copilot/language-models#_bring-your-own-language-model-key">Bring your own language model key</a></td>
+      <td>VS Code</td>
+      <td>Public Preview - Free & Pro user only</td>
+      <td>TBD</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
       <td><a href="https://code.visualstudio.com/api/extension-guides/chat">Chat skills/participants in VS Code</a></td>
       <td>VS Code</td>
       <td>GA</td>
@@ -420,7 +428,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>N/A</td>
     </tr>
         <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/adding-organization-custom-instructions-for-github-copilot">Organization Custom Instructions</a></td>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/adding-organization-custom-instructions-for-github-copilot">Organization Custom Instructions</a>(Enterprise only)</td>
       <td>N/A</td>
       <td>Public Preview</td>
       <td></td>
@@ -429,9 +437,9 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#vision">Vision</a></td>
-      <td>VS Code</td>
-      <td><a href="https://github.blog/changelog/2025-04-16-using-vision-input-in-copilot-chat-with-claude-and-gemini-is-now-in-public-preview/">Public Preview</a></td>
-      <td>TBD</td>
+      <td>Claude Sonnet 3.5/3.7, Gemini 2.0 Flash, Gemini 2.5 Pro, GPT-4o</td>
+      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-04-16-using-vision-input-in-copilot-chat-with-claude-and-gemini-is-now-in-public-preview/">TBD</a></td>
       <td><a href="https://www.youtube.com/watch?v=pEEw7BvaK50">Copilot Vision is HERE! Watch It Turn Images into Code!</a></td>
       <td>Editor preview features</td>
     </tr>
