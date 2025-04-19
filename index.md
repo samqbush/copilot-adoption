@@ -48,12 +48,18 @@ These checklists outline the essential steps for a successful large-scale Copilo
 > See the [user management](./user-mgmt/user-mgmt.md) folder for script examples of creating & mapping teams to IDPs
 
 ### Copilot Policies
+The following policy decisions typically require more consideration than a single Enterprise owner due to a company's specific risk & business posture.
+- [IP indemnification](https://copilot.github.trust.page/faq?s=mp8vvy1z1ym1knw9id4ri) which requires these [mitigations](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/customer-copyright-commitment#required-mitigations-for-github-offerings).  
+  - See [code referencing release](https://github.blog/news-insights/product-news/code-referencing-now-generally-available-in-github-copilot-and-with-microsoft-azure-ai/#the-power-of-code-referencing-for-businesses) for additional information when enabling "Suggestions matching public code"
+  - See these [prompt engineering examples](./prompt-engineering-for-disabled-public-code) when disabling "Suggestions matching public code"
+- [Premium requests](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/monitoring-usage-and-entitlements/about-premium-requests) for [models](./models)
 
 #### Enterprise configuration
 
 - Assign each organization ability to assign Business or Enterprise licenses and grant all users in the organization a license
 - [Enable the desired policies & models at the Enterprise level](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise)
   - Use No Policy if configuring differently at the organization level
+
 
 #### Organization configuration
 
@@ -64,12 +70,13 @@ These checklists outline the essential steps for a successful large-scale Copilo
 
 ### Network & Security Policy
 
-Configure GitHub Enterprise settings to align with your organization's security and policy requirements
+Configure Network & Device Management settings to align with your organization's security and policy requirements
 
 - [Configure Network Settings for GitHub Copilot](https://docs.github.com/en/copilot/managing-copilot/managing-github-copilot-in-your-organization/configuring-your-proxy-server-or-firewall-for-copilot)
 - [Restrict network traffic to your enterprise with an IP allow list](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/hardening-security-for-your-enterprise/restricting-network-traffic-to-your-enterprise-with-an-ip-allow-list)
 - [Require two-factor authentication for organizations in your enterprise](https://docs.github.com/en/enterprise-cloud@latest/admin/enforcing-policies/enforcing-policies-for-your-enterprise/enforcing-policies-for-security-settings-in-your-enterprise#requiring-two-factor-authentication-for-organizations-in-your-enterprise)
 - [Ensure proxy configuration for smooth GitHub Copilot integration in enterprise networks](https://docs.github.com/en/copilot/managing-copilot/configure-personal-settings/configuring-network-settings-for-github-copilot)
+- [Centrally managing allowed extensions](https://code.visualstudio.com/docs/setup/enterprise#_centrally-manage-allowed-extensions) for use with MCP Servers & VS Code Chat Participants
 
 ## Provide Self Serve Training
 
@@ -94,6 +101,7 @@ Configure GitHub Enterprise settings to align with your organization's security 
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
   - [Example](https://github.com/maxmash1/copilot-workshop)
 - [Copilot Extensions](https://resources.github.com/learn/pathways/copilot/extensions/essentials-of-github-copilot-extensions/)
+- [MCP Servers](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
 
 ### GitHub Specific Fundamentals
 
@@ -104,10 +112,10 @@ Configure GitHub Enterprise settings to align with your organization's security 
 
 - [Copilot Certification](https://github.com/orgs/community/discussions/144443)
   - The official GitHub Copilot certification
-- [GitHub Copilot - Training, Tips, & Tricks](https://www.youtube.com/playlist?list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D)
-  - A comprehensive playlist for those that prefer to learn by watching versus reading.
 - [Microsoft Learning Training](https://learn.microsoft.com/en-us/training/browse/?products=github&terms=GitHub%20Copilot)
   - For those that prefer training module style learning from Microsoft on Generally Available features
+- [Mastering GitHub Copilot for Paired Programming](https://github.com/microsoft/Mastering-GitHub-Copilot-for-Paired-Programming)
+  - Language specific lessons using Codespaces
 
 ### Troubleshooting
 
@@ -145,13 +153,16 @@ Ensure that users are aware of the support resources available to them and provi
 #### Copilot Metrics
 
 - Use one of the following for a dashboard
-  - [Power BI App](https://appsource.microsoft.com/en-us/product/power-bi/github.github-copilot-metrics)
-  - [NodeJS Copilot Metrics Viewer](https://github.com/github-copilot-resources/copilot-metrics-viewer)
-  - [Grafana Metrics Viewer](https://github.com/kleeadrian/Grafana-Copilot-Metrics)
+  - [Copilot Metrics Viewer for Power BI](https://github.com/github-copilot-resources/copilot-metrics-viewer-power-bi)
   - Create your own using [API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics?apiVersion=2022-11-28)
-    - [Getting started with Copilot Metrics APIs](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/analyzing-usage-over-time-with-the-copilot-metrics-api)
-    - [Copilot Usage GitHub Action](https://github.com/marketplace/actions/copilot-usage-action) - Get Copilot usage data as .md, CSV, XML, JSON, or emailed PDF report
-    - [Copilot Metrics Retention GitHub Action](https://github.com/marketplace/actions/copilot-metrics-retention) - GitHub Action designed to persistently store Copilot Usage Metrics data over time in a JSON file format.
+    - Examples of API Usage
+      - [Getting started with Copilot Metrics APIs](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/analyzing-usage-over-time-with-the-copilot-metrics-api)
+      - [Copilot Usage GitHub Action](https://github.com/marketplace/actions/copilot-usage-action) - Get Copilot usage data as .md, CSV, XML, JSON, or emailed PDF report
+      - [Copilot Metrics Retention GitHub Action](https://github.com/marketplace/actions/copilot-metrics-retention) - GitHub Action designed to persistently store Copilot Usage Metrics data over time in a JSON file format.
+    - Example dashboard types for ideas - not recommended for production
+      - [Power BI App](https://appsource.microsoft.com/en-us/product/power-bi/github.github-copilot-metrics)
+      - [NodeJS Copilot Metrics Viewer](https://github.com/github-copilot-resources/copilot-metrics-viewer)
+      - [Grafana Metrics Viewer](https://github.com/kleeadrian/Grafana-Copilot-Metrics)
 - Focus on engagement metrics vs acceptance metrics that can be a red herring and should be avoided in the beginning
   - Compare the number of licensed users, total engaged users, and the overall developer population
 - Add qualitative metrics by implementing surveys

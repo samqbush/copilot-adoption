@@ -1,10 +1,11 @@
 ---
 layout: default
-title: Prompt Engineering Examples
+title: Prompt Engineering
+description: Examples of Copilot prompts in different scenarios depending on configuration
 ---
 
-The following examples show how to prompt Copilot chat when public code suggestions are disabled in an enterprise/organization.
-
+# Disabled "Suggestions Matching Public Code"
+The following examples show how to prompt Copilot when [public code suggestions](https://docs.github.com/en/copilot/using-github-copilot/finding-public-code-that-matches-github-copilot-suggestions) are disabled in an enterprise/organization.
 ## Example 1 - pom.xml
 **Bad**
 

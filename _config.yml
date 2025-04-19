@@ -15,6 +15,10 @@ plugins:
 markdown: kramdown
 permalink: pretty
 
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
 toc:
   min_level: 1
   max_level: 6
