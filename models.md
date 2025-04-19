@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let text = cell.textContent.trim().toLowerCase();
     
     // Handle date sorting
-    if (index === 3) { // GA Date column
+    if (index === 2) { // GA Date column
       if (text === 'tbd' || text === '') return Infinity; // Put TBD at the end
       
       // Look for dates like "October 2024" or "March 21, 2024"
