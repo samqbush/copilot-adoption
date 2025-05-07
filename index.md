@@ -154,7 +154,7 @@ Ensure that users are aware of the support resources available to them and provi
 - Use one of the following for a dashboard
   - [Power BI](https://github.com/github-copilot-resources/copilot-metrics-viewer-power-bi)
   - [NodeJS](https://github.com/github-copilot-resources/copilot-metrics-viewer)
-  - [Grafana](https://github.com/github-copilot-resources/copilot-metrics-viewer)
+  - [Grafana](https://devblogs.microsoft.com/all-things-azure/visualize-roi-of-your-github-copilot-usage-how-it-works/#data-collection)
   - Create your own using [API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics?apiVersion=2022-11-28)
     - Examples of API Usage
       - [Getting started with Copilot Metrics APIs](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/analyzing-usage-over-time-with-the-copilot-metrics-api)
