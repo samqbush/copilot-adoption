@@ -145,31 +145,27 @@ Ensure that users are aware of the support resources available to them and provi
 
 #### Baseline
 
-- Read [Research: quantifying GitHub Copilot’s impact on developer productivity and happiness](https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/)
-- Read [Why developer satisfaction is your best productivity metric](https://resources.github.com/developer-productivity/why-developer-satisfaction-is-your-best-productivity-metric/)
-- Define trackable key performance indicators (KPIs) that reflect the goals and expected benefits of using GitHub Copilot.
-- Conduct a baseline measurement of development metrics prior to introducing GitHub Copilot.
+- Read and apply the [GitHub Engineering System Success Playbook (ESSP)](https://resources.github.com/engineering-system-success-playbook/)
+  - Define trackable key performance indicators (KPIs) that reflect the goals and expected benefits of using GitHub Copilot.
+  - Conduct a baseline measurement of development metrics prior to introducing GitHub Copilot.
 
 #### Copilot Metrics
 
 - Use one of the following for a dashboard
-  - [Copilot Metrics Viewer for Power BI](https://github.com/github-copilot-resources/copilot-metrics-viewer-power-bi)
+  - [Power BI](https://github.com/github-copilot-resources/copilot-metrics-viewer-power-bi)
+  - [NodeJS](https://github.com/github-copilot-resources/copilot-metrics-viewer)
+  - [Grafana](https://github.com/github-copilot-resources/copilot-metrics-viewer)
   - Create your own using [API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics?apiVersion=2022-11-28)
     - Examples of API Usage
       - [Getting started with Copilot Metrics APIs](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/analyzing-usage-over-time-with-the-copilot-metrics-api)
       - [Copilot Usage GitHub Action](https://github.com/marketplace/actions/copilot-usage-action) - Get Copilot usage data as .md, CSV, XML, JSON, or emailed PDF report
       - [Copilot Metrics Retention GitHub Action](https://github.com/marketplace/actions/copilot-metrics-retention) - GitHub Action designed to persistently store Copilot Usage Metrics data over time in a JSON file format.
-    - Example dashboard types for ideas - not recommended for production
-      - [Power BI App](https://appsource.microsoft.com/en-us/product/power-bi/github.github-copilot-metrics)
-      - [NodeJS Copilot Metrics Viewer](https://github.com/github-copilot-resources/copilot-metrics-viewer)
-      - [Grafana Metrics Viewer](https://github.com/kleeadrian/Grafana-Copilot-Metrics)
 - Focus on engagement metrics vs acceptance metrics that can be a red herring and should be avoided in the beginning
   - Compare the number of licensed users, total engaged users, and the overall developer population
 - Add qualitative metrics by implementing surveys
   - [GitHub Value](https://github.com/austenstone/github-value) - provides a combined survey engine and value dashboard via GitHub Application
   - [Pull Request Survey Engine]( https://github.com/github/copilot-survey-engine) - a GitHub App built on Probot that will prompt developers during PRs about their Copilot experience
-  - [Survey Guide](https://docs.google.com/document/d/1IJasrJNkM3GE9a6a25DfU5DrXrtr4I6OYl6WUYIS0sE/edit?tab=t.0)
-    - [Google Forms Survey Template](https://docs.google.com/forms/d/1HVPK1OjOYV-y5ZUcHWB_qvUhiVssHchh6LdiEyBXeD4/edit)
+  - [ESSP - Developer Survey](https://downloads.ctfassets.net/wfutmusr1t3h/6BD0BWsrVXIIq1gSnnsrUd/be55fd315df8ea02804bb7aa1b9fd114/ESSP-survey.pdf)
 
 # Phase 2 - Early Adopters & Early Majority
 

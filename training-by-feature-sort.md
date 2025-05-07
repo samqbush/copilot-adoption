@@ -428,10 +428,10 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>N/A</td>
     </tr>
         <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/adding-organization-custom-instructions-for-github-copilot">Organization Custom Instructions</a>(Enterprise only)</td>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/adding-organization-custom-instructions-for-github-copilot">Organization Custom Instructions</a> (Enterprise only)</td>
       <td>N/A</td>
-      <td>Public Preview</td>
-      <td></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-17-organization-custom-instructions-now-available/">April 17, 2025</a></td>
       <td></td>
       <td>N/A</td>
     </tr>
