@@ -412,6 +412,14 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>N/A</td>
     </tr>
     <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/using-github-copilot-for-pull-requests/creating-a-pull-request-summary-with-github-copilot">Prompt Files</a></td>
+      <td>VS Code</td>
+      <td>GA</td>
+      <td><a href="https://code.visualstudio.com/updates/v1_100">May 8, 2025</a></td>
+      <td>N/A</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/using-github-copilot-for-pull-requests/creating-a-pull-request-summary-with-github-copilot">Pull request summaries</a></td>
       <td>GitHub.com</td>
       <td>GA</td>
@@ -436,8 +444,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>N/A</td>
     </tr>
     <tr>
-      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#vision">Vision</a></td>
-      <td>Claude Sonnet 3.5/3.7, Gemini 2.0 Flash, Gemini 2.5 Pro, GPT-4o</td>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-images-in-copilot-chat">Images in Chat</a></td>
+      <td>Claude Sonnet 3.5/3.7, Gemini 2.0 Flash, Gemini 2.5 Pro, GPT-4o/4.1</td>
       <td>Public Preview</td>
       <td><a href="https://github.blog/changelog/2025-04-16-using-vision-input-in-copilot-chat-with-claude-and-gemini-is-now-in-public-preview/">TBD</a></td>
       <td><a href="https://www.youtube.com/watch?v=pEEw7BvaK50">Copilot Vision is HERE! Watch It Turn Images into Code!</a></td>
@@ -452,8 +460,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>Copilot in the CLI</td>
     </tr>
     <tr>
-      <td><a href="https://githubnext.com/projects/copilot-workspace">Workspace</a></td>
-      <td>GitHub.com, VS Code, JetBrains</td>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/using-github-copilot-for-pull-requests/using-copilot-to-help-you-work-on-a-pull-request">Workspace</a></td>
+      <td>GitHub.com</td>
       <td>Public Preview</td>
       <td>TBD</td>
       <td><a href="https://youtu.be/2ZjE8MPtXyw?feature=shared">This is why GitHub Workspaces is changing the developer experience</a></td>

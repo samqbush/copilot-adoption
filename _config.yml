@@ -3,6 +3,7 @@ description: A step-by-step guide for rolling out GitHub Copilot at scale
 theme: jekyll-theme-cayman
 baseurl: "/copilot-adoption"
 url: "https://samqbush.github.io"
+repository: samqbush/copilot-adoption
 
 # Plugins
 plugins:
