@@ -4,7 +4,9 @@
 
 
 ## Local Development
-- Uses [jekyll-gfm-admonitions](https://github.com/Helveg/jekyll-gfm-admonitions) for GitHub flavored alerts
+- [jekyll-gfm-admonitions](https://github.com/Helveg/jekyll-gfm-admonitions) for GitHub flavored alerts
+- [jekyll-toc] for Table of Contents
+- Requires [GH Actions build](./.github/workflows/gh-pages.yml) & deploy due to the above custom plugins
 
 ```shell
 # Remove unused gems

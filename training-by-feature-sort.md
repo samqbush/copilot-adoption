@@ -134,8 +134,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
   <tbody>
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-agent-mode">Agent mode in the IDE</a></td>
-      <td>VS Code</td>
-      <td>GA</td>
+      <td>VS Code, [Visual Studio](https://github.blog/changelog/2025-05-13-agent-mode-mcp-and-next-edit-suggestions-come-to-github-copilot-in-visual-studio-17-14/)</td>
+      <td>GA/Public Preview</td>
       <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/#agent-mode-is-now-available-in-vs-code-stable">April 4, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=sYepbevm8TY&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=2&pp=iAQB0gcJCTgDd0p55Nqk">Use GitHub Copilot agent mode to create an application from scratch</a></td>
       <td>N/A</td>
@@ -333,7 +333,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">MCP servers</a></td>
-      <td>VS Code</td>
+      <td>VS Code, [Visual Studio](https://github.blog/changelog/2025-05-13-agent-mode-mcp-and-next-edit-suggestions-come-to-github-copilot-in-visual-studio-17-14/)</td>
       <td><a href="https://github.blog/changelog/2025-04-04-github-mcp-server-public-preview/">Public Preview</a></td>
       <td>TBD</td>
       <td><a href="https://www.youtube.com/watch?v=WySJOAlVpQ0">Tug on Dev! - GitHub Copilot Agent Mode with MCP</a></td>
@@ -397,8 +397,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot#about-next-edit-suggestions">Next Edit Suggestions</a></td>
-      <td>VS Code</td>
-      <td>GA</td>
+      <td>VS Code, [Visual Studio](https://github.blog/changelog/2025-05-13-agent-mode-mcp-and-next-edit-suggestions-come-to-github-copilot-in-visual-studio-17-14/)</td>
+      <td>GA/Public Preview</td>
       <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/">April 4, 2024</a></td>
       <td><a href="https://www.youtube.com/watch?v=zPUvU6XYhpw&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=6&pp=iAQB">Next Edit Suggestions for GitHub Copilot in action</a></td>
       <td>Editor preview features</td>
