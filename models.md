@@ -163,8 +163,8 @@ description: This matrix provides a curated list of available GitHub Copilot mod
     </tr>
     <tr>
       <td>GPT-4.1</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-04-14-openai-gpt-4-1-now-available-in-public-preview-for-github-copilot-and-github-models/">TBD</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-05-08-openai-gpt-4-1-is-now-generally-available-in-github-copilot-as-the-new-default-model/">May 8, 2025</a></td>
     </tr>
     <tr>
       <td>GPT-4.5</td>

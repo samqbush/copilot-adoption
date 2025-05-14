@@ -56,7 +56,7 @@ The following policy decisions typically require more consideration than a singl
 
 #### Enterprise configuration
 
-- Assign each organization ability to assign Business or Enterprise licenses and grant all users in the organization a license
+- Assign each organization the ability to assign [Business or Enterprise licenses](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-access-to-copilot-in-your-enterprise/enabling-copilot-for-organizations-in-your-enterprise)
 - [Enable the desired policies & models at the Enterprise level](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise)
   - Use No Policy if configuring differently at the organization level
 
@@ -64,7 +64,7 @@ The following policy decisions typically require more consideration than a singl
 #### Organization configuration
 
 - [Enable the desired policies on the production org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
-- [Enable the desired policies on the test/preview org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
+- Enable the desired policies on the test/preview org
 - [Install desired extensions at the org level](https://docs.github.com/en/copilot/customizing-copilot/extending-the-capabilities-of-github-copilot-in-your-organization)
 - Add teams to appropriate organization
 
@@ -72,7 +72,7 @@ The following policy decisions typically require more consideration than a singl
 
 Configure Network & Device Management settings to align with your organization's security and policy requirements
 
-- [Configure Network Settings for GitHub Copilot](https://docs.github.com/en/copilot/managing-copilot/managing-github-copilot-in-your-organization/configuring-your-proxy-server-or-firewall-for-copilot)
+- [Configure firewall settings for GitHub Copilot](https://docs.github.com/en/copilot/managing-copilot/managing-github-copilot-in-your-organization/configuring-your-proxy-server-or-firewall-for-copilot)
 - [Restrict network traffic to your enterprise with an IP allow list](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/hardening-security-for-your-enterprise/restricting-network-traffic-to-your-enterprise-with-an-ip-allow-list)
 - [Require two-factor authentication for organizations in your enterprise](https://docs.github.com/en/enterprise-cloud@latest/admin/enforcing-policies/enforcing-policies-for-your-enterprise/enforcing-policies-for-security-settings-in-your-enterprise#requiring-two-factor-authentication-for-organizations-in-your-enterprise)
 - [Ensure proxy configuration for smooth GitHub Copilot integration in enterprise networks](https://docs.github.com/en/copilot/managing-copilot/configure-personal-settings/configuring-network-settings-for-github-copilot)
@@ -92,16 +92,17 @@ Configure Network & Device Management settings to align with your organization's
 - [Getting code suggestions in your IDE with GitHub Copilot](https://docs.github.com/en/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot)
 - [Chat in the IDE](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide)
 - [Prompt Engineering](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/prompt-engineering-for-copilot-chat)
-  - If [public code suggestions](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise#suggestions-matching-public-code) are disabled then prompt engineering should be a required training.  See [examples](./prompt-engineering-for-disabled-public-code.md)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Edits & Agent Mode](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-edit-mode)
 
 ### Advanced
 
+- [Copilot Extensions](https://resources.github.com/learn/pathways/copilot/extensions/essentials-of-github-copilot-extensions/)
+- [MCP Servers](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
 - [Customize Copilot with personal custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-personal-custom-instructions-for-github-copilot)
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
   - [Example](https://github.com/maxmash1/copilot-workshop)
-- [Copilot Extensions](https://resources.github.com/learn/pathways/copilot/extensions/essentials-of-github-copilot-extensions/)
-- [MCP Servers](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
+
 
 ### GitHub Specific Fundamentals
 
@@ -179,19 +180,12 @@ Ensure that users are aware of the support resources available to them and provi
 ## Invite additional teams
 
 - Design a team priority rollout plan
-- Add additional teams based on the rollout plan
+- Add additional teams via IDP group based on the rollout plan
 
 # Phase 3 - Enterprise-wide
 
-- Mandate Usage from Executive Leadership using success stories gathered from advocates, the internal community, and metrics gathered if implemented
+- Mandate Usage from Executive Leadership using success stories gathered from advocates, the internal community, and metrics gathered
 - Add remaining teams via IDP group
-
-# Appendix
-
-## Word-of-mouth evangelism
-
-- Organize training sessions to demonstrate GitHub Copilot’s features and benefits.
-- [Conduct hands-on / hackathon to let people feel the latest AI coding](https://github.com/users/samqbush/projects/2/views/1?pane=issue&itemId=98034156)
 
 # Phase 4 - Maintain & Improve
 
@@ -201,7 +195,15 @@ Ensure that users are aware of the support resources available to them and provi
 - Formulate a plan to address identified issues and improve enablement resources
   - [Remind inactive users](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/reminding-inactive-users)
 
-# Additional Reading
+# Appendix
+
+## Word-of-mouth evangelism
+
+- Organize training sessions to demonstrate GitHub Copilot’s features and benefits.
+- [Conduct hands-on / hackathon to let people feel the latest AI coding](https://github.com/maxmash1/copilot-workshop)
+
+
+## Additional Reading
 
 - [Taking GitHub Copilot to the stars, not just the skies](https://resources.github.com/artificial-intelligence/scaling-github-copilot-across-your-organization/) - a detailed whitepaper on GitHub & Accenture's rollouts of Copilot with implementation advice
 - [Advice on Driving Adoption](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/driving-copilot-adoption-in-your-company) - GitHub official documentation on adoption
