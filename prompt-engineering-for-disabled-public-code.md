@@ -5,6 +5,9 @@ description: Examples of Copilot prompts in different scenarios depending on con
 ---
 
 # Disabled "Suggestions Matching Public Code"
+
+> **Note:** For more discussion and context, see [GitHub Community Discussion #159805](https://github.com/orgs/community/discussions/159805).
+
 The following examples show how to prompt Copilot when [public code suggestions](https://docs.github.com/en/copilot/using-github-copilot/finding-public-code-that-matches-github-copilot-suggestions) are disabled in an enterprise/organization.
 ## Example 1 - pom.xml
 **Bad**
