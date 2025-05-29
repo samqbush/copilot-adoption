@@ -81,6 +81,7 @@ Configure Network & Device Management settings to align with your organization's
 ## Provide Self Serve Training
 
 Bundle training and provide a distribution method using the content sections below.
+
 ### Training Examples
 - [Training by Feature](./training-by-feature-sort)
 - [Copilot-Intro](https://github.com/maxmash1/copilot-intro)
