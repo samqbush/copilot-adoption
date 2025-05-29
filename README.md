@@ -14,5 +14,6 @@ bundle clean --force
 
 # Install gems & run local server
 bundle install
+
 JEKYLL_ENV=production bundle exec jekyll serve
 ```

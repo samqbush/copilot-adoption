@@ -171,6 +171,16 @@ description: This matrix provides a curated list of available GitHub Copilot mod
       <td>Public Preview</td>
       <td><a href="https://github.blog/changelog/2025-02-27-openai-gpt-4-5-in-github-copilot-now-available-in-public-preview/">TBD</a></td>
     </tr>
+    <tr>
+      <td>Claude Sonnet 4</td>
+      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-05-22-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-in-public-preview-in-github-copilot/">TBD</a></td>
+    </tr>
+    <tr>
+      <td>Claude Opus 4</td>
+      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-05-22-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-in-public-preview-in-github-copilot/">TBD</a></td>
+    </tr>
   </tbody>
 </table>
 </div>
