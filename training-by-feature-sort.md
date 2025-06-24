@@ -82,6 +82,35 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     text-align: center; /* Center-align dates for better readability */
   }
   
+  /* IDE Matrix table specific column widths */
+  #ideMatrix th:nth-child(1), #ideMatrix td:nth-child(1) { width: 20%; }  /* Feature */
+  #ideMatrix th:nth-child(2), #ideMatrix td:nth-child(2) { width: 9%; }   /* VS Code */
+  #ideMatrix th:nth-child(3), #ideMatrix td:nth-child(3) { width: 9%; }   /* Visual Studio */
+  #ideMatrix th:nth-child(4), #ideMatrix td:nth-child(4) { width: 9%; }   /* JetBrains */
+  #ideMatrix th:nth-child(5), #ideMatrix td:nth-child(5) { width: 8%; }   /* Xcode */
+  #ideMatrix th:nth-child(6), #ideMatrix td:nth-child(6) { width: 8%; }   /* Eclipse */
+  #ideMatrix th:nth-child(7), #ideMatrix td:nth-child(7) { width: 10%; }  /* Other */
+  #ideMatrix th:nth-child(8), #ideMatrix td:nth-child(8) { width: 15%; }  /* Video */
+  
+  /* Cell styling for IDE Matrix table */
+  #ideMatrix td {
+    padding: 8px; /* Smaller padding for IDE table cells */
+    text-align: center;
+  }
+  
+  #ideMatrix td:first-child {
+    text-align: left; /* Keep feature names left-aligned */
+  }
+  
+  #ideMatrix th {
+    text-align: center;
+    padding: 10px 5px;
+  }
+  
+  #ideMatrix th:first-child {
+    text-align: left; /* Keep feature header left-aligned */
+  }
+  
   .sortable tr:hover {
     background-color: #f1f1f1; /* Subtle hover effect for rows */
   }
@@ -154,7 +183,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review#customizing-copilots-reviews-with-custom-instructions-1">Code Review Customization via Instructions</a></td>
-      <td>Public Preview</td>
+      <td>Preview</td>
       <td><a href="https://github.blog/changelog/2025-06-13-copilot-code-review-customization-for-all/">June 13, 2025</a></td>
       <td></td>
       <td>Copilot in GitHub.com</td>
@@ -203,7 +232,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/github-models/prototyping-with-ai-models">Model Playground</a></td>
-      <td>Public Preview</td>
+      <td>Preview</td>
       <td><a href="https://github.blog/changelog/2024-10-29-github-models-is-now-available-in-public-preview/">October 29, 2024</a></td>
       <td><a href="https://www.youtube.com/watch?v=OCNvxcMfunA">GitHub Models: Your AI exploration playground</a></td>
       <td>N/A</td>
@@ -238,22 +267,22 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/coding-agent">Copilot Coding Agent</a> *</td>
-      <td>Public Preview</td>
+      <td>Preview</td>
       <td><a href="https://github.blog/changelog/2025-05-19-github-copilot-coding-agent-in-public-preview/">May 19, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=EPyyyB23NUU">GitHub Copilot Coding Agent Overview</a></td>
       <td>Copilot coding agent access <br>
       Block Copilot coding agent in all enterprise repositories</td>
     </tr>
     <tr>
-      <td><a href="https://docs.github.com/en/copilot/managing-copilot/monitoring-usage-and-entitlements/monitoring-your-copilot-usage-and-entitlements">Premium Request reports</a></td>
+      <td><a href="https://docs.github.com/en/copilot/managing-copilot/understanding-and-managing-copilot-usage/understanding-and-managing-requests-in-copilot">Premium Requests</a></td>
       <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-05-16-github-copilot-premium-request-report-available-today/">May 16, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-06-18-update-to-github-copilot-consumptive-billing-experience/">June 18, 2025</a></td>
       <td></td>
-      <td>N/A</td>
+      <td>Additional Copilot premium requests</td>
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-spaces/about-organizing-and-sharing-context-with-copilot-spaces">Copilot Spaces</a></td>
-      <td>Public Preview</td>
+      <td>Preview</td>
       <td><a href="https://github.blog/changelog/2025-05-29-introducing-copilot-spaces-a-new-way-to-work-with-code-and-context/">May 29, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=a0LWEWLUt48">What is GitHub Copilot Spaces? Centralize your project’s context</a></td>
       <td>N/A</td>
@@ -279,171 +308,15 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://www.youtube.com/watch?v=EQH-V5jQ0aA">Copilot features - videos - GitHub Mobile</a></td>
       <td>Copilot Chat in GitHub Mobile</td>
     </tr>
-  </tbody>
-</table>
-</div>
-
-<h2>IDE Features</h2>
-<div class="table-container">
-<table id="ideTable" class="sortable">
-  <thead>
-    <tr>
-      <th>Feature</th>
-      <th>IDEs</th>
-      <th>Release Stage</th>
-      <th>Release Date</th>
-      <th>Video</th>
-      <th><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise">Policy Toggle</a></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-agent-mode">Agent mode in the IDE</a></td>
-      <td>VS Code, <a href="https://github.blog/changelog/2025-06-17-visual-studio-17-14-june-release/">Visual Studio</a></td>
-      <td>GA/Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/#agent-mode-is-now-available-in-vs-code-stable">April 4, 2025</a></td>
-      <td><a href="https://www.youtube.com/watch?v=sYepbevm8TY&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=2&pp=iAQB0gcJCTgDd0p55Nqk">Use GitHub Copilot agent mode to create an application from scratch</a></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td><a href="https://code.visualstudio.com/docs/copilot/language-models#_bring-your-own-language-model-key">Bring your own language model key</a></td>
-      <td>VS Code</td>
-      <td>Public Preview - Free & Pro user only</td>
-      <td>TBD</td>
-      <td></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td><a href="https://code.visualstudio.com/api/extension-guides/chat">Chat skills/participants in VS Code</a></td>
-      <td>VS Code</td>
-      <td>GA</td>
-      <td><a href="https://code.visualstudio.com/updates/v1_95">October 2024</a></td>
-      <td><a href="https://www.youtube.com/watch?v=OdW2r3raAHI">Building your own GitHub Copilot chat participant in VS Code</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
+      <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/using-github-copilot-in-the-command-line">GitHub CLI</a></td>
-      <td>GitHub CLI</td>
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2024-03-21-github-copilot-general-availability-in-the-cli/">March 21, 2024</a></td>
       <td><a href="https://www.youtube.com/watch?v=fHwtrOcLAnI">GitHub Copilot in the CLI</a></td>
       <td>Copilot in the CLI</td>
     </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/github-copilot-chat-cheat-sheet?tool=vscode">Chat Context Variables</a></td>
-      <td>VS Code, Jet Brains</td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/#context-variables">January 2024</a></td>
-      <td><a href="https://youtu.be/N62d9PgiqoY">More Context == Better GitHub Copilot Responses in Visual Studio</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide">Copilot Chat</a></td>
-      <td><a href="https://github.blog/news-insights/product-news/github-copilot-chat-now-generally-available-for-organizations-and-individuals/">VS Code & Visual Studio</a>, <a href="https://github.blog/changelog/2024-03-07-github-copilot-chat-general-availability-in-jetbrains-ide">JetBrains</a>, <a href="https://github.blog/changelog/2025-03-11-github-copilot-for-xcode-chat-is-now-generally-available/">Xcode</a>, <a href="https://github.blog/changelog/2025-04-15-github-copilot-chat-for-eclipse-is-now-generally-available/">Eclipse</a></td>
-      <td>GA</td>
-      <td>See IDE links</td>
-      <td><a href="https://www.youtube.com/watch?v=P3Q5wa0mI_0&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=58&pp=iAQB">Copilot Chat - Power User</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot">Copilot Code Completion</a></td>
-      <td>VS Code, JetBrains, Visual Studio, <a href="https://github.blog/changelog/2025-02-14-code-completion-in-github-copilot-for-xcode-is-now-generally-available">Xcode</a>, <a href="https://github.blog/changelog/2025-03-11-code-completion-in-github-copilot-for-eclipse-is-now-generally-available">Eclipse</a>, Neovim</td>
-      <td>GA</td>
-      <td>See IDE links</td>
-      <td><a href="https://www.youtube.com/watch?v=EsRPYoXY9IA&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=57&pp=iAQB">Rewriting your Java code with Copilot-based suggestions in VS Code</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#copilot-edits">Copilot Edits</a></td>
-      <td><a href="https://code.visualstudio.com/updates/v1_97#_copilot-edits-general-availability">VS Code</a>, Visual Studio, <a href="https://github.blog/changelog/2025-04-28-copilot-edits-for-jetbrains-ides-is-generally-available/">JetBrains</a></td>
-      <td>GA</td>
-      <td>See IDE links</td>
-      <td><a href="https://youtu.be/NvWl-bZTDKw">The all NEW GitHub Copilot Experience</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/copilot-chat-cookbook/documenting-code">Document & Explain Code</a></td>
-      <td>VS Code, Visual Studio, JetBrains, Xcode, Eclipse</td>
-      <td>GA</td>
-      <td>See Copilot Chat IDE Links</td>
-      <td><a href="https://youtu.be/fm4JCyXbWPo?feature=shared">Using GitHub Copilot to write documentation for you!</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/customizing-copilot/creating-a-custom-model-for-github-copilot">Fine Tuning & Custom Models</a> *</td>
-      <td>All IDEs</td>
-      <td>Private Preview</td>
-      <td>TBD</td>
-      <td></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/copilot-chat-cookbook/testing-code/generate-unit-tests">Generate Unit Tests</a></td>
-      <td>VS Code, Visual Studio, JetBrains, Xcode, Eclipse</td>
-      <td>GA</td>
-      <td>See Copilot Chat IDE links</td>
-      <td><a href="https://github.blog/ai-and-ml/github-copilot/how-to-generate-unit-tests-with-github-copilot-tips-and-examples/">How to generate unit tests with GitHub Copilot: Tips and examples</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#additional-ways-to-access-copilot-chat">Inline Chat</a></td>
-      <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/">VS Code</a>, Visual Studio, <a href="https://github.blog/changelog/2024-09-11-inline-chat-is-now-available-in-github-copilot-in-jetbrains">JetBrains</a></td>
-      <td>GA</td>
-      <td>See IDE links</td>
-      <td></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">MCP servers in IDEs</a></td>
-      <td>VS Code,<a href="https://github.blog/changelog/2025-05-13-agent-mode-mcp-and-next-edit-suggestions-come-to-github-copilot-in-visual-studio-17-14/">Visual Studio</a>, <a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Jetbrains, Eclipse, Xcode</a></td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-04-04-github-mcp-server-public-preview/">April 4, 2025</a></td>
-      <td><a href="https://www.youtube.com/watch?v=WySJOAlVpQ0">Tug on Dev! - GitHub Copilot Agent Mode with MCP</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">Remote MCP Authentication in IDEs</a></td>
-      <td>VS Code</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-06-13-github-copilot-in-vs-code-may-release-v1-101/">June 13, 2025</a></td>
-      <td><a href="https://www.youtube.com/watch?v=PdQWgF4oV7Q">The Download: Remote GitHub MCP Server</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/using-github-copilot-for-pull-requests/creating-a-pull-request-summary-with-github-copilot">Prompt Files</a></td>
-      <td>VS Code</td>
-      <td>GA</td>
-      <td><a href="https://code.visualstudio.com/updates/v1_100">May 8, 2025</a></td>
-      <td></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://learn.microsoft.com/en-us/azure/developer/java/migration/migrate-github-copilot-app-modernization-for-java-quickstart-assess-migrate">Copilot App Modernization for Java</a></td>
-      <td>VS Code</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-05-19-github-copilot-app-modernization-for-java-now-in-public-preview/">May 19, 2025</a></td>
-      <td><a href="https://www.youtube.com/watch?v=TBS2sv-e80o">Java App Modernization Simplified with AI | BRK131</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://devblogs.microsoft.com/dotnet/github-copilot-upgrade-dotnet/">Copilot App Modernization for .NET</a></td>
-      <td>Visual Studio</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-05-19-github-copilot-app-modernization-upgrade-for-net-now-in-public-preview/">May 19, 2025</a></td>
-      <td><a href="https://www.youtube.com/watch?v=3NFWcHrsba0">Using agentic AI to simplify .NET upgrades with GitHub Copilot | DEM549</a></td>
-      <td>N/A</td>
-    </tr>
-    <tr>
-      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-images-in-copilot-chat">Images in Chat</a></td>
-      <td>Claude Sonnet 3.5/3.7, Gemini 2.0 Flash, Gemini 2.5 Pro, GPT-4o/4.1</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-04-16-using-vision-input-in-copilot-chat-with-claude-and-gemini-is-now-in-public-preview/">April 16, 2025</a></td>
-      <td><a href="https://www.youtube.com/watch?v=pEEw7BvaK50">Copilot Vision is HERE! Watch It Turn Images into Code!</a></td>
-      <td>Editor preview features</td>
-    </tr>
-    <tr>
+      <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/asking-github-copilot-questions-in-windows-terminal">Windows Terminal</a></td>
-      <td>Windows Terminal</td>
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2024-10-29-github-copilot-is-now-available-in-windows-terminal/">October 29, 2024</a></td>
       <td><a href="https://youtu.be/rwKfazgCw9E?feature=shared">Windows Terminal now has GitHub Copilot!?</a></td>
@@ -453,11 +326,201 @@ description: This matrix provides a curated list of GitHub Copilot features, the
 </table>
 </div>
 
+<h2>IDE Features</h2>
+<div class="table-container">
+<table id="ideMatrix" class="sortable">
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>VS Code</th>
+      <th>Visual Studio</th>
+      <th>JetBrains</th>
+      <th>Xcode</th>
+      <th>Eclipse</th>
+      <th>NeoVim</th>
+      <th>Video</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-agent-mode">Agent mode</a></td>
+      <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/#agent-mode-is-now-available-in-vs-code-stable">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-06-17-visual-studio-17-14-june-release/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=sYepbevm8TY&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=2&pp=iAQB0gcJCTgDd0p55Nqk">Use GitHub Copilot agent mode to create an application from scratch</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://code.visualstudio.com/docs/copilot/language-models#_bring-your-own-language-model-key">Bring your own language model key</a></td>
+      <td><a href="https://code.visualstudio.com/docs/copilot/language-models#_bring-your-own-language-model-key">Preview</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="https://code.visualstudio.com/api/extension-guides/chat">Chat skills/participants</a></td>
+      <td><a href="https://code.visualstudio.com/updates/v1_95">GA</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=OdW2r3raAHI">Building your own GitHub Copilot chat participant in VS Code</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/github-copilot-chat-cheat-sheet?tool=vscode">Chat Context Variables</a></td>
+      <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/#context-variables">GA</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://youtu.be/N62d9PgiqoY">More Context == Better GitHub Copilot Responses in Visual Studio</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide">Copilot Chat</a></td>
+      <td><a href="https://github.blog/news-insights/product-news/github-copilot-chat-now-generally-available-for-organizations-and-individuals/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-04-15-github-copilot-chat-for-eclipse-is-now-generally-available/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2024-03-07-github-copilot-chat-general-availability-in-jetbrains-ide">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-03-11-github-copilot-for-xcode-chat-is-now-generally-available/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-04-15-github-copilot-chat-for-eclipse-is-now-generally-available/">GA</a></td>
+      <td>GA</td>
+      <td><a href="https://www.youtube.com/watch?v=P3Q5wa0mI_0&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=58&pp=iAQB">Copilot Chat - Power User</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot">Copilot Code Completion</a></td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-02-14-code-completion-in-github-copilot-for-xcode-is-now-generally-available">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-03-11-code-completion-in-github-copilot-for-eclipse-is-now-generally-available">GA</a></td>
+      <td>GA</td>
+      <td><a href="https://www.youtube.com/watch?v=EsRPYoXY9IA&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=57&pp=iAQB">Rewriting your Java code with Copilot-based suggestions in VS Code</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#copilot-edits">Copilot Edits</a></td>
+      <td><a href="https://code.visualstudio.com/updates/v1_97#_copilot-edits-general-availability">GA</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-04-28-copilot-edits-for-jetbrains-ides-is-generally-available/">GA</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://youtu.be/NvWl-bZTDKw">The all NEW GitHub Copilot Experience</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/copilot-chat-cookbook/documenting-code">Document & Explain Code</a></td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td><a href="https://youtu.be/fm4JCyXbWPo?feature=shared">Using GitHub Copilot to write documentation for you!</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/copilot-chat-cookbook/testing-code/generate-unit-tests">Generate Unit Tests</a></td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/ai-and-ml/github-copilot/how-to-generate-unit-tests-with-github-copilot-tips-and-examples/">How to generate unit tests with GitHub Copilot: Tips and examples</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#additional-ways-to-access-copilot-chat">Inline Chat</a></td>
+      <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/">GA</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2024-09-11-inline-chat-is-now-available-in-github-copilot-in-jetbrains">GA</a></td>
+      <td>GA</td>
+      <td>GA</td>
+      <td>GA</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">MCP servers in IDEs</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-08-github-copilot-in-vs-code-april-release-v1-100/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-06-17-visual-studio-17-14-june-release/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=WySJOAlVpQ0">Tug on Dev! - GitHub Copilot Agent Mode with MCP</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">Remote MCP Authentication in IDEs</a></td>
+      <td><a href="https://github.blog/changelog/2025-06-13-github-copilot-in-vs-code-may-release-v1-101/">Preview</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=PdQWgF4oV7Q">The Download: Remote GitHub MCP Server</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://code.visualstudio.com/docs/copilot/copilot-customization#_prompt-files-experimental">Prompt Files</a></td>
+      <td><a href="https://code.visualstudio.com/updates/v1_100">Experimental</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="https://learn.microsoft.com/en-us/azure/developer/java/migration/migrate-github-copilot-app-modernization-for-java-quickstart-assess-migrate">Copilot App Modernization for Java</a></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-github-copilot-app-modernization-for-java-now-in-public-preview/">Preview</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=TBS2sv-e80o">Java App Modernization Simplified with AI | BRK131</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://devblogs.microsoft.com/dotnet/github-copilot-upgrade-dotnet/">Copilot App Modernization for .NET</a></td>
+      <td></td>
+      <td><a href="https://github.blog/changelog/2025-05-19-github-copilot-app-modernization-upgrade-for-net-now-in-public-preview/">Preview</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=3NFWcHrsba0">Using agentic AI to simplify .NET upgrades with GitHub Copilot | DEM549</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-images-in-copilot-chat">Images in Chat</a></td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td><a href="https://www.youtube.com/watch?v=pEEw7BvaK50">Copilot Vision is HERE! Watch It Turn Images into Code!</a></td>
+    </tr>
+        <tr>
+      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/getting-code-suggestions-in-your-ide-with-github-copilot#about-next-edit-suggestions">Next Edit Suggestions</a></td>
+      <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/#ux-improvements-help-you-work-faster-and-stay-focused">GA</a></td>
+      <td><a href="https://learn.microsoft.com/en-us/visualstudio/ide/copilot-next-edit-suggestions?view=vs-2022">GA</a></td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td>Preview</td>
+      <td><a href="https://www.youtube.com/watch?v=zPUvU6XYhpw&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=6&pp=iAQB">Next Edit Suggestions for GitHub Copilot in action</a></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   // Get the table element
   const githubTable = document.getElementById('githubTable');
-  const ideTable = document.getElementById('ideTable');
+  const ideTable = document.getElementById('ideMatrix');
   const githubHeaders = githubTable.querySelectorAll('th');
   const ideHeaders = ideTable.querySelectorAll('th');
   const githubTableBody = githubTable.querySelector('tbody');
@@ -598,8 +661,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Sort GitHub table by date (column 2, index 2) descending by default
   sortTable('github', 2, 'desc');
-  // Sort IDE table by date (column 3, index 3) descending by default
-  sortTable('ide', 3, 'desc');
+  // Sort IDE table by feature column (column 0, index 0) ascending by default
+  sortTable('ide', 0, 'asc');
 });
 </script>
 
