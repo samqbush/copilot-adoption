@@ -139,6 +139,7 @@ Ensure that users are aware of the support resources available to them and provi
 ### Cost Centers
 
 - [Create cost centers & allocate spending](https://docs.github.com/en/enterprise-cloud@latest/billing/using-the-new-billing-platform/charging-business-units#creating-a-cost-center)
+  - [Strategies for Managing Copilot Premium Request Spending](./cost-management_premium-requests.md)
 
 ### Developer ROI
 

@@ -70,12 +70,12 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     white-space: normal;
   }
   
-  /* Adjusted column widths */
-  .sortable th:nth-child(1), .sortable td:nth-child(1) { width: 18%; }  /* Feature */
-  .sortable th:nth-child(2), .sortable td:nth-child(2) { width: 10%; }  /* Release Stage */
-  .sortable th:nth-child(3), .sortable td:nth-child(3) { width: 12%; }  /* GA Date */
-  .sortable th:nth-child(4), .sortable td:nth-child(4) { width: 22%; }  /* Video */
-  .sortable th:nth-child(5), .sortable td:nth-child(5) { width: 24%; }  /* Policy Toggle */
+  /* Adjusted column widths for GitHub.com table only */
+  #githubTable.sortable th:nth-child(1), #githubTable.sortable td:nth-child(1) { width: 18%; }  /* Feature */
+  #githubTable.sortable th:nth-child(2), #githubTable.sortable td:nth-child(2) { width: 10%; }  /* Release Stage */
+  #githubTable.sortable th:nth-child(3), #githubTable.sortable td:nth-child(3) { width: 12%; }  /* GA Date */
+  #githubTable.sortable th:nth-child(4), #githubTable.sortable td:nth-child(4) { width: 22%; }  /* Video */
+  #githubTable.sortable th:nth-child(5), #githubTable.sortable td:nth-child(5) { width: 24%; }  /* Policy Toggle */
   
   /* Special handling for GA Date column */
   .sortable td:nth-child(3), .sortable th:nth-child(3) {
@@ -627,10 +627,10 @@ document.addEventListener('DOMContentLoaded', function() {
       const direction = index === currentGithubColumn && currentGithubDirection === 'asc' ? 'desc' : 'asc';
       sortTable('github', index, direction);
     });
-    
+
     // Add tabindex for accessibility
     header.setAttribute('tabindex', '0');
-    
+
     // Add keyboard support
     header.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' || e.key === ' ') {
