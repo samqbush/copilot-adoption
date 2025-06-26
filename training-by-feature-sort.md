@@ -266,9 +266,9 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>N/A</td>
     </tr>
     <tr>
-      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/coding-agent">Copilot Coding Agent</a> *</td>
+      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/coding-agent">Copilot Coding Agent</a></td>
       <td>Preview</td>
-      <td><a href="https://github.blog/changelog/2025-05-19-github-copilot-coding-agent-in-public-preview/">May 19, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-06-24-github-copilot-coding-agent-is-now-available-for-copilot-business-users/">May 19, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=EPyyyB23NUU">GitHub Copilot Coding Agent Overview</a></td>
       <td>Copilot coding agent access <br>
       Block Copilot coding agent in all enterprise repositories</td>

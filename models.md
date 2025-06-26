@@ -143,8 +143,8 @@ description: This matrix provides a curated list of available GitHub Copilot mod
     </tr>
     <tr>
       <td>o3-mini</td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-04-04-multiple-new-models-are-now-generally-available-in-github-copilot/">April 4, 2025</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-06-20-upcoming-deprecation-of-o1-gpt-4-5-o3-mini-and-gpt-4o/">June 20, 2025</a></td>
     </tr>
     <tr>
       <td>o3</td>
@@ -161,6 +161,11 @@ description: This matrix provides a curated list of available GitHub Copilot mod
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2025-04-04-multiple-new-models-are-now-generally-available-in-github-copilot/">April 4, 2025</a></td>
     </tr>
+        <tr>
+      <td>GPT-4.0</td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-06-20-upcoming-deprecation-of-o1-gpt-4-5-o3-mini-and-gpt-4o/">June 20, 2025</a></td>
+    </tr>
     <tr>
       <td>GPT-4.1</td>
       <td>GA</td>
@@ -168,18 +173,18 @@ description: This matrix provides a curated list of available GitHub Copilot mod
     </tr>
     <tr>
       <td>GPT-4.5</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-02-27-openai-gpt-4-5-in-github-copilot-now-available-in-public-preview/">TBD</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-06-20-upcoming-deprecation-of-o1-gpt-4-5-o3-mini-and-gpt-4o/">June 20, 2025</a></td>
     </tr>
     <tr>
       <td>Claude Sonnet 4</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-05-22-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-in-public-preview-in-github-copilot/">TBD</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-06-25-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-generally-available-in-github-copilot/">June 25, 2025</a></td>
     </tr>
     <tr>
       <td>Claude Opus 4</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-05-22-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-in-public-preview-in-github-copilot/">TBD</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-06-25-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-generally-available-in-github-copilot/">June 25, 2025</a></td>
     </tr>
   </tbody>
 </table>
