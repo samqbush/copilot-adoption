@@ -175,7 +175,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>Suggestions matching public code (duplication detection filter)</td>
     </tr>
     <tr>
-      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review">Code review</a> & <a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review#customizing-copilots-reviews-with-coding-guidelines-1">Coding Guidelines*</a></td>
+      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review">Code review</a></td>
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2025-04-04-copilot-code-review-now-generally-available/">April 4, 2025</a></td>
       <td><a href="https://youtu.be/cyPaAkRfEBQ">GitHub Copilot code review</a></td>
@@ -184,7 +184,7 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/code-review/using-copilot-code-review#customizing-copilots-reviews-with-custom-instructions-1">Code Review Customization via Instructions</a></td>
       <td>Preview</td>
-      <td><a href="https://github.blog/changelog/2025-06-13-copilot-code-review-customization-for-all/">June 13, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-07-18-upcoming-deprecations-and-changes-to-copilot-code-review/">August 1, 2025</a></td>
       <td></td>
       <td>Copilot in GitHub.com</td>
     </tr>
@@ -281,6 +281,13 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>Additional Copilot premium requests</td>
     </tr>
     <tr>
+      <td><a href="https://docs.github.com/en/copilot/reference/metrics-data#copilot-activity-report">Activity Report</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-07-18-new-github-copilot-activity-report-with-enhanced-authentication-and-usage-insights/">July 17, 2025</a></td>
+      <td></td>
+      <td>N/A</td>
+    </tr>
+    <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-spaces/about-organizing-and-sharing-context-with-copilot-spaces">Copilot Spaces</a></td>
       <td>Preview</td>
       <td><a href="https://github.blog/changelog/2025-05-29-introducing-copilot-spaces-a-new-way-to-work-with-code-and-context/">May 29, 2025</a></td>
@@ -346,9 +353,9 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#using-agent-mode">Agent mode</a></td>
       <td><a href="https://github.blog/changelog/2025-04-03-github-copilot-in-vs-code-march-release-v1-99/#agent-mode-is-now-available-in-vs-code-stable">GA</a></td>
       <td><a href="https://github.blog/changelog/2025-06-17-visual-studio-17-14-june-release/">GA</a></td>
-      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
-      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
-      <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
+      <td><a href="https://github.blog/changelog/2025-07-16-agent-mode-for-jetbrains-eclipse-and-xcode-is-now-generally-available/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-07-16-agent-mode-for-jetbrains-eclipse-and-xcode-is-now-generally-available/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-07-16-agent-mode-for-jetbrains-eclipse-and-xcode-is-now-generally-available/">GA</a></td>
       <td></td>
       <td><a href="https://www.youtube.com/watch?v=sYepbevm8TY&list=PLCiDM8_DsPQ1WJ5Ss3e0Lsw8EaijUL_6D&index=2&pp=iAQB0gcJCTgDd0p55Nqk">Use GitHub Copilot agent mode to create an application from scratch</a></td>
     </tr>
@@ -444,13 +451,13 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">MCP servers in IDEs</a></td>
-      <td><a href="https://github.blog/changelog/2025-05-08-github-copilot-in-vs-code-april-release-v1-100/">GA</a></td>
-      <td><a href="https://github.blog/changelog/2025-06-17-visual-studio-17-14-june-release/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-07-14-model-context-protocol-mcp-support-in-vs-code-is-generally-available/">GA</a></td>
+      <td><a href="https://github.blog/changelog/2025-06-17-visual-studio-17-14-june-release/">Preview</a></td>
       <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
       <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
       <td><a href="https://github.blog/changelog/2025-05-19-agent-mode-and-mcp-support-for-copilot-in-jetbrains-eclipse-and-xcode-now-in-public-preview/">Preview</a></td>
       <td></td>
-      <td><a href="https://www.youtube.com/watch?v=WySJOAlVpQ0">Tug on Dev! - GitHub Copilot Agent Mode with MCP</a></td>
+      <td><a href="https://www.youtube.com/watch?v=Coot4TFTkN4">MCP Servers in VS Code</a></td>
     </tr>
     <tr>
       <td><a href="https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp">Remote MCP Authentication in IDEs</a></td>

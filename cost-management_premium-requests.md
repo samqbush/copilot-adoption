@@ -4,8 +4,11 @@ As your organization adopts GitHub Copilot, developers will begin using premium 
 
 This guide outlines two key strategies for effective cost management: optimizing license tiers for heavy users and setting granular budgets for specific groups.
 
-> **Note:**
+> [!NOTE]
 > By default, the spending limit for Copilot premium features is set to $0. To implement these strategies, you will need to adjust your enterprise's billing settings to allow for spending.
+
+> [!TIP]
+> This open source [premium request calculator](https://github.com/jonjozwiak/premium-requests-calculator) can be used for calculating your monthly estimated premium requests and costs.
 
 ---
 

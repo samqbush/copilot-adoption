@@ -101,6 +101,7 @@ Bundle training and provide a distribution method using the content sections bel
 - [Copilot Extensions](https://resources.github.com/learn/pathways/copilot/extensions/essentials-of-github-copilot-extensions/)
 - [MCP Servers](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
 - [Customize Copilot with personal custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-personal-custom-instructions-for-github-copilot)
+  - [Real World examples of custom instructions, prompts, and chat modes](https://github.com/github/awesome-copilot) 
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
   - [Example](https://github.com/maxmash1/copilot-workshop)
 
