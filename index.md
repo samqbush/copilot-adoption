@@ -101,6 +101,8 @@ Bundle training and provide a distribution method using the content sections bel
 - [Copilot Extensions](https://resources.github.com/learn/pathways/copilot/extensions/essentials-of-github-copilot-extensions/)
 - [MCP Servers](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
 - [Customize Copilot with personal custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-personal-custom-instructions-for-github-copilot)
+  - [Real World examples of custom instructions, prompts, and chat modes](https://github.com/github/awesome-copilot)
+  - [GitHub Engineer's take on using Agent Mode + MCP to increase personal productivity](https://austen.info/blog/github-copilot-agent-mcp)
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
   - [Example](https://github.com/maxmash1/copilot-workshop)
 
@@ -157,7 +159,8 @@ Ensure that users are aware of the support resources available to them and provi
 - Use one of the following for a dashboard
   - [Power BI](https://github.com/github-copilot-resources/copilot-metrics-viewer-power-bi)
   - [NodeJS](https://github.com/github-copilot-resources/copilot-metrics-viewer)
-  - [Grafana](https://devblogs.microsoft.com/all-things-azure/visualize-roi-of-your-github-copilot-usage-how-it-works/#data-collection)
+  - [Grafana](https://github.com/satomic/copilot-usage-advanced-dashboard)
+    - [Blog - Visualize ROI of your GitHub Copilot Usage, How it works!](https://devblogs.microsoft.com/all-things-azure/visualize-roi-of-your-github-copilot-usage-how-it-works)
   - Create your own using [API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics?apiVersion=2022-11-28)
     - Examples of API Usage
       - [Getting started with Copilot Metrics APIs](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/analyzing-usage-over-time-with-the-copilot-metrics-api)
