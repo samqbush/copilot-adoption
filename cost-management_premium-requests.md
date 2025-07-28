@@ -54,3 +54,5 @@ If your organization already uses GitHub's Cost Centers to align spending with b
 3.  Create a new budget at the enterprise level, applying it to the "Copilot Premium Request" SKU and scoping it to the new cost center.
 
 By combining these strategies, you can create a flexible and cost-effective approach to rolling out GitHub Copilot across your entire organization.
+
+*Thanks to [Dylan Rinker](https://github.com/dylan-rinker) for this excellent writeup*
