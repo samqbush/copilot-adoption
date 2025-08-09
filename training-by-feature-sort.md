@@ -380,6 +380,26 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td><a href="https://www.youtube.com/watch?v=OdW2r3raAHI">Building your own GitHub Copilot chat participant in VS Code</a></td>
     </tr>
     <tr>
+      <td><a href="https://code.visualstudio.com/docs/copilot/chat/chat-modes#_custom-chat-modes">Custom Chat Modes</a></td>
+      <td><a href="https://code.visualstudio.com/updates/v1_101#_custom-chat-modes-preview">Preview</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><a href="https://www.youtube.com/watch?v=rE6svXzyhg0">Custom Chat Mode Will Change How You Code</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode#_manage-tool-approvals">Manage Tool Approvals</a></td>
+      <td><a href="https://code.visualstudio.com/updates/v1_103#_terminal-autoapprove-improvements">Preview</a></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
       <td><a href="https://docs.github.com/en/enterprise-cloud@latest/copilot/using-github-copilot/copilot-chat/github-copilot-chat-cheat-sheet?tool=vscode">Chat Context Variables</a></td>
       <td><a href="https://github.blog/changelog/2024-02-12-vs-code-copilot-chat-january-2024-version-0-12/#context-variables">GA</a></td>
       <td></td>

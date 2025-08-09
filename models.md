@@ -186,6 +186,11 @@ description: This matrix provides a curated list of available GitHub Copilot mod
       <td>GA</td>
       <td><a href="https://github.blog/changelog/2025-06-25-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-generally-available-in-github-copilot/">June 25, 2025</a></td>
     </tr>
+    <tr>
+      <td>GPT-5</td>
+      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-08-07-openai-gpt-5-is-now-in-public-preview-for-github-copilot/">August 7, 2025</a></td>
+    </tr>
   </tbody>
 </table>
 </div>

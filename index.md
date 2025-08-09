@@ -104,7 +104,9 @@ Bundle training and provide a distribution method using the content sections bel
   - [Real World examples of custom instructions, prompts, and chat modes](https://github.com/github/awesome-copilot)
   - [GitHub Engineer's take on using Agent Mode + MCP to increase personal productivity](https://austen.info/blog/github-copilot-agent-mcp)
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
-  - [Example](https://github.com/maxmash1/copilot-workshop)
+  - [Intro to Copilot Workshop](https://github.com/maxmash1/copilot-workshop)
+  - [Intermediate Copilot Workshop](https://github.com/maxmash1/401k-portal/issues/3)
+  - [Agent mode Workshop](https://github.com/maxmash1/401k-portal/issues/4)
 
 
 ### GitHub Specific Fundamentals
