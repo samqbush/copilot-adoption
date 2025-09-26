@@ -133,33 +133,33 @@ description: This matrix provides a curated list of available GitHub Copilot mod
     </tr>
     <tr>
       <td>Claude Sonnet 3.7</td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-04-04-multiple-new-models-are-now-generally-available-in-github-copilot/">April 4, 2025</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-23-upcoming-deprecation-of-select-copilot-models-from-claude-openai-and-gemini/">October 23, 2025</a></td>
     </tr>
     <tr>
       <td>Claude Sonnet 3.7 Thinking</td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-04-04-multiple-new-models-are-now-generally-available-in-github-copilot/">April 4, 2025</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-23-upcoming-deprecation-of-select-copilot-models-from-claude-openai-and-gemini/">October 23, 2025</a></td>
     </tr>
     <tr>
       <td>o3-mini</td>
       <td>Retired</td>
-      <td><a href="https://github.blog/changelog/2025-06-20-upcoming-deprecation-of-o1-gpt-4-5-o3-mini-and-gpt-4o/">June 20, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-09-23-upcoming-deprecation-of-select-copilot-models-from-claude-openai-and-gemini/">October 23, 2025</a></td>
     </tr>
     <tr>
       <td>o3</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-04-16-openai-o3-and-o4-mini-are-now-available-in-public-preview-for-github-copilot-and-github-models/">TBD</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-23-upcoming-deprecation-of-select-copilot-models-from-claude-openai-and-gemini/">October 23, 2025</a></td>
     </tr>
     <tr>
       <td>o4-mini</td>
-      <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-04-16-openai-o3-and-o4-mini-are-now-available-in-public-preview-for-github-copilot-and-github-models/">TBD</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-23-upcoming-deprecation-of-select-copilot-models-from-claude-openai-and-gemini/">October 23, 2025</a></td>
     </tr>
     <tr>
-      <td>Gemini Flash 2.0</td>
+      <td>Gemini 2.5 Pro</td>
       <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-04-04-multiple-new-models-are-now-generally-available-in-github-copilot/">April 4, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-08-19-gemini-2-5-pro-is-generally-available-in-copilot/">August 19, 2025</a></td>
     </tr>
         <tr>
       <td>GPT-4.0</td>
@@ -183,13 +183,28 @@ description: This matrix provides a curated list of available GitHub Copilot mod
     </tr>
     <tr>
       <td>Claude Opus 4</td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-23-upcoming-deprecation-of-select-copilot-models-from-claude-openai-and-gemini/">October 23, 2025</a></td>
+    </tr>
+    <tr>
+      <td>Claude Opus 4.1</td>
       <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-06-25-anthropic-claude-sonnet-4-and-claude-opus-4-are-now-generally-available-in-github-copilot/">June 25, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-09-23-claude-opus-4-1-is-now-generally-available-in-github-copilot/">September 23, 2025</a></td>
     </tr>
     <tr>
       <td>GPT-5</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-09-09-openai-gpt-5-and-gpt-5-mini-are-now-generally-available-in-github-copilot/">September 9, 2025</a></td>
+    </tr>
+    <tr>
+      <td>GPT-5 mini</td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-09-09-openai-gpt-5-and-gpt-5-mini-are-now-generally-available-in-github-copilot/">September 9, 2025</a></td>
+    </tr>
+    <tr>
+      <td>Groke Code Fast 1</td>
       <td>Public Preview</td>
-      <td><a href="https://github.blog/changelog/2025-08-07-openai-gpt-5-is-now-in-public-preview-for-github-copilot/">August 7, 2025</a></td>
+      <td><a href="https://github.blog/changelog/2025-08-26-grok-code-fast-1-is-rolling-out-in-public-preview-for-github-copilot/">August 26, 2025</a></td>
     </tr>
   </tbody>
 </table>
