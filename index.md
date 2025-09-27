@@ -61,7 +61,7 @@ The following policy decisions typically require more consideration than a singl
 
 #### Organization configuration
 > [!NOTE]
-> Idemnity is includedfor all preview features for volume Copilot Business/Enterprise customers as of [August 2025](https://github.blog/changelog/2025-08-08-defense-of-third-party-claims-added-for-volume-licensing-customers/)
+> Indemnity is included for all preview features for volume Copilot Business/Enterprise customers as of [August 2025](https://github.blog/changelog/2025-08-08-defense-of-third-party-claims-added-for-volume-licensing-customers/)
 
 - [Enable the desired policies on the production org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
 - Enable the desired policies on the test/preview org

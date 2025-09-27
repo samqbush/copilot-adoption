@@ -548,8 +548,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
       <tr>
       <td><a href="https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review?tool=vscode">Code Review in IDE</a></td>
-      <td>GA</a></td>
-      <td>GA</a></td>
+      <td>GA</td>
+      <td>GA</td>
       <td><a href="https://github.blog/changelog/2025-09-18-copilot-code-review-now-in-jetbrains-ides-and-visual-studio/">GA</a></td>
       <td>GA</td>
       <td>Preview</td>
