@@ -206,6 +206,11 @@ description: This matrix provides a curated list of available GitHub Copilot mod
       <td>Public Preview</td>
       <td><a href="https://github.blog/changelog/2025-08-26-grok-code-fast-1-is-rolling-out-in-public-preview-for-github-copilot/">August 26, 2025</a></td>
     </tr>
+    <tr>
+      <td>GPT-5 Codex</td>
+      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-09-23-openai-gpt-5-codex-is-rolling-out-in-public-preview-for-github-copilot/">September 23, 2025</a></td>
+    </tr>
   </tbody>
 </table>
 </div>

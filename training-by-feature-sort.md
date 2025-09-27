@@ -211,8 +211,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/building-copilot-extensions/about-building-copilot-extensions">Marketplace Extensions</a></td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2025-02-19-announcing-the-general-availability-of-github-copilot-extensions">February 19, 2025</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-24-deprecate-github-copilot-extensions-github-apps/">November 10, 2025</a></td>
       <td><a href="https://youtu.be/ky5TMI9skLE?feature=shared">GitHub Copilot Extensions : Build Your First Extension</a></td>
       <td>Copilot Extensions</td>
     </tr>
@@ -267,8 +267,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/coding-agent">Copilot Coding Agent</a></td>
-      <td>Preview</td>
-      <td><a href="https://github.blog/changelog/2025-06-24-github-copilot-coding-agent-is-now-available-for-copilot-business-users/">May 19, 2025</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-09-25-copilot-coding-agent-is-now-generally-available/">September 25, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=EPyyyB23NUU">GitHub Copilot Coding Agent Overview</a></td>
       <td>Copilot coding agent access <br>
       Block Copilot coding agent in all enterprise repositories</td>
@@ -289,8 +289,8 @@ description: This matrix provides a curated list of GitHub Copilot features, the
     </tr>
     <tr>
       <td><a href="https://docs.github.com/en/copilot/using-github-copilot/copilot-spaces/about-organizing-and-sharing-context-with-copilot-spaces">Copilot Spaces</a></td>
-      <td>Preview</td>
-      <td><a href="https://github.blog/changelog/2025-05-29-introducing-copilot-spaces-a-new-way-to-work-with-code-and-context/">May 29, 2025</a></td>
+      <td>GA</td>
+      <td><a href="https://github.blog/changelog/2025-09-24-copilot-spaces-is-now-generally-available/">September 24, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=a0LWEWLUt48">What is GitHub Copilot Spaces? Centralize your project’s context</a></td>
       <td>N/A</td>
     </tr>
@@ -316,18 +316,18 @@ description: This matrix provides a curated list of GitHub Copilot features, the
       <td>Copilot Chat in GitHub Mobile</td>
     </tr>
       <tr>
-      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/using-github-copilot-in-the-command-line">GitHub CLI</a></td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2024-03-21-github-copilot-general-availability-in-the-cli/">March 21, 2024</a></td>
+      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/using-github-copilot-in-the-command-line">GitHub CLI & Windows Terminal</a></td>
+      <td>Retired</td>
+      <td><a href="https://github.blog/changelog/2025-09-25-upcoming-deprecation-of-gh-copilot-cli-extension/">October 25, 2025</a></td>
       <td><a href="https://www.youtube.com/watch?v=fHwtrOcLAnI">GitHub Copilot in the CLI</a></td>
       <td>Copilot in the CLI</td>
     </tr>
       <tr>
-      <td><a href="https://docs.github.com/en/copilot/using-github-copilot/asking-github-copilot-questions-in-windows-terminal">Windows Terminal</a></td>
-      <td>GA</td>
-      <td><a href="https://github.blog/changelog/2024-10-29-github-copilot-is-now-available-in-windows-terminal/">October 29, 2024</a></td>
-      <td><a href="https://youtu.be/rwKfazgCw9E?feature=shared">Windows Terminal now has GitHub Copilot!?</a></td>
-      <td>Copilot in the CLI</td>
+      <td><a href="https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli">GitHub Copilot CLI</a></td>
+      <td>Public Preview</td>
+      <td><a href="https://github.blog/changelog/2025-09-25-github-copilot-cli-is-now-in-public-preview/">September 25, 2025</a></td>
+      <td></td>
+      <td></td>
     </tr>
       <tr>
       <td><a href="https://github.com/mcp?utm_source=changelog-source&utm_campaign=mcp-registry-server-launch-2025">MCP Registry</a></td>

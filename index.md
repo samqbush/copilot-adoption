@@ -36,11 +36,11 @@ These checklists outline the essential steps for a successful large-scale Copilo
 #### Enterprise Managed Users (EMU)
 
 - Option 1 - Use existing org/team structure to provide access
-  - This option can be cumbersome if a large number of organizations exist
+  - This option can be cumbersome if a large number of organizations exist or you want to provide preview access to a limited group.
 - Option 2 - Create additional organizations to control copilot access -  follow GHES steps
 
 #### Copilot Business Only (Standalone)
-- Customers are recommended migrate to using [EMUs with Enterprise Teams](https://github.blog/changelog/2025-09-04-manage-copilot-and-users-via-enterprise-teams-in-public-preview/)
+- Customers are recommended to migrate to using [EMUs with Enterprise Teams](https://github.blog/changelog/2025-09-04-manage-copilot-and-users-via-enterprise-teams-in-public-preview/)
 
 > [!NOTE]
 > See the [user management](./user-mgmt/user-mgmt.md) folder for script examples of creating & mapping teams to IDPs
