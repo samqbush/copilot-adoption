@@ -36,13 +36,11 @@ These checklists outline the essential steps for a successful large-scale Copilo
 #### Enterprise Managed Users (EMU)
 
 - Option 1 - Use existing org/team structure to provide access
-  - This option can be cumbersome if a large number of organizations exist
+  - This option can be cumbersome if a large number of organizations exist or you want to provide preview access to a limited group.
 - Option 2 - Create additional organizations to control copilot access -  follow GHES steps
 
 #### Copilot Business Only (Standalone)
-
-- Create enterprise teams since organizations do not exist in this instance
-- Map teams to IDP groups
+- Customers are recommended to migrate to using [EMUs with Enterprise Teams](https://github.blog/changelog/2025-09-04-manage-copilot-and-users-via-enterprise-teams-in-public-preview/)
 
 > [!NOTE]
 > See the [user management](./user-mgmt/user-mgmt.md) folder for script examples of creating & mapping teams to IDPs
@@ -62,6 +60,8 @@ The following policy decisions typically require more consideration than a singl
 
 
 #### Organization configuration
+> [!NOTE]
+> Indemnity is included for all preview features for volume Copilot Business/Enterprise customers as of [August 2025](https://github.blog/changelog/2025-08-08-defense-of-third-party-claims-added-for-volume-licensing-customers/)
 
 - [Enable the desired policies on the production org](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-policies-for-copilot-in-your-organization)
 - Enable the desired policies on the test/preview org
@@ -102,6 +102,7 @@ Bundle training and provide a distribution method using the content sections bel
 - [MCP Servers](https://learn.microsoft.com/en-us/microsoft-copilot-studio/agent-extend-action-mcp)
 - [Customize Copilot with personal custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-personal-custom-instructions-for-github-copilot)
   - [Real World examples of custom instructions, prompts, and chat modes](https://github.com/github/awesome-copilot)
+    - [Customization Library](https://docs.github.com/en/copilot/tutorials/customization-library)
   - [GitHub Engineer's take on using Agent Mode + MCP to increase personal productivity](https://austen.info/blog/github-copilot-agent-mcp)
 - Create a series of interactive tutorials or challenges that encourage users to try out Copilot in their coding work.
   - [Intro to Copilot Workshop](https://github.com/maxmash1/copilot-workshop)
