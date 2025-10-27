@@ -50,13 +50,14 @@ The following policy decisions typically require more consideration than a singl
 - [IP indemnification](https://copilot.github.trust.page/faq?s=mp8vvy1z1ym1knw9id4ri) which requires these [mitigations](https://learn.microsoft.com/en-us/legal/cognitive-services/openai/customer-copyright-commitment#required-mitigations-for-github-offerings).  
   - See [code referencing release](https://github.blog/news-insights/product-news/code-referencing-now-generally-available-in-github-copilot-and-with-microsoft-azure-ai/#the-power-of-code-referencing-for-businesses) for additional information when enabling "Suggestions matching public code"
   - See these [prompt engineering examples](./prompt-engineering-for-disabled-public-code) when disabling "Suggestions matching public code"
-- [Premium requests](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/monitoring-usage-and-entitlements/about-premium-requests) for [models](./models)
+- [Premium requests](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/monitoring-usage-and-entitlements/about-premium-requests) for [models](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/ai-models/supported-models)
 
 #### Enterprise configuration
 
 - Assign each organization the ability to assign [Business or Enterprise licenses](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-access-to-copilot-in-your-enterprise/enabling-copilot-for-organizations-in-your-enterprise)
 - [Enable the desired policies & models at the Enterprise level](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-copilot-for-your-enterprise/managing-policies-and-features-for-copilot-in-your-enterprise)
   - Use No Policy if configuring differently at the organization level
+  - Keep these [conflict resolution](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/policy-conflicts) rules in mind 
 
 
 #### Organization configuration
@@ -153,9 +154,9 @@ Ensure that users are aware of the support resources available to them and provi
 
 #### Baseline
 
-- Read and apply the [GitHub Engineering System Success Playbook (ESSP)](https://resources.github.com/engineering-system-success-playbook/)
-  - Define trackable key performance indicators (KPIs) that reflect the goals and expected benefits of using GitHub Copilot.
-  - Conduct a baseline measurement of development metrics prior to introducing GitHub Copilot.
+- Read and apply [Measuring GenAI Impact](https://wellarchitected.github.com/library/scenarios/measuring-genai-impact/)
+  - [Engineering System Metrics](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/)
+  - [GitHub Engineering System Success Playbook (ESSP)](https://resources.github.com/engineering-system-success-playbook/)
 
 #### Copilot Metrics
 
@@ -215,7 +216,7 @@ Ensure that users are aware of the support resources available to them and provi
 
 - [Taking GitHub Copilot to the stars, not just the skies](https://resources.github.com/artificial-intelligence/scaling-github-copilot-across-your-organization/) - a detailed whitepaper on GitHub & Accenture's rollouts of Copilot with implementation advice
 - [Advice on Driving Adoption](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale/driving-copilot-adoption-in-your-company) - GitHub official documentation on adoption
-- GitHub Copilot Adoption Blueprint - ask your Customer Success Manager for a company specific GitHub Project. If you prefer to export this project's issues, you can run the [plan export](./plan-export.sh) script
+- [GitHub Well-Architected Framework - Adopting Copilot at Scale](https://wellarchitected.github.com/library/productivity/recommendations/adopting-copilot-at-scale/)
 - [GitHub Learning Pathways](https://resources.github.com/learn/pathways/copilot/essentials/essentials-of-github-copilot/)
 
 ## [Requesting Access to Copilot](https://docs.github.com/en/enterprise-cloud@latest/copilot/rolling-out-github-copilot-at-scale/setting-up-a-self-serve-process-for-github-copilot-licenses#approach-1-use-githubs-request-access-feature)
