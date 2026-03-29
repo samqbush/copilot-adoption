@@ -1,5 +1,5 @@
-title: Minimum Required Tasks for Copilot Adoption
-description: A step-by-step guide for rolling out GitHub Copilot at scale
+title: GitHub Copilot Adoption Resources
+description: "Curated resources for rolling out GitHub Copilot at scale — with links to official documentation and unique cost management, prompt engineering, and user management guides"
 theme: jekyll-theme-cayman
 baseurl: "/copilot-adoption"
 url: "https://samqbush.github.io"

@@ -1,9 +1,15 @@
-> [!NOTE]
-> The READMEs in this repository have been converted to GitHub Pages.  Please visit [https://samqbush.github.io/copilot-adoption/](https://samqbush.github.io/copilot-adoption/)
+# GitHub Copilot Adoption Resources
 
+> **Note:** The original phased rollout checklist on this site has been retired. Official GitHub documentation now covers the same ground. Visit [https://samqbush.github.io/copilot-adoption/](https://samqbush.github.io/copilot-adoption/) for links to official resources and the unique guides that are still maintained.
 
+## Unique Resources (Still Maintained)
+
+- **[Strategies for Managing Copilot Premium Request Spending](https://samqbush.github.io/copilot-adoption/cost-management_premium-requests)** — Business vs Enterprise break-even analysis and granular budget strategies
+- **[Prompt Engineering for Disabled Public Code](https://samqbush.github.io/copilot-adoption/prompt-engineering-for-disabled-public-code)** — Practical prompt examples when public code suggestions are disabled
+- **[User Management Scripts](./user-mgmt/)** — Shell scripts for creating teams and mapping to IDP groups
 
 ## Local Development
+
 - [jekyll-gfm-admonitions](https://github.com/Helveg/jekyll-gfm-admonitions) for GitHub flavored alerts
 - [jekyll-toc](https://github.com/allejo/jekyll-toc) for Table of Contents
 - Requires [GH Actions build](./.github/workflows/gh-pages.yml) & deploy due to the above custom plugins
