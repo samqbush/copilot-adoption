@@ -10,7 +10,6 @@ title: GitHub Copilot Adoption Resources
 
 - [Rolling Out GitHub Copilot at Scale](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale) — GitHub's official rollout guide
 - [Well-Architected: Adopting Copilot at Scale](https://wellarchitected.github.com/library/productivity/recommendations/adopting-copilot-at-scale/) — GitHub's Well-Architected Framework guidance
-- [Copilot User Guide (Community Gist)](https://gist.github.com/xrvk/0d252d55da0b2124077672e23d68f1c8) — Comprehensive user onboarding guide
 - [Copilot Feature Matrix](https://docs.github.com/en/copilot/reference/copilot-feature-matrix) — Official feature comparison across plans and IDEs
 
 ## Unique Resource (Still Maintained)
