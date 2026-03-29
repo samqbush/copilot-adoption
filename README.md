@@ -5,8 +5,6 @@
 ## Unique Resources (Still Maintained)
 
 - **[Strategies for Managing Copilot Premium Request Spending](https://samqbush.github.io/copilot-adoption/cost-management_premium-requests)** — Business vs Enterprise break-even analysis and granular budget strategies
-- **[Prompt Engineering for Disabled Public Code](https://samqbush.github.io/copilot-adoption/prompt-engineering-for-disabled-public-code)** — Practical prompt examples when public code suggestions are disabled
-- **[User Management Scripts](./user-mgmt/)** — Shell scripts for creating teams and mapping to IDP groups
 
 ## Local Development
 

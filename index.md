@@ -13,10 +13,8 @@ title: GitHub Copilot Adoption Resources
 - [Copilot User Guide (Community Gist)](https://gist.github.com/xrvk/0d252d55da0b2124077672e23d68f1c8) — Comprehensive user onboarding guide
 - [Copilot Feature Matrix](https://docs.github.com/en/copilot/reference/copilot-feature-matrix) — Official feature comparison across plans and IDEs
 
-## Unique Resources (Still Maintained)
+## Unique Resource (Still Maintained)
 
-The following pages cover topics not yet addressed by official documentation and remain actively maintained.
+The following page covers topics not yet addressed by official documentation and remains actively maintained.
 
 - [Strategies for Managing Copilot Premium Request Spending](./cost-management_premium-requests) — Unique cost analysis including Business vs Enterprise break-even calculations and granular budget strategies
-- [Prompt Engineering for Disabled Public Code](./prompt-engineering-for-disabled-public-code) — Practical prompt examples when "Suggestions matching public code" is disabled
-- [User Management Scripts](./user-mgmt/user-mgmt) — Shell scripts for creating teams and mapping to IDP groups
