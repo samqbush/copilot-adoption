@@ -207,4 +207,4 @@ Additionally, the new [Usage Summary API](https://docs.github.com/en/rest/billin
 
 By combining these strategies, you can create a flexible and cost-effective approach to rolling out GitHub Copilot across your entire organization.
 
-*Thanks to [Dylan Rinker](https://github.com/dylan-rinker) for this excellent writeup*
+*Thanks to [Dylan Rinker](https://gist.github.com/Dylan-Rinker/cb0ee4241d8d41a3e0fac9f16cd6c875) for this excellent writeup*
