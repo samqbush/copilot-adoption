@@ -1,6 +1,7 @@
 # GitHub Copilot Adoption Resources
 
-> **Note:** The original phased rollout checklist on this site has been retired. Official GitHub documentation now covers the same ground. Visit [https://samqbush.github.io/copilot-adoption/](https://samqbush.github.io/copilot-adoption/) for links to official resources and the unique guides that are still maintained.
+> [!NOTE]
+> The original phased rollout checklist on this site has been retired. Official GitHub documentation now covers the same ground. Visit [https://samqbush.github.io/copilot-adoption/](https://samqbush.github.io/copilot-adoption/) for links to official resources and the unique guides that are still maintained.
 
 ## Unique Resources (Still Maintained)
 
