@@ -208,4 +208,4 @@ The [Usage Summary API](https://docs.github.com/en/rest/billing/usage) lets you 
 
 By combining a well-tuned Universal User Budget with progressive discovery of power users, you create a system that is both cost-effective and a powerful driver of AI adoption across your organization.
 
-*Billing model guidance adapted from [Dylan Rinker](https://gist.github.com/Dylan-Rinker/cb0ee4241d8d41a3e0fac9f16cd6c875) and [xrvk](https://github.com/xrvk)*
+*Budget guidance adapted from [xrvk](https://github.com/xrvk)*
