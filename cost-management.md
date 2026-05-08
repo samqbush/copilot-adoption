@@ -28,6 +28,9 @@ For the first three months of usage-based billing, existing Copilot customers re
 
 During the promotional period, Enterprise seats include **7,000 AICs** (vs. 3,000 for Business) — a 2.3× advantage per seat. If you have power users who will consume significantly more than 3,000 AICs/month, placing them on Enterprise seats during this window maximizes your pooled credits at no additional per-credit cost.
 
+> [!NOTE]
+> **Copilot Enterprise requires a GitHub Enterprise Cloud seat.** This optimization only applies to users who already have a GitHub Enterprise Cloud license. If a user is not on GitHub Enterprise Cloud, adding Copilot Enterprise also requires purchasing a GHEC seat — factor that additional cost into your analysis before upgrading.
+
 After the promotional period ends (September 2026), the advantage normalizes: both tiers include AICs proportional to their license cost ($0.01/AIC), so upgrading a seat from Business to Enterprise adds $20/month in cost alongside $20 in additional credit value — no net gain. At that point, raising Individual User Budgets is more cost-effective than upgrading tiers (see Tip #5 below).
 
 > [!TIP]
