@@ -2,9 +2,6 @@
 
 GitHub Copilot has transitioned from a premium-request counting model to **Usage-Based Billing (UBB)** built on **AI Credits (AICs)** — a token-consumption measure that scales with how much AI capacity each interaction uses. This guide explains how UBB works and provides practical strategies for configuring budgets that keep spending predictable while maximizing developer productivity.
 
-> [!TIP]
-> This open source [budget command center](https://github.com/jonjozwiak/premium-requests-calculator) provides interactive tools for calculating, reviewing, and applying your budget configuration — including a Tier Planner and Promo Optimizer.
-
 ---
 
 ## How Usage-Based Billing Works
@@ -201,4 +198,4 @@ The [Usage Summary API](https://docs.github.com/en/rest/billing/usage) lets you 
 
 By combining a well-tuned Universal User Budget with progressive discovery of power users, you create a system that is both cost-effective and a powerful driver of AI adoption across your organization.
 
-*Billing model guidance adapted from [Dylan Rinker](https://gist.github.com/Dylan-Rinker/cb0ee4241d8d41a3e0fac9f16cd6c875)*
+*Billing model guidance adapted from [Dylan Rinker](https://gist.github.com/Dylan-Rinker/cb0ee4241d8d41a3e0fac9f16cd6c875) and [xrvk](https://github.com/xrvk)*
