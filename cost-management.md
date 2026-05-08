@@ -116,9 +116,12 @@ The Enterprise Budget is a post-pool safety net. Size it as: **total maximum con
 
 When you first create a budget, it applies only to metered usage from the date of creation onwards — prior consumption is not counted. This means you may exceed your budget in the first billing cycle even with "Stop usage" enabled. **Create or adjust budgets at the start of a new billing cycle** whenever possible. If creating mid-cycle, set the initial limit conservatively to account for consumption that already occurred. See [Budgets and alerts](https://docs.github.com/en/enterprise-cloud@latest/billing/concepts/budgets-and-alerts#your-first-billing-cycle-after-creating-a-budget) for details.
 
-### 5. Raise Individual User Budgets Before Upgrading License Tiers
+### 5. Raise Individual User Budgets Before Upgrading License Tiers *(Post-Promotional Period)*
 
-An Individual Budget on a Business license lets a user borrow more from the pool at no extra cost. Upgrading from Business to Enterprise adds $20/month in licensing cost alongside $20 in additional AIC value — since credits are 1:1 with license cost, **there's no net gain**. If a user needs more capacity, raise their Individual User Budget first.
+After the promotional period ends (September 2026), an Individual Budget on a Business license lets a user borrow more from the pool at no extra cost. At standard rates, upgrading from Business to Enterprise adds $20/month in licensing cost alongside $20 in additional AIC value — since credits are 1:1 with license cost, **there's no net gain**. If a user needs more capacity post-promo, raise their Individual User Budget first.
+
+> [!NOTE]
+> During the promotional period (June–September 2026), Enterprise seats include disproportionately more AICs (7,000 vs. 3,000), making the upgrade worthwhile for power users who already have a GHEC seat. See the [Promotional Period](#promotional-period-june--september-2026) section above.
 
 ### 6. Gate Individual Budget Increases on Prior-Month Usage Data
 
