@@ -16,4 +16,4 @@ title: GitHub Copilot Adoption Resources
 
 The following page covers topics not yet addressed by official documentation and remains actively maintained.
 
-- [Strategies for Managing Copilot Premium Request Spending](./cost-management_premium-requests) — Unique cost analysis including Business vs Enterprise break-even calculations and granular budget strategies
+- [Strategies for Managing Copilot Usage-Based Billing](./cost-management) — Practical guide to AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
