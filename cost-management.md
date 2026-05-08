@@ -15,6 +15,26 @@ For a full explanation of AI Credits, pooling, and what happens at overage, see 
 
 ---
 
+## Promotional Period (June – September 2026)
+
+For the first three months of usage-based billing, existing Copilot customers receive increased AI Credit allowances:
+
+| Plan | Standard AICs/user/month | Promotional AICs/user/month |
+|------|--------------------------|----------------------------|
+| Copilot Business | 1,900 | 3,000 |
+| Copilot Enterprise | 3,900 | 7,000 |
+
+### Why This Matters for Enterprise Seats
+
+During the promotional period, Enterprise seats include **7,000 AICs** (vs. 3,000 for Business) — a 2.3× advantage per seat. If you have power users who will consume significantly more than 3,000 AICs/month, placing them on Enterprise seats during this window maximizes your pooled credits at no additional per-credit cost.
+
+After the promotional period ends (September 2026), the advantage normalizes: both tiers include AICs proportional to their license cost ($0.01/AIC), so upgrading a seat from Business to Enterprise adds $20/month in cost alongside $20 in additional credit value — no net gain. At that point, raising Individual User Budgets is more cost-effective than upgrading tiers (see Tip #5 below).
+
+> [!TIP]
+> Use the promotional period to identify your power users and get them on Enterprise seats. After the promo ends, shift your strategy to Individual User Budgets for users who need more capacity.
+
+---
+
 ## The Four Budget Controls
 
 The billing system gives you four distinct tools, each operating at a different level:
@@ -83,7 +103,7 @@ The developers who consistently hit their budgets are your **power users** — a
 
 ### 2. Always Enable "Stop Usage" on Budgets
 
-Without explicitly enabling the **"Stop usage"** (`prevent_further_usage`) option, every budget is advisory only — it sends a notification when the threshold is crossed, but usage and billing continue uncapped. Enable this on every budget to guarantee actual cost ceilings.
+Without explicitly enabling the **"Stop usage"**, every budget is advisory only — it sends a notification when the threshold is crossed, but usage and billing continue uncapped. Enable this on every budget to guarantee actual cost ceilings.
 
 ### 3. Size the Enterprise Budget from Your Seat Mix
 
@@ -91,7 +111,7 @@ The Enterprise Budget is a post-pool safety net. Size it as: **total maximum con
 
 ### 4. Budgets Only Track from Their Creation Date
 
-A budget created or reset mid-cycle starts its counter at zero regardless of prior consumption. **Create or adjust budgets at the start of a new billing cycle** whenever possible. If creating mid-cycle, set the initial limit conservatively.
+When you first create a budget, it applies only to metered usage from the date of creation onwards — prior consumption is not counted. This means you may exceed your budget in the first billing cycle even with "Stop usage" enabled. **Create or adjust budgets at the start of a new billing cycle** whenever possible. If creating mid-cycle, set the initial limit conservatively to account for consumption that already occurred. See [Budgets and alerts](https://docs.github.com/en/enterprise-cloud@latest/billing/concepts/budgets-and-alerts#your-first-billing-cycle-after-creating-a-budget) for details.
 
 ### 5. Raise Individual User Budgets Before Upgrading License Tiers
 
