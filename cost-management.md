@@ -102,6 +102,10 @@ The developers who consistently hit their budgets are your power users. They're 
 > [!WARNING]
 > Without a Universal User Budget, one user or one automated agent can consume the entire pool overnight. Set this before anything else.
 
+Here's how to set it in the enterprise billing settings:
+
+![Setting the Universal User Budget in GitHub enterprise billing](universal-user-budget.gif)
+
 ### 2. Always enable "Stop usage" on budgets
 
 Without the "Stop usage" option enabled, every budget is advisory only. It sends a notification when the threshold is crossed, but usage and billing keep going. Enable it on every budget if you want actual cost ceilings.
