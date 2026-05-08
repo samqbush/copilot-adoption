@@ -178,22 +178,6 @@ When a developer reports being blocked, work through these checks in order:
 
 ---
 
-## Common Mistakes
-
-### Treating the Enterprise Budget as a Total Budget
-
-Finance sets a $5,000 "enterprise budget" expecting it to cap total monthly spend. Actual bill: $5,000 + $2,300 pool consumption = $7,300. The Enterprise Budget only caps metered charges **after** the pool runs out. Seat fees and pool consumption happen regardless.
-
-### Not Enabling "Stop Usage"
-
-Enterprise limit set to $500. Limit reached. Usage continues. The bill is $1,800. Without the `prevent_further_usage` flag, every budget is purely advisory.
-
-### Enabling Cost Center Exclusion Without Cost Center Budgets
-
-Exclusion flipped ON. Teams without a cost center budget now have no metered charge ceiling at all. **Always configure a budget for every cost center before enabling this toggle.**
-
----
-
 ## Budget Management via API
 
 All budget management can be performed programmatically via the [Budget Management API](https://docs.github.com/en/rest/billing/budgets), allowing you to:
