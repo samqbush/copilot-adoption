@@ -6,25 +6,9 @@ GitHub Copilot has transitioned from a premium-request counting model to **Usage
 
 ## How Usage-Based Billing Works
 
-### What You Pay For
+GitHub Copilot uses **AI Credits (AICs)** as its billing unit — each credit equals $0.01 USD of token consumption. Every license includes AI Credits (Business: 1,900/month, Enterprise: 3,900/month) that pool enterprise-wide into a shared reservoir. When the pool runs out, additional usage is charged as metered billing — and that's where budgets come in.
 
-Every GitHub Copilot license comes with **AI Credits (AICs)** included — worth the same dollar value as the license itself. Using those included credits costs nothing extra.
-
-| Plan | License Cost | AICs Included | Credit Value |
-|------|-------------|---------------|--------------|
-| Copilot Business | $19/user/month | 1,900 AICs | $19 |
-| Copilot Enterprise | $39/user/month | 3,900 AICs | $39 |
-
-### The Shared Pool
-
-All AICs from every seat combine into **one enterprise-wide pool**. It doesn't matter which team purchased which license — everyone draws from the same reservoir. The pool resets each billing cycle; unused credits do not roll over.
-
-> [!NOTE]
-> **Example:** 80 Business + 20 Enterprise seats → 230,000 AICs pooled together ($2,300 in included credits). Every developer draws from the same reservoir.
-
-### When the Pool Runs Out
-
-When the pool hits zero, Copilot usage doesn't automatically stop. Additional usage is charged as **metered billing** — a per-credit fee for consumption beyond your included credits. The budgets in GitHub's billing settings exist to manage this additional usage, not the pool itself.
+For a full explanation of AI Credits, pooling, and what happens at overage, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises).
 
 > [!IMPORTANT]
 > Your licenses include pre-paid AI Credits (included credits). **Budgets cap what happens after those included credits run out.**
