@@ -20,8 +20,8 @@ For the first three months of usage-based billing, existing customers get more i
 
 | Plan | Standard | Promotional |
 |------|----------|-------------|
-| Copilot Business | 1,900 AICs/user/month | 3,000 |
-| Copilot Enterprise | 3,900 AICs/user/month | 7,000 |
+| Copilot Business | 1,900 AICs/user/month | 3,000 AICs/user/month |
+| Copilot Enterprise | 3,900 AICs/user/month | 7,000 AICs/user/month |
 
 ### Why this matters for Enterprise seats
 
