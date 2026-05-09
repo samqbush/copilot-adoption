@@ -20,8 +20,8 @@ For the first three months of usage-based billing, existing customers get more i
 
 | Plan | Standard | Promotional |
 |------|----------|-------------|
-| Copilot Business | 1,900 AICs/user/month | 3,000 |
-| Copilot Enterprise | 3,900 AICs/user/month | 7,000 |
+| Copilot Business | 1,900 AICs/user/month | 3,000 AICs/user/month |
+| Copilot Enterprise | 3,900 AICs/user/month | 7,000 AICs/user/month |
 
 ### Why this matters for Enterprise seats
 
@@ -101,6 +101,10 @@ The developers who consistently hit their budgets are your power users. They're 
 
 > [!WARNING]
 > Without a Universal User Budget, one user or one automated agent can consume the entire pool overnight. Set this before anything else.
+
+Here's how to set it in the enterprise billing settings:
+
+![Setting the Universal User Budget in GitHub enterprise billing](universal-user-budget.gif)
 
 ### 2. Always enable "Stop usage" on budgets
 

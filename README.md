@@ -5,7 +5,7 @@
 
 ## Unique Resources (Still Maintained)
 
-- **[Strategies for Managing Copilot Premium Request Spending](https://samqbush.github.io/copilot-adoption/cost-management_premium-requests)** — Business vs Enterprise break-even analysis and granular budget strategies
+- **[Managing Copilot Usage-Based Billing](https://samqbush.github.io/copilot-adoption/cost-management)** — AI Credits budget strategy, configuration tips, and troubleshooting
 
 ## Local Development
 
