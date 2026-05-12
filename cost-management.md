@@ -5,9 +5,11 @@ title: Managing Copilot usage-based billing
 
 # Managing Copilot usage-based billing
 
-GitHub Copilot now bills based on token consumption through AI Credits (AICs), where 1 credit = $0.01 USD. Every license includes credits (Business: 1,900/month, Enterprise: 3,900/month) that pool across your entire enterprise. When the pool runs out, metered billing kicks in, and budgets control what happens next.
+GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
 
-For the full explanation, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises).
+For how the billing model works and the available cost controls, see the [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) product guide. For billing mechanics, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises).
+
+This page covers **opinionated budget strategy, sizing guidance, and operational tips** that go beyond the product documentation.
 
 > [!IMPORTANT]
 > Enterprise and Cost Center budgets only cap spending *after* included credits run out. Universal and Individual User Budgets are always active and limit how much of the pool each person can draw, even while the pool still has capacity.
@@ -34,31 +36,6 @@ After September 2026 the advantage disappears. Both tiers include credits propor
 
 > [!TIP]
 > Use the promotional window to find your power users and get them on Enterprise seats. After the promo ends, switch to Individual User Budgets for anyone who needs more headroom.
-
----
-
-## The four budget controls
-
-There are four budget levels, and they don't all work the same way:
-
-### Enterprise Budget *(post-pool only)*
-
-A hard ceiling on metered charges after the shared pool runs dry. Does nothing while the pool still has capacity. This is not a total budget for your Copilot spend; it only governs overage.
-
-### Cost Center Budget *(overage only)*
-
-Caps metered charges for a GitHub org or group of users *after the enterprise entitlement pool is fully exhausted*. While the pool still has capacity, Cost Center budget progress stays at $0 — it only begins tracking once overage (metered billing) kicks in. Useful for departmental chargeback on overage spend.
-
-> [!WARNING]
-> A Cost Center budget cannot unblock a user who has hit their Universal or Individual User Budget. If the pool still has capacity and a user is blocked, the constraint is their personal budget — raise the Universal User Budget or grant an Individual User Budget instead.
-
-### Universal User Budget *(always active)*
-
-Caps how much of the shared pool any single person can draw per month. This is the one you care about most. Without it, one user or one automated agent can drain the entire pool overnight.
-
-### Individual User Budget *(always active)*
-
-A higher personal cap for named users who need more than the universal limit.
 
 ---
 
@@ -140,22 +117,10 @@ Publish a simple end-of-month summary ("Pool was 74% consumed, no one was blocke
 
 ## Cost center exclusion
 
-One toggle changes how Enterprise and Cost Center Budgets interact. Decide on this before sizing any budgets because it changes the math for everything.
+One toggle changes how Enterprise and Cost Center Budgets interact. Decide on this before sizing any budgets because it changes the math for everything. See [how these controls work together](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) in the product guide.
 
 > [!IMPORTANT]
 > Regardless of exclusion setting, Cost Center budgets never override Universal or Individual User Budgets. A user capped by their personal budget cannot be unblocked by any Cost Center budget configuration. Cost Center budgets only govern overage spend after the pool is exhausted.
-
-### Exclusion OFF (default)
-
-The Enterprise Budget covers all metered charges beyond the pool, including those attributed to cost centers. Cost center budgets act as sub-limits within it.
-
-Most organizations should use this. One cap, simpler to reason about.
-
-### Exclusion ON
-
-Enterprise and cost center budgets become independent meters. Charges attributed to a cost center don't count against the enterprise budget at all.
-
-Use this when departments manage their own AI spend and need full autonomy. But every cost center must have its own budget configured.
 
 > [!WARNING]
 > Never enable exclusion without configuring cost center budgets for every team. Any cost center without a budget has no metered charge ceiling at all.
