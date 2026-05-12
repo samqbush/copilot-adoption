@@ -5,7 +5,7 @@ title: Managing Copilot usage-based billing
 
 # Managing Copilot usage-based billing
 
-GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
+GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits (AICs) where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
 
 For how the billing model works and the available cost controls, see the [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) product guide. For billing mechanics, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises).
 
@@ -84,7 +84,7 @@ The developers who consistently hit their budgets are your power users. They're 
 
 Here's how to set it in the enterprise billing settings:
 
-![Setting the Universal User Budget in GitHub enterprise billing](universal-user-budget.gif)
+![Setting the Universal User Budget in GitHub enterprise billing]({{ site.baseurl }}/universal-user-budget.gif)
 
 ### 2. Always enable "Stop usage" on budgets
 
