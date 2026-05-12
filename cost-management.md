@@ -45,9 +45,12 @@ There are four budget levels, and they don't all work the same way:
 
 A hard ceiling on metered charges after the shared pool runs dry. Does nothing while the pool still has capacity. This is not a total budget for your Copilot spend; it only governs overage.
 
-### Cost Center Budget *(post-pool only)*
+### Cost Center Budget *(overage only)*
 
-Caps metered charges for a GitHub org or group of users. Useful for departmental chargeback. Cannot protect a group's share of the pre-paid pool.
+Caps metered charges for a GitHub org or group of users *after the enterprise entitlement pool is fully exhausted*. While the pool still has capacity, Cost Center budget progress stays at $0 — it only begins tracking once overage (metered billing) kicks in. Useful for departmental chargeback on overage spend.
+
+> [!WARNING]
+> A Cost Center budget cannot unblock a user who has hit their Universal or Individual User Budget. If the pool still has capacity and a user is blocked, the constraint is their personal budget — raise the Universal User Budget or grant an Individual User Budget instead.
 
 ### Universal User Budget *(always active)*
 
@@ -79,7 +82,7 @@ This lets heavier users borrow from lighter users' unused portions without anyon
 
 When a developer hits their Universal User Budget, don't just raise it. Instead:
 
-1. Move them into a personal Individual User Budget or a Cost Center Budget with a higher allowance.
+1. Grant them an Individual User Budget with a higher cap. This is the only way to give a specific user more headroom within the pool — Cost Center budgets won't help here since they only track overage after the pool is exhausted.
 2. Find out what project they're working on. This context is how you build the case for AI investment.
 
 ### Step 3: Build your champions program
@@ -139,6 +142,9 @@ Publish a simple end-of-month summary ("Pool was 74% consumed, no one was blocke
 
 One toggle changes how Enterprise and Cost Center Budgets interact. Decide on this before sizing any budgets because it changes the math for everything.
 
+> [!IMPORTANT]
+> Regardless of exclusion setting, Cost Center budgets never override Universal or Individual User Budgets. A user capped by their personal budget cannot be unblocked by any Cost Center budget configuration. Cost Center budgets only govern overage spend after the pool is exhausted.
+
 ### Exclusion OFF (default)
 
 The Enterprise Budget covers all metered charges beyond the pool, including those attributed to cost centers. Cost center budgets act as sub-limits within it.
@@ -161,22 +167,25 @@ Use this when departments manage their own AI spend and need full autonomy. But 
 When someone reports being blocked, work through these checks in order:
 
 1. **Did they hit their Universal or Individual User Budget?**
-   - Yes: raise their budget or move them to an Individual User Budget. This is the cause nine times out of ten.
+   - Yes: raise their budget or grant an Individual User Budget with a higher cap. This is the cause nine times out of ten.
    - No: keep checking.
 
 2. **Is the shared pool depleted?**
-   - No: the pool still has capacity. Check their license status and feature access.
+   - No: the pool still has capacity. The issue is the user's personal budget (step 1) or their license/feature access. Cost Center budgets are irrelevant here — they only track overage after the pool is exhausted.
    - Yes: keep checking.
 
 3. **Has the Enterprise Budget been reached?**
    - Yes: raise it. It's capping total metered charges.
 
-4. **Are they in a cost center with a budget?**
-   - Yes: the cost center budget is the constraint. Raise it or remove the cap.
-   - No: check whether "Stop usage" is enabled, or whether their license was removed.
+4. **Are they in a cost center with a budget that has "Stop usage" enabled?**
+   - Yes and the pool is depleted: the cost center budget is capping their overage. Raise it or remove the cap.
+   - No: check whether "Stop usage" is enabled on the Enterprise Budget, or whether their license was removed.
 
 > [!TIP]
-> Mid-month blocks are almost always the Universal User Budget. The Enterprise Budget only matters after the pool runs out.
+> Mid-month blocks are almost always the Universal User Budget. Cost Center budgets only matter after the pool runs out — they cannot unblock a user who hit their personal cap while pooled credits remain.
+
+> [!NOTE]
+> A common misconception is that placing a user in a Cost Center with a higher budget will let them exceed their Universal User Budget. It won't. Cost Center budgets track overage spend, not pooled entitlement usage. The only way to give a user more headroom within the pool is to raise their Universal User Budget or assign an Individual User Budget.
 
 ---
 
