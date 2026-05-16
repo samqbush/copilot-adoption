@@ -7,9 +7,9 @@ title: Managing Copilot usage-based billing
 
 GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits (AICs) where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
 
-For how the billing model works and the available cost controls, see the [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) product guide. For billing mechanics, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises).
+For the full governance framework — layered budget design, cost center configuration, operating model, and API automation — see the [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) article in the GitHub Well-Architected Framework. For billing mechanics, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises). For budget definitions and how controls interact, see the [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) product guide.
 
-This page covers **opinionated budget strategy, sizing guidance, and operational tips** that go beyond the product documentation.
+This page covers **tactical sizing guidance, operational tips, and troubleshooting** that complement the WAF article.
 
 > [!IMPORTANT]
 > Enterprise and Cost Center budgets only cap spending *after* included credits run out. Universal and Individual User Budgets are always active and limit how much of the pool each person can draw, even while the pool still has capacity.
@@ -32,7 +32,7 @@ During the promo, Enterprise seats include 7,000 AICs vs. 3,000 for Business, a 
 > [!NOTE]
 > Copilot Enterprise requires a GitHub Enterprise Cloud (GHEC) seat. This only works for users who already have GHEC. If they don't, you'd also need to purchase a GHEC seat, so factor that cost in before upgrading.
 
-After September 2026 the advantage disappears. Both tiers include credits proportional to their license cost ($0.01/AIC), so upgrading from Business to Enterprise adds $20/month in cost alongside $20 in credit value. No net gain. At that point, raising Individual User Budgets is cheaper than upgrading tiers (see Tip #5).
+After September 2026 the advantage disappears. Both tiers include credits proportional to their license cost ($0.01/AIC), so upgrading from Business to Enterprise adds $20/month in cost alongside $20 in credit value. No net gain. At that point, raising Individual User Budgets is cheaper than upgrading tiers (see Tip #4).
 
 > [!TIP]
 > Use the promotional window to find your power users and get them on Enterprise seats. After the promo ends, switch to Individual User Budgets for anyone who needs more headroom.
@@ -79,51 +79,32 @@ The developers who consistently hit their budgets are your power users. They're 
 
 ### 1. Always set a Universal User Budget
 
-> [!WARNING]
-> Without a Universal User Budget, one user or one automated agent can consume the entire pool overnight. Set this before anything else.
-
 Here's how to set it in the enterprise billing settings:
 
 ![Setting the Universal User Budget in GitHub enterprise billing]({{ site.baseurl }}/universal-user-budget.gif)
 
-### 2. Always enable "Stop usage" on budgets
+### 2. Enable "Stop usage" on User-Level Budgets
 
-Without the "Stop usage" option enabled, every budget is advisory only. It sends a notification when the threshold is crossed, but usage and billing keep going. Enable it on every budget if you want actual cost ceilings.
+Enable "Stop usage" on Universal and Individual User Budgets — this is your hard enforcement cap per user. At the enterprise and cost center level, the [WAF recommends disabling "Stop usage"](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) to avoid a single global cap that disrupts all engineers. Use threshold alerts (75%, 90%, 100%) at those levels instead.
 
-### 3. Size the Enterprise Budget from your seat mix
-
-The Enterprise Budget is a post-pool safety net. Calculate it as: total max consumption minus pool value = potential additional spend. Add a buffer. It does nothing while the pool still has capacity.
-
-### 4. Budgets only track from their creation date
+### 3. Budgets only track from their creation date
 
 When you first create a budget, it applies only to metered usage from that date forward. Prior consumption isn't counted. This means you can exceed your budget in the first cycle even with "Stop usage" enabled. Create or adjust budgets at the start of a billing cycle whenever possible. If creating mid-cycle, set the limit conservatively. See [Budgets and alerts](https://docs.github.com/en/enterprise-cloud@latest/billing/concepts/budgets-and-alerts#your-first-billing-cycle-after-creating-a-budget) for details.
 
-### 5. Raise Individual User Budgets before upgrading tiers *(post-promotional period)*
+### 4. Raise Individual User Budgets before upgrading tiers *(post-promotional period)*
 
 After September 2026, an Individual User Budget on a Business license lets a user borrow more from the pool at no extra cost. Upgrading from Business to Enterprise adds $20/month in licensing alongside $20 in credit value. No net gain. If someone needs more capacity post-promo, raise their Individual User Budget first.
 
 > [!NOTE]
 > During the promotional period (June 1 – September 1, 2026), Enterprise seats include disproportionately more AICs (7,000 vs. 3,000), so the upgrade is worthwhile for power users who already have a GHEC seat. See the [Promotional period](#promotional-period-june-1--september-1-2026) section.
 
-### 6. Gate budget increases on prior-month usage data
+### 5. Gate budget increases on prior-month usage data
 
 Individual User Budgets don't expand the pool. They raise the per-user ceiling, which accelerates depletion for everyone. Require usage data before granting increases: if someone didn't hit their limit last month, they don't need a higher one.
 
-### 7. Share pool depletion metrics monthly
+### 6. Share pool depletion metrics monthly
 
 Publish a simple end-of-month summary ("Pool was 74% consumed, no one was blocked"). When people can see the pool is healthy, they're less likely to inflate usage defensively or rush to consume credits early in the cycle.
-
----
-
-## Cost center exclusion
-
-One toggle changes how Enterprise and Cost Center Budgets interact. Decide on this before sizing any budgets because it changes the math for everything. See [how these controls work together](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) in the product guide.
-
-> [!IMPORTANT]
-> Regardless of exclusion setting, Cost Center budgets never override Universal or Individual User Budgets. A user capped by their personal budget cannot be unblocked by any Cost Center budget configuration. Cost Center budgets only govern overage spend after the pool is exhausted.
-
-> [!WARNING]
-> Never enable exclusion without configuring cost center budgets for every team. Any cost center without a budget has no metered charge ceiling at all.
 
 ---
 
@@ -151,14 +132,6 @@ When someone reports being blocked, work through these checks in order:
 
 > [!NOTE]
 > A common misconception is that placing a user in a Cost Center with a higher budget will let them exceed their Universal User Budget. It won't. Cost Center budgets track overage spend, not pooled entitlement usage. The only way to give a user more headroom within the pool is to raise their Universal User Budget or assign an Individual User Budget.
-
----
-
-## Budget management via API
-
-You can manage budgets programmatically through the [Budget Management API](https://docs.github.com/en/rest/billing/budgets): create, update, delete budgets, adjust alert thresholds, and automate provisioning as part of team onboarding.
-
-The [Usage Summary API](https://docs.github.com/en/rest/billing/usage) lets you pull usage data filtered by org, repo, cost center, product, or SKU.
 
 ---
 
