@@ -11,6 +11,9 @@ For the full governance framework — layered budget design, cost center configu
 
 This page covers **tactical sizing guidance, operational tips, and troubleshooting** that complement the WAF article.
 
+> [!TIP]
+> **Haven't transitioned yet?** If your organization is still preparing for the move to usage-based billing, start with [Prepare for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing) — it walks you through downloading your usage report, projecting costs with the billing preview tool, and taking action before the June 1, 2026 cutover.
+
 > [!IMPORTANT]
 > Enterprise and Cost Center budgets only cap spending *after* included credits run out. Universal and Individual User Budgets are always active and limit how much of the pool each person can draw, even while the pool still has capacity.
 
@@ -107,6 +110,18 @@ Individual User Budgets don't expand the pool. They raise the per-user ceiling, 
 Publish a simple end-of-month summary ("Pool was 74% consumed, no one was blocked"). When people can see the pool is healthy, they're less likely to inflate usage defensively or rush to consume credits early in the cycle.
 
 ---
+
+## Reducing token consumption at the source
+
+Budgets control how much each user *can* spend — but the most effective cost lever is making every credit count. Well-scoped agent sessions, deliberate model selection, and deterministic guardrails (tests, linters, security scans) all reduce retries and wasted tokens, which directly lowers credit consumption without limiting developer productivity.
+
+For a full checklist covering model selection, prompt structure, the research-plan-implement workflow, and maintaining effective `copilot-instructions.md` files, see [Improve agent quality and token optimization](https://support.github.com/product-guides/github-copilot/accelerate-usage/improve-agent-quality-and-token-optimization).
+
+> [!TIP]
+> Teams that invest in agent quality guardrails often see **fewer retries, faster task completion, and lower total token usage** — even when individual steps use slightly more tokens upfront. Pair this with the budget strategy above: when power users hit their limits less often, you spend less time adjusting budgets and more time shipping. For developers who want hands-on practice, share the [Context Engineering Lab](https://copilot-academy.github.io/labs/context-engineering-lab) — a 2-hour workshop on measuring and reducing token consumption.
+
+---
+
 
 ## When developers are blocked
 
