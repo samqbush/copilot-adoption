@@ -122,6 +122,7 @@ For a full checklist covering model selection, prompt structure, the research-pl
 
 ---
 
+
 ## When developers are blocked
 
 When someone reports being blocked, work through these checks in order:
