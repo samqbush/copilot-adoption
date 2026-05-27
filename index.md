@@ -22,8 +22,9 @@ The highest-impact adoption strategies focus on raising the floor across your or
 
 3. **Create an Internal Plugin Marketplace** — Curate and share custom plugins/skills so teams can leverage each other's work. See the [Copilot Plugins Marketplace docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace) and the open-source [awesome-copilot](https://github.com/github/awesome-copilot) collection for inspiration.
 
-## Unique Resource (Still Maintained)
+## Unique Resources (Still Maintained)
 
-The following page covers topics not yet addressed by official documentation and remains actively maintained.
+The following pages cover topics not yet addressed by official documentation and remain actively maintained.
 
 - [Strategies for Managing Copilot Usage-Based Billing](./cost-management) — Practical guide to AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
+- [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html) — Interactive guide to token optimization with context rot scenarios, a cost calculator, a model-selection playbook, and copy-paste templates for reducing token consumption
