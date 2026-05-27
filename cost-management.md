@@ -7,9 +7,14 @@ title: Managing Copilot usage-based billing
 
 GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits (AICs) where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
 
-For the full governance framework — layered budget design, cost center configuration, operating model, and API automation — see the [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) article in the GitHub Well-Architected Framework. For billing mechanics, see [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises). For budget definitions and how controls interact, see the [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) product guide.
+Key resources:
 
-This page covers **tactical sizing guidance, operational tips, and troubleshooting** that complement the WAF article.
+- **Governance framework** — layered budget design, cost center configuration, operating model, and API automation: [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) (GitHub Well-Architected Framework)
+- **Billing mechanics** — how credits, metering, and charges work: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
+- **Budget definitions** — how budget controls interact: [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting)
+- **Hands-on training** — end-to-end fundamentals course: [GitHub Usage-Based Billing](https://learn.github.com/courses/gitHubusagebasedbillingmodule) (GitHub Learn)
+
+This page covers **tactical sizing guidance, operational tips, and troubleshooting** that complement the official documentation linked above.
 
 > [!TIP]
 > **Haven't transitioned yet?** If your organization is still preparing for the move to usage-based billing, start with [Prepare for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing) — it walks you through downloading your usage report, projecting costs with the billing preview tool, and taking action before the June 1, 2026 cutover.
