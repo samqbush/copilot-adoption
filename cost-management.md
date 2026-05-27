@@ -120,7 +120,10 @@ Publish a simple end-of-month summary ("Pool was 74% consumed, no one was blocke
 
 Budgets control how much each user *can* spend — but the most effective cost lever is making every credit count. Well-scoped agent sessions, deliberate model selection, and deterministic guardrails (tests, linters, security scans) all reduce retries and wasted tokens, which directly lowers credit consumption without limiting developer productivity.
 
-For a full checklist covering model selection, prompt structure, the research-plan-implement workflow, and maintaining effective `copilot-instructions.md` files, see [Improve agent quality and token optimization](https://support.github.com/product-guides/github-copilot/accelerate-usage/improve-agent-quality-and-token-optimization).
+Key resources for developers:
+
+- **Interactive token optimization guide** — Scenarios, a cost calculator, a model-selection playbook, and copy-paste templates: [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html)
+- **Agent quality checklist** — Model selection, prompt structure, the research-plan-implement workflow, and maintaining effective `copilot-instructions.md` files: [Improve agent quality and token optimization](https://support.github.com/product-guides/github-copilot/accelerate-usage/improve-agent-quality-and-token-optimization)
 
 > [!TIP]
 > Teams that invest in agent quality guardrails often see **fewer retries, faster task completion, and lower total token usage** — even when individual steps use slightly more tokens upfront. Pair this with the budget strategy above: when power users hit their limits less often, you spend less time adjusting budgets and more time shipping. For developers who want hands-on practice, share the [Context Engineering Lab](https://copilot-academy.github.io/labs/context-engineering-lab) — a 2-hour workshop on measuring and reducing token consumption.
