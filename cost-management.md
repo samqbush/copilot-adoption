@@ -19,6 +19,9 @@ This page covers **tactical sizing guidance, operational tips, and troubleshooti
 > [!TIP]
 > **Haven't transitioned yet?** If your organization is still preparing for the move to usage-based billing, start with [Prepare for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing) — it walks you through downloading your usage report, projecting costs with the billing preview tool, and taking action before the June 1, 2026 cutover.
 
+> [!TIP]
+> **Haven't transitioned yet?** If your organization is still preparing for the move to usage-based billing, start with [Prepare for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing) — it walks you through downloading your usage report, projecting costs with the billing preview tool, and taking action before the June 1, 2026 cutover.
+
 > [!IMPORTANT]
 > Enterprise and Cost Center budgets only cap spending *after* included credits run out. Universal and Individual User Budgets are always active and limit how much of the pool each person can draw, even while the pool still has capacity.
 
