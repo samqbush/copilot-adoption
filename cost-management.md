@@ -63,7 +63,7 @@ This lets heavier users borrow from lighter users' unused portions without anyon
 The 2.5–3× multiplier also reduces operational overhead at scale. With thousands of users, adjusting Individual User Budgets one by one is impractical. A generous Universal User Budget accommodates the natural variation between power users and light users without requiring per-user intervention — you only need to grant Individual User Budgets for the outliers who exceed even the 3× ceiling.
 
 > [!WARNING]
-> User-level budgets control how much of the pool each person can draw — **and they keep working after the pool is exhausted**, authorizing metered overages up to the same limit. If you set every user's budget at 3× their entitlement, the theoretical max spend across all users is 3× the pool value. For 100 Business users that's up to $3,800/month in uncapped overages. **Always pair generous user budgets with an enterprise budget backstop** (see [Step 4](#step-4-set-an-enterprise-budget-backstop)).
+> User-level budgets control how much of the pool each person can draw — **and they keep working after the pool is exhausted**, authorizing metered overages up to the same limit. If you set every user's budget at 3× their entitlement, the total authorized usage across all users is 3× the pool value — but the **overage** (incremental metered charges) is up to 2× the pool value. For 100 Business users (190,000 AIC pool), that's up to $3,800/month in metered overages on top of what you've already paid for. **Always pair generous user budgets with an enterprise budget backstop** (see [Step 4](#step-4-set-an-enterprise-budget-backstop)).
 
 > [!TIP]
 > Capping at exactly 1× the per-license value defeats the purpose of pooling. Heavy users get blocked while light users waste credits. 2.5–3× is the sweet spot — just make sure you have an enterprise backstop so the generosity has a ceiling.
@@ -88,7 +88,7 @@ The developers who consistently hit their budgets are your power users. They're 
 
 ### Step 4: Set an enterprise budget backstop
 
-User-level budgets (Universal and Individual) control how much each person can draw from the pool — but they also authorize metered overages after the pool is exhausted. If you set every user at 3× and many of them draw heavily, there's no ceiling on aggregate overage without an enterprise budget.
+User-level budgets (Universal and Individual) control how much each person can draw from the pool — but they also authorize metered overages after the pool is exhausted. If you set every user at 3× and many of them draw heavily, the sum of all user budgets creates an implicit aggregate ceiling — but that ceiling may be far higher than your organization's intended spend. An enterprise budget makes that ceiling explicit and intentional.
 
 Set an enterprise-level budget as a **financial backstop**:
 
