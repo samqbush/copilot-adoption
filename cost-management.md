@@ -104,7 +104,7 @@ Set an enterprise-level budget as a **financial backstop**:
 > The enterprise backstop is a safety net, not a routine cap. Set it high enough that it only fires in a truly runaway month. If it triggers regularly, your user-level budgets are too generous or your pool is undersized — fix those first.
 
 > [!TIP]
-> To size the backstop precisely, GitHub's [Optimizing your budget configuration](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/optimizing-your-budget-configuration#sizing-your-budgets) tutorial walks through the formula: multiply your users by their user-level budgets, subtract your pool value (Business seats × $19 + Enterprise seats × $39), and the difference is the maximum metered spend your enterprise budget needs to cover. It also includes common configurations by org structure.
+> To size the backstop precisely, GitHub's [Optimizing your budget configuration](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/optimizing-your-budget-configuration#sizing-your-budgets) tutorial walks through the formula: multiply your users by their user-level budgets, subtract your pool value (the sum of your Copilot seat license costs — each seat's per-seat price × number of seats), and the difference is the maximum metered spend your enterprise budget needs to cover. It also includes common configurations by org structure.
 
 ---
 
