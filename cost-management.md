@@ -11,7 +11,8 @@ Key resources:
 
 - **Governance framework** — layered budget design, cost center configuration, operating model, and API automation: [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) (GitHub Well-Architected Framework)
 - **Billing mechanics** — how credits, metering, and charges work: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
-- **Budget definitions** — how budget controls interact: [Understanding Copilot budgeting](https://support.github.com/product-guides/github-copilot/get-started/understanding-copilot-budgeting) *(requires GitHub login)*
+- **Budget definitions** — how the four budget controls interact, how billing flows through them, and when usage is blocked: [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)
+- **Budget setup** — recommended step-by-step setup for your enterprise: [Getting started with budget controls](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/getting-started-with-budget-controls)
 - **Hands-on training** — end-to-end fundamentals course: [GitHub Usage-Based Billing](https://learn.github.com/courses/gitHubusagebasedbillingmodule) (GitHub Learn)
 
 This page covers **tactical sizing guidance, operational tips, and troubleshooting** that complement the official documentation linked above.
@@ -50,6 +51,9 @@ After September 2026 the advantage disappears. Both tiers include credits propor
 ## Recommended budget strategy
 
 The approach that works best for most organizations is progressive: start generous, then use the limits to discover who your heavy users are and what they're working on.
+
+> [!NOTE]
+> The steps below map closely to GitHub's official setup walkthrough. For the click-by-click version, see [Getting started with budget controls](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/getting-started-with-budget-controls).
 
 ### Step 1: Set the Universal User Budget at 2.5–3× entitled credits
 
@@ -99,6 +103,9 @@ Set an enterprise-level budget as a **financial backstop**:
 > [!IMPORTANT]
 > The enterprise backstop is a safety net, not a routine cap. Set it high enough that it only fires in a truly runaway month. If it triggers regularly, your user-level budgets are too generous or your pool is undersized — fix those first.
 
+> [!TIP]
+> To size the backstop precisely, GitHub's [Optimizing your budget configuration](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/optimizing-your-budget-configuration#sizing-your-budgets) tutorial walks through the formula: multiply your users by their user-level budgets, subtract your pool value (Business seats × $19 + Enterprise seats × $39), and the difference is the maximum metered spend your enterprise budget needs to cover. It also includes common configurations by org structure.
+
 ---
 
 ## Configuration tips
@@ -141,7 +148,7 @@ Budgets control how much each user *can* spend — but the most effective cost l
 Key resources for developers:
 
 - **Interactive token optimization guide** — Scenarios, a cost calculator, a model-selection playbook, and copy-paste templates: [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html)
-- **Agent quality checklist** — Model selection, prompt structure, the research-plan-implement workflow, and maintaining effective `copilot-instructions.md` files: [Improve agent quality and token optimization](https://support.github.com/product-guides/github-copilot/accelerate-usage/improve-agent-quality-and-token-optimization)
+- **Optimize AI usage** — GitHub's five strategies for higher-quality agents that complete tasks in fewer attempts: model selection, prompt guidance, the research-plan-implement workflow, deterministic guardrails, and concise `copilot-instructions.md` files: [Optimize AI usage](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/optimize-ai-usage)
 
 > [!TIP]
 > Teams that invest in agent quality guardrails often see **fewer retries, faster task completion, and lower total token usage** — even when individual steps use slightly more tokens upfront. Pair this with the budget strategy above: when power users hit their limits less often, you spend less time adjusting budgets and more time shipping. For developers who want hands-on practice, share the [Context Engineering Lab](https://copilot-academy.github.io/labs/context-engineering-lab) — a 2-hour workshop on measuring and reducing token consumption.
