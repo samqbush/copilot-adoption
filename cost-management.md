@@ -51,7 +51,7 @@ Over the 3-month promotional window that's **$6,000** in credits you'd otherwise
 > [!NOTE]
 > Copilot Enterprise requires a GitHub Enterprise Cloud (GHEC) seat. This only works for users who already have GHEC. If they don't, you'd also need to purchase a GHEC seat, so factor that cost in before upgrading.
 
-After August 2026 the credit-arbitrage advantage disappears. Both tiers include credits proportional to their license cost ($0.01/AIC), so upgrading from Business to Enterprise adds $20/month in cost alongside $20 in credit value. From a credit-pool perspective, there is no net gain. At that point, raising Individual User Budgets is cheaper than upgrading tiers (see Tip #4).
+After August 2026 the credit-arbitrage advantage disappears. Both tiers include credits proportional to their license cost ($0.01/AIC), so upgrading from Business to Enterprise adds $20/month in cost alongside $20 in credit value. From a credit-pool perspective, there is no net gain. At that point, raising Individual User Budgets is cheaper than upgrading tiers (see [Tip #4](#4-raise-individual-user-budgets-before-upgrading-tiers-post-promotional-period)).
 
 > [!NOTE]
 > All dollar examples in the below strategies use promotional-period credit values ($30/user for Business, $70/user for Enterprise). After August, this page will be updated with new guidance based on token usage patterns observed in June/July.
@@ -162,7 +162,7 @@ When a developer hits their Universal User Budget, don't just raise the UULB for
 With this path, Individual User Budgets are a core part of the operating model, not an exception. In orgs with broad Copilot adoption, you may need individual overrides for a large share of your population — potentially 50–70% depending on usage patterns.
 
 > [!WARNING]
-> User-level budgets control how much of the pool each person can draw — **and they keep working after the pool is exhausted**, authorizing metered overages up to the same limit. If you set every user's budget at 2× their entitlement, the total authorized overage across all users is up to 1× the pool value. For 100 Business users ($3000 pool), that's up to $3000/month in metered overages on top of what you've already paid for. **Always pair user budgets with an enterprise budget backstop.**
+> User-level budgets control how much of the pool each person can draw — **and they keep working after the pool is exhausted**, authorizing metered overages up to the same limit. If you set every user's budget at 2× their entitlement, the total authorized overage across all users is up to 1× the pool value. For 100 Business users ($3,000 pool), that's up to $3,000/month in metered overages on top of what you've already paid for. **Always pair user budgets with an enterprise budget backstop.**
 
 
 ### Enterprise budget backstop
