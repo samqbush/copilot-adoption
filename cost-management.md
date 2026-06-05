@@ -5,6 +5,8 @@ title: Managing Copilot usage-based billing
 
 # Managing Copilot usage-based billing
 
+*Last updated: June 4, 2026*
+
 GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits (AICs) where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
 
 Key resources:
@@ -17,8 +19,6 @@ Key resources:
 
 This page covers **tactical sizing guidance, operational tips, and troubleshooting** that complement the official documentation linked above.
 
-> [!TIP]
-> **Haven't transitioned yet?** If your organization is still preparing for the move to usage-based billing, start with [Prepare for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing) — it walks you through downloading your usage report, projecting costs with the billing preview tool, and taking action before the June 1, 2026 cutover.
 
 > [!IMPORTANT]
 > Enterprise and Cost Center budgets only cap spending *after* included credits run out. Universal and Individual User Budgets are always active and limit how much of the pool each person can draw, even while the pool still has capacity.
@@ -41,26 +41,77 @@ During the promo, Enterprise seats include 7,000 AICs vs. 3,000 for Business, a 
 > [!NOTE]
 > Copilot Enterprise requires a GitHub Enterprise Cloud (GHEC) seat. This only works for users who already have GHEC. If they don't, you'd also need to purchase a GHEC seat, so factor that cost in before upgrading.
 
-After September 2026 the advantage disappears. Both tiers include credits proportional to their license cost ($0.01/AIC), so upgrading from Business to Enterprise adds $20/month in cost alongside $20 in credit value. No net gain. At that point, raising Individual User Budgets is cheaper than upgrading tiers (see Tip #4).
+After August 2026 the advantage disappears. Both tiers include credits proportional to their license cost ($0.01/AIC), so upgrading from Business to Enterprise adds $20/month in cost alongside $20 in credit value. No net gain. At that point, raising Individual User Budgets is cheaper than upgrading tiers (see Tip #4).
 
-> [!TIP]
-> Use the promotional window to find your power users and get them on Enterprise seats. After the promo ends, switch to Individual User Budgets for anyone who needs more headroom.
 
 ---
 
-## Recommended budget strategy
+## Budget strategies
 
-The approach that works best for most organizations is progressive: start generous, then use the limits to discover who your heavy users are and what they're working on.
+Which strategy to use depends on one question: **do you already know who your power users are?**
 
-> [!NOTE]
-> The steps below map closely to GitHub's official setup walkthrough. For the click-by-click version, see [Getting started with budget controls](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/getting-started-with-budget-controls).
+- **Yes** → Use the [Known power users](#strategy-known-power-users) approach. Set a moderate Universal User Budget, grant individual overrides for heavy users, and backstop with an enterprise budget.
+- **Not yet** → Use the [Discover your power users](#strategy-discover-your-power-users) approach. Start generous, let budget notifications surface your heavy users, then build a champions program around them.
 
-### Step 1: Set the Universal User Budget at 2.5–3× entitled credits
+Both strategies require an enterprise budget backstop. Neither is universally "better" — pick the one that matches your current visibility into developer usage patterns.
 
-Give every user a Universal User Budget (ULB) of 2.5–3× their per-seat entitlement:
 
-- Business users (1,900 AICs included): set ULB to 4,750–5,700 AICs
-- Enterprise users (3,900 AICs included): set ULB to 9,750–11,700 AICs
+### Strategy: Known power users
+
+Use this when you already know you have power users who will burn through their per-seat entitlement — and you also know that a significant portion of your developers won't use their credits. The goal: let power users "hungry hippo" the shared pool (consuming unused credits from lighter users) without them knocking on your door every month asking for more budget.
+
+Each user only contributes 3,000 AICs (Business) or 7,000 AICs (Enterprise) to the pool. If you set the UULB to $90/month, your power users hit that ceiling immediately and you're fielding budget requests constantly. Instead, set it high enough that most power users never hit it — they just consume from the excess pool capacity that light users aren't touching.
+
+#### Step 1: Set the Universal User Budget at $200–$1,000
+
+Size the UULB (Universal User-Level Budget) as **the largest amount you're willing to let any single developer spend from the pool before they need to ask for more budget**. This controls both pool draw-down *and* per-user overage after pool depletion.
+
+$200–$1,000 is typical. Most of your power users will never hit this ceiling because the pool will deplete first. The ones who do hit it are the extreme outliers — and those are the only ones who need to come ask for more.
+
+#### Step 2: Grant Individual User Budgets only for project specific needs
+
+For the developer who hit their $500–$1,000 ceiling, find out what they are working on if if this justifies granting an Individual (override) User-Level Budget. Size it based on **how much of the overage pool you'd want that specific person to be able to exhaust**.
+
+
+> [!TIP]
+> Managing Individual User Budgets through the UI is tedious at scale. Two options:
+> - **REST API** — [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint lets you script bulk budget assignments
+> - **gh CLI extension** — [`gh-ulb`](https://github.com/colinbeales/gh-ulb) wraps the API if you don't want to write the scripts yourself
+
+#### Step 3: Set an enterprise backstop (mandatory)
+
+You **must** set an enterprise-level budget with this approach. Here's why:
+
+The UULB and Individual ULBs control both pool and overage spending. If your UULB is $1,000 and you have 100 developers, the **theoretical maximum overage** is either $97,000 or $93,000 depending on your license (every user maxing out).
+
+Set the enterprise backstop to **the total overage amount you're actually willing to spend**:
+
+| Example | Value |
+|---------|-------|
+| UULB | $1,000 |
+| Developers | 100 |
+| Theoretical max overage | $93,000 |
+| Enterprise backstop | $20,000 (what you'll actually pay) |
+
+The backstop can be $0 if you want zero overage — users draw from the pool and stop when it's gone.
+
+> [!WARNING]
+> Without an enterprise backstop, the UULB × user count is your implicit spending ceiling. Make it explicit. Even if you trust your developers, set a backstop.
+
+> [!TIP]
+> Start the backstop low and raise it monthly as you see real overage patterns. It's easier to loosen a tight backstop than to explain an unexpected bill.
+
+### Strategy: Discover your power users
+
+Use this when you don't yet know who your heavy users are. The approach is progressive: start generous, then use budget notifications to surface power users and build a champions program around them.
+
+#### Step 1: Set the Universal User Budget at 1-3× entitled credits
+
+Give every user a Universal User Budget (ULB) of 1-3× their per-seat entitlement:
+
+During the promotional period:
+- Business users: set ULB to $30-$90
+- Enterprise users: set ULB to $70-$210
 
 This lets heavier users borrow from lighter users' unused portions without anyone monopolizing the pool. If credits are left over at month end, raise it. You want near-zero remaining credits with nobody blocked mid-month.
 
@@ -72,14 +123,14 @@ The 2.5–3× multiplier also reduces operational overhead at scale. With thousa
 > [!TIP]
 > Capping at exactly 1× the per-license value defeats the purpose of pooling. Heavy users get blocked while light users waste credits. 2.5–3× is the sweet spot — just make sure you have an enterprise backstop so the generosity has a ceiling.
 
-### Step 2: When someone hits the limit, find out why
+#### Step 2: When someone hits the limit, find out why
 
 When a developer hits their Universal User Budget, don't just raise it. Instead:
 
 1. Grant them an Individual User Budget with a higher cap. This is the only way to give a specific user more headroom within the pool — Cost Center budgets won't help here since they only track overage after the pool is exhausted.
 2. Find out what project they're working on. This context is how you build the case for AI investment.
 
-### Step 3: Build your champions program
+#### Step 3: Build your champions program
 
 The developers who consistently hit their budgets are your power users. They're also the foundation of a good AI adoption story:
 
@@ -90,7 +141,7 @@ The developers who consistently hit their budgets are your power users. They're 
 > [!NOTE]
 > This turns cost management into a discovery exercise. Budget notifications become a signal for where AI is delivering real returns, not just a spending alert.
 
-### Step 4: Set an enterprise budget backstop
+#### Step 4: Set an enterprise budget backstop
 
 User-level budgets (Universal and Individual) control how much each person can draw from the pool — but they also authorize metered overages after the pool is exhausted. If you set every user at 3× and many of them draw heavily, the sum of all user budgets creates an implicit aggregate ceiling — but that ceiling may be far higher than your organization's intended spend. An enterprise budget makes that ceiling explicit and intentional.
 
