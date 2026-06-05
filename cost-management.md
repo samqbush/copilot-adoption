@@ -38,6 +38,16 @@ For the first three months of usage-based billing, existing customers get more i
 
 During the promo, Enterprise seats include 7,000 AICs vs. 3,000 for Business, a 2.3× difference. If you have developers who will burn through 3,000 credits/month, putting them on Enterprise seats during this window gets you more pooled credits at no extra per-credit cost.
 
+#### Promo upgrade math (100 Business developers)
+
+| | Business | Enterprise | Difference |
+|--|----------|------------|------------|
+| Pool value (100 users) | $3,000 | $7,000 | +$4,000 in credits |
+| Upgrade cost (100 × $19.99) | — | $2,000 | −$2,000 |
+| **Net monthly savings** | | | **$2,000** |
+
+Over the 3-month promotional window that's **$6,000** in credits you'd otherwise pay for as metered overage. This only matters if your developers are actually consuming past the Business pool — if the pool isn't depleting, there's nothing to save.
+
 > [!NOTE]
 > Copilot Enterprise requires a GitHub Enterprise Cloud (GHEC) seat. This only works for users who already have GHEC. If they don't, you'd also need to purchase a GHEC seat, so factor that cost in before upgrading.
 
@@ -94,6 +104,17 @@ Size the UULB as **the largest amount you're willing to let any single developer
 
 $200–$1,000 is typical. Most power users will never hit this ceiling because the pool will deplete first. The ones who do hit it are the extreme outliers — and those are the only ones who need to come ask for more.
 
+#### Example: 100 Business developers, UULB at $500
+
+| | Value |
+|--|-------|
+| Pool (100 × $30 promo) | $3,000 |
+| UULB per user | $500 |
+| Total authorized spend (100 × $500) | $50,000 |
+| Theoretical max overage ($50K − $3K) | $47,000 |
+
+In practice, most developers use $10–$50/month. If 80 developers average $20, they consume $1,600 — leaving $1,400 in the pool for 20 power users ($70 each). The $500 ceiling only kicks in after the pool is gone, and your enterprise backstop caps actual spend long before 100 people hit $500.
+
 #### Grant Individual User Budgets only for extreme outliers with approved projects
 
 For the developer who hit their $500–$1,000 ceiling, find out what they're working on and whether it justifies granting an Individual (override) User-Level Budget. Size it based on **how much of the overage pool you'd want that specific person to be able to exhaust**.
@@ -116,6 +137,17 @@ During the promotional period:
 - Enterprise users: $70–$140
 
 This lets heavier users borrow from lighter users' unused portions without anyone monopolizing the pool. If credits are left over at month end, raise it. You want near-zero remaining credits with nobody blocked mid-month.
+
+#### Example: 100 Business developers, UULB at $60
+
+| | Value |
+|--|-------|
+| Pool (100 × $30 promo) | $3,000 |
+| UULB per user | $60 (2× entitlement) |
+| Total authorized spend (100 × $60) | $6,000 |
+| Theoretical max overage ($6K − $3K) | $3,000 |
+
+At 2× entitlement, even if every developer consumes their full $60, the pool covers the first $3,000 and overage tops out at $3,000. Your enterprise backstop handles that. Realistically, light users won't hit $60, so heavy users borrow their slack from the pool before overage even starts.
 
 > [!TIP]
 > Capping at exactly 1× the per-license value defeats the purpose of pooling. Heavy users get blocked while light users waste credits. 1.5–2× is the sweet spot — just make sure you have an enterprise backstop so the generosity has a ceiling.
@@ -145,14 +177,14 @@ User-level budgets (Universal and Individual) control how much each person can d
 2. **Set the enterprise budget above your projected spend** with "Stop usage" enabled — give yourself enough headroom for growth (e.g., 1.5–2× your highest projected month) so the backstop only fires in a truly abnormal month.
 3. **Set threshold alerts at 75% and 90%** so you have time to react before the backstop fires.
 
-| Example (Path A — 100 Copilot Enterprise users, promotional period) | Value |
+| Example (Path A — 100 Copilot Business users, promotional period) | Value |
 |----------------------------------------------------------------------|-------|
 | UULB | $1,000 |
 | Developers | 100 |
 | Total authorized spend (100 × $1,000) | $100,000 |
-| Pool value (100 × $70 promo credits) | $7,000 |
-| Theoretical max overage ($100K − $7K) | $93,000 |
-| Enterprise backstop | $20,000 (what you'll actually pay) |
+| Pool value (100 × $30 promo credits) | $3,000 |
+| Theoretical max overage ($100K − $3K) | $97,000 |
+| Enterprise backstop | $10,000 (what you'll actually pay) |
 
 The backstop can be $0 if you want zero overage — users draw from the pool and stop when it's gone.
 
