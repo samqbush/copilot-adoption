@@ -1,9 +1,11 @@
 ---
 layout: default
 title: Managing Copilot usage-based billing
+toc: true
 ---
 
 # Managing Copilot usage-based billing
+{:.no_toc}
 
 *Last updated: June 5, 2026*
 
