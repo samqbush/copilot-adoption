@@ -31,7 +31,6 @@ However, the underlying mechanism is portable: AI tools add a `Co-authored-by` [
 | **Cursor Agent** | ❌ No | — | No automatic attribution as of June 2026 |
 | **Windsurf Agent** | ❌ No | — | No automatic attribution as of June 2026 |
 
-Bottom line: Copilot CLI and Claude Code handle this automatically. VS Code agent mode — the most common agent workflow — requires you to turn it on.
 
 > [!NOTE]
 > **Note the different email addresses**: Copilot CLI uses the GitHub noreply format (`223556219+Copilot@users.noreply.github.com`) while VS Code's built-in setting uses `copilot@github.com`. Both are valid, but your query patterns need to match both.
@@ -40,9 +39,7 @@ Bottom line: Copilot CLI and Claude Code handle this automatically. VS Code agen
 
 ## Configuration: Ensuring AI Commits Are Tagged
 
-Two approaches. Recommend both for defense in depth.
-
-### Option A: VS Code Setting (IDE-Level) — Recommended Starting Point
+### VS Code Setting (IDE-Level)
 
 The VS Code Git extension has a built-in [`git.addAICoAuthor`](https://github.com/microsoft/vscode/blob/main/extensions/git/package.json) setting with three values:
 
@@ -52,10 +49,10 @@ The VS Code Git extension has a built-in [`git.addAICoAuthor`](https://github.co
 | `"chatAndAgent"` | Add trailer when code from chat or agent edits is included |
 | `"all"` | Add trailer when any AI-generated code is included (inline completions, chat, and agent edits) |
 
-Enable it in workspace settings committed to repos:
+Test locally by adding it to your VS Code user settings:
 
 ```json
-// .vscode/settings.json (committed to repo)
+// VS Code user settings (Cmd+Shift+P → "Preferences: Open User Settings (JSON)")
 {
   "git.addAICoAuthor": "all"
 }
@@ -67,11 +64,11 @@ Enable it in workspace settings committed to repos:
 - It **cannot** be locked — developers can override it in their user settings
 - It will **not** show the "managed by your organization" lock icon in VS Code
 
-This is the same constraint as [Copilot OpenTelemetry settings](https://code.visualstudio.com/docs/agents/guides/monitoring-agents) — you can push it as an overridable default, but you cannot enforce it. See the [Copilot OpenTelemetry via Intune](./copilot-otel-intune) guide for the full pattern.
+This is the same constraint as [Copilot OpenTelemetry settings](https://code.visualstudio.com/docs/agents/guides/monitoring-agents) — you can push it as an overridable default, but you cannot enforce it. The [Copilot OpenTelemetry via Intune](./copilot-otel-intune) guide covers the full Intune deployment pattern; the MDM scripts below follow that same approach for `git.addAICoAuthor`.
 
 #### Deploying via MDM (Intune example)
 
-Push `git.addAICoAuthor` as a default into each developer's VS Code `settings.json` via an MDM script. Same mechanism as OTel deployment (see [Copilot OpenTelemetry via Intune — Part 2A](./copilot-otel-intune#2a-vs-code-half--default-settingsjson-shell-script) for the full pattern).
+Push `git.addAICoAuthor` as a default into each developer's VS Code `settings.json` via an MDM script.
 
 **macOS** — Intune → Devices → Scripts → shell script, run as root:
 
@@ -122,54 +119,18 @@ if (Test-Path $settingsPath) {
 > [!NOTE]
 > These are overridable defaults. A developer can change the setting in their VS Code preferences. For observability use cases (measuring AI adoption) this is acceptable — most developers won't bother overriding it. For compliance/audit requirements where override is unacceptable, the server-side metrics on Cloud/EMU are the only enforceable path.
 
-### Option B: Git Hook (Repo-Level, Tool-Agnostic)
-
-A [`prepare-commit-msg`](https://git-scm.com/docs/githooks#_prepare_commit_msg) hook catches commits from ALL agent tools — including Cursor, Windsurf, or any future tool that runs `git commit`:
-
-```bash
-#!/bin/bash
-# .git/hooks/prepare-commit-msg
-# Adds AI co-author trailer when an AI agent session is detected
-
-COMMIT_MSG_FILE="$1"
-COMMIT_SOURCE="$2"
-
-# Skip merge/squash commits
-[[ "$COMMIT_SOURCE" == "merge" || "$COMMIT_SOURCE" == "squash" ]] && exit 0
-
-# Check if trailer already exists (from VS Code setting or tool default)
-grep -qi "Co-authored-by:.*\(Copilot\|Claude\|AI-Agent\)" "$COMMIT_MSG_FILE" && exit 0
-
-# Detect AI agent sessions via environment signals
-AI_DETECTED=false
-[[ -n "$COPILOT_SESSION" ]] && AI_DETECTED=true  # Copilot CLI
-[[ -n "$CLAUDE_CODE" ]] && AI_DETECTED=true       # Claude Code
-
-# Alternative: "always-on" approach — tag all commits unconditionally
-# Uncomment the line below if you want to assume AI is always involved:
-# AI_DETECTED=true
-
-if [[ "$AI_DETECTED" == "true" ]]; then
-    TRAILER="Co-authored-by: AI-Agent <ai-agent@company.com>"
-    git interpret-trailers --in-place --trailer "$TRAILER" "$COMMIT_MSG_FILE"
-fi
-```
-
-**Distribution options:**
-- Set org-wide default hooks directory: `git config --global core.hooksPath ~/.git-hooks` ([git docs](https://git-scm.com/docs/git-config#Documentation/git-config.txt-corehooksPath))
-- Use hook managers: [Husky](https://typicode.github.io/husky/) (JS), [Lefthook](https://github.com/evilmartians/lefthook) (polyglot), [pre-commit](https://pre-commit.com/) (Python)
-- Bake into developer environment setup scripts or machine images
-
-**Pros**: Works with any AI tool, tool-agnostic, catches tools that don't self-tag
-**Cons**: Developers can bypass hooks with `git commit --no-verify`; requires a distribution strategy
+> [!IMPORTANT]
+> **Known gap:** Cursor and Windsurf do not add AI attribution trailers and do not expose environment signals that would allow external detection. Commits from those tools will not show up in AI leverage queries unless the developer manually adds a trailer.
 
 ---
 
 ## Measuring AI Leverage: Querying PRs on GHES
 
-This section lines up with the [Engineering System Success Playbook (ESSP)](https://github.com/resources/insights/engineering-system-success-playbook) — specifically the **(Percentage) AI leverage** metric in the Business Outcomes zone. See also the [Well-Architected Framework: Engineering System Metrics](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/).
+Once trailers are landing on commits, you can measure what GitHub's [Engineering System Success Playbook](https://github.com/resources/insights/engineering-system-success-playbook) (ESSP) calls **AI leverage** — the percentage of merged PRs that contain at least one AI-authored commit.
 
-The goal: **What percentage of merged (or closed) PRs in a given period contained at least one AI-authored commit?**
+See also: [Well-Architected Framework: Engineering System Metrics](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/) for a TLDR of the ESSP
+
+The goal: **What percentage of merged PRs in a given period contained at least one AI-authored commit?**
 
 ### Trailer Patterns to Search For
 
@@ -180,81 +141,130 @@ Different tools use different trailer formats. Your queries need to match all va
 | Copilot CLI | `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` |
 | VS Code (`git.addAICoAuthor`) | `Co-authored-by: Copilot <copilot@github.com>` |
 | Claude Code | `Co-Authored-By: Claude <noreply@anthropic.com>` |
-| Custom hook (if deployed) | `Co-authored-by: AI-Agent <ai-agent@company.com>` |
 
-A broad match pattern that catches all of these: `Co-authored-by:.*Copilot` and `Co-authored-by:.*Claude`
+A broad match pattern that catches both Copilot trailer variants: `Co-authored-by:.*Copilot` — this works because "Copilot" appears as the author name in both formats, before the email address.
 
-### Approach: GHES REST API
+### Approach: Daily GHES REST API Job
 
-A GHES admin runs this centrally against the GHES API. No repo cloning or local git access required.
+Run this as a daily GitHub Actions workflow or cron job. The script iterates all repos in the org, pulls closed PRs from the last 24 hours, classifies each as merged or closed-without-merge, and checks commit messages for Copilot trailers.
 
-**Step 1: List merged PRs for a repo in a date range**
-
-Use the [List pull requests](https://docs.github.com/en/enterprise-server@3.21/rest/pulls/pulls#list-pull-requests) endpoint. Filter to `state=closed`, then check `merged_at` in the response to confirm it was merged (not just closed):
-
-```bash
-curl -s -H "Authorization: token $GHES_TOKEN" \
-  -H "Accept: application/vnd.github+json" \
-  "https://GHES_HOSTNAME/api/v3/repos/{owner}/{repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100"
-```
-
-Each result includes `merged_at` (non-null if merged) and `number` (the PR number).
-
-**Step 2: For each merged PR, fetch its commits**
-
-Use the [List commits on a pull request](https://docs.github.com/en/enterprise-server@3.21/rest/pulls/pulls#list-commits-on-a-pull-request) endpoint:
+This gives you two signals from the [ESSP](https://github.com/resources/insights/engineering-system-success-playbook):
+- **AI leverage (throughput)** — what % of merged PRs had AI involvement?
+- **AI rejection rate (quality)** — what % of AI-attributed PRs were closed without merging? A high rejection rate may indicate AI-generated code that doesn't meet quality standards.
 
 ```bash
-curl -s -H "Authorization: token $GHES_TOKEN" \
-  -H "Accept: application/vnd.github+json" \
-  "https://GHES_HOSTNAME/api/v3/repos/{owner}/{repo}/pulls/{pull_number}/commits?per_page=100"
+#!/bin/bash
+# ai-leverage-daily.sh
+# Daily job: calculates AI leverage and AI rejection rate for an org on GHES.
+# Designed for cron / GitHub Actions. Processes the previous day's closed PRs.
+#
+# Usage: GHES_TOKEN=xxx GHES_HOSTNAME=github.example.com ./ai-leverage-daily.sh MY_ORG
+#
+# Output: JSON report to stdout (pipe to file, dashboard, or artifact)
+
+set -euo pipefail
+
+ORG="${1:?Usage: $0 <org>}"
+SINCE=$(date -u -v-1d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%dT%H:%M:%SZ)
+API="https://${GHES_HOSTNAME}/api/v3"
+AUTH="Authorization: token ${GHES_TOKEN}"
+ACCEPT="Accept: application/vnd.github+json"
+
+TOTAL_MERGED=0
+TOTAL_CLOSED=0
+AI_MERGED=0
+AI_CLOSED=0
+
+# Paginated GET — returns all pages concatenated as a JSON array
+paginate() {
+  local url="$1" page=1 sep="["
+  while true; do
+    local body
+    body=$(curl -s -H "$AUTH" -H "$ACCEPT" "${url}&page=${page}&per_page=100")
+    local count
+    count=$(echo "$body" | jq 'length')
+    echo "$body" | jq -c '.[]' | while read -r item; do echo "${sep}${item}"; sep=","; done
+    [[ "$count" -lt 100 ]] && break
+    ((page++))
+    sleep 0.3
+  done
+  echo "]"
+}
+
+# Check if any commit in a PR has a Copilot trailer
+pr_has_ai() {
+  local repo="$1" pr_num="$2"
+  curl -s -H "$AUTH" -H "$ACCEPT" "$API/repos/$repo/pulls/$pr_num/commits?per_page=100" | \
+    jq -r '[.[].commit.message] | join("\n")' | \
+    grep -qi "co-authored-by:.*copilot" && return 0 || return 1
+}
+
+# Get all repos in the org
+REPOS=$(curl -s -H "$AUTH" -H "$ACCEPT" "$API/orgs/$ORG/repos?type=all&per_page=100" | \
+  jq -r '.[].full_name')
+
+for REPO in $REPOS; do
+  # Fetch PRs closed/merged since yesterday
+  PRS_JSON=$(curl -s -H "$AUTH" -H "$ACCEPT" \
+    "$API/repos/$REPO/pulls?state=closed&sort=updated&direction=desc&per_page=100")
+
+  # Process each PR closed within our window
+  echo "$PRS_JSON" | jq -c --arg since "$SINCE" \
+    '.[] | select(.closed_at >= $since)' | while read -r PR; do
+
+    PR_NUM=$(echo "$PR" | jq -r '.number')
+    MERGED_AT=$(echo "$PR" | jq -r '.merged_at')
+
+    if [[ "$MERGED_AT" != "null" ]]; then
+      ((TOTAL_MERGED++)) || true
+      if pr_has_ai "$REPO" "$PR_NUM"; then
+        ((AI_MERGED++)) || true
+      fi
+    else
+      ((TOTAL_CLOSED++)) || true
+      if pr_has_ai "$REPO" "$PR_NUM"; then
+        ((AI_CLOSED++)) || true
+      fi
+    fi
+    sleep 0.2
+  done
+done
+
+# Output report as JSON
+cat <<EOF
+{
+  "date": "$(date -u +%Y-%m-%d)",
+  "org": "$ORG",
+  "total_merged_prs": $TOTAL_MERGED,
+  "ai_attributed_merged": $AI_MERGED,
+  "ai_leverage_pct": $(echo "scale=1; if ($TOTAL_MERGED > 0) $AI_MERGED * 100 / $TOTAL_MERGED else 0" | bc),
+  "total_closed_without_merge": $TOTAL_CLOSED,
+  "ai_attributed_closed": $AI_CLOSED,
+  "ai_rejection_rate_pct": $(echo "scale=1; a=$AI_MERGED+$AI_CLOSED; if (a > 0) $AI_CLOSED * 100 / a else 0" | bc)
+}
+EOF
 ```
 
-Each commit object includes `commit.message` — check this field for AI co-author trailers.
+**What this measures:**
 
-**Step 3: Check commit messages for AI trailers**
+| Metric | Formula | ESSP zone |
+|---|---|---|
+| AI leverage | AI-attributed merged PRs ÷ total merged PRs | Business Outcomes (Activity) |
+| AI rejection rate | AI-attributed closed-without-merge ÷ all AI-attributed PRs | Quality |
+| PR merge rate | Total merged PRs ÷ total developers | Velocity |
 
-For each commit in the PR, check if `commit.message` contains any of the trailer patterns above. If at least one commit has a match, the PR is "AI-attributed."
-
-**Step 4: Aggregate**
-
-```
-AI Leverage (%) = (PRs with ≥1 AI commit / Total merged PRs) × 100
-```
-
-### Scaling Across the Instance
-
-To run this across all repos in an org (or the entire GHES instance):
-
-- **List all repos**: [`GET /orgs/{org}/repos`](https://docs.github.com/en/enterprise-server@3.21/rest/repos/repos#list-organization-repositories) or [`GET /organizations`](https://docs.github.com/en/enterprise-server@3.21/rest/orgs/orgs#list-organizations) + repos per org
-- **Pagination**: All endpoints return max 100 results per page. Use `Link` header pagination to iterate.
-- **Rate limiting**: GHES rate limits are [disabled by default](https://docs.github.com/en/enterprise-server@3.21/rest/search/search) but may be enabled. Check with your GHES site admin.
-- **Commit search shortcut**: The [search commits](https://docs.github.com/en/enterprise-server@3.21/rest/search/search#search-commits) endpoint can find AI-attributed commits across repos in a single query:
-
-```bash
-curl -s -H "Authorization: token $GHES_TOKEN" \
-  -H "Accept: application/vnd.github.cloak-preview+json" \
-  "https://GHES_HOSTNAME/api/v3/search/commits?q=org:MY_ORG+author-date:>2026-05-01+Co-authored-by+Copilot"
-```
+A rising rejection rate for AI-attributed PRs (compared to non-AI PRs) could indicate that AI-generated code isn't passing review — worth investigating with the team before drawing conclusions.
 
 > [!NOTE]
-> Search returns max 1,000 results. For large orgs, use the per-repo PR + commits approach above.
-
-### Recommended Automation
-
-Run this as a scheduled GitHub Actions workflow on GHES (or a cron job) that:
-- Queries all repos in the org for merged PRs in the last 7/30 days
-- Checks each PR's commits for AI trailers
-- Outputs a report: total PRs, AI-attributed PRs, AI leverage %, broken down by repo and by developer
-- Stores results over time to track trending
+> **Rate limits:** GHES has rate limits [disabled by default](https://docs.github.com/en/enterprise-server@3.21/admin/configuring-settings/configuring-rate-limits/configuring-rate-limits-for-your-instance). If your instance has them enabled, or you're adapting this for GHEC (15,000 requests/hour), a daily cadence keeps volumes manageable — a 1,000-repo org with ~50 PRs closed per day uses roughly 1,000 + 50 = ~1,050 API calls per run.
 
 ---
 
 ## Limitations & Gaps
 
 - **IDE completions are NOT tracked** — This approach only covers agent/CLI sessions where AI makes commits. A developer using Copilot inline suggestions in the editor gets no trailer. The `"all"` value for `git.addAICoAuthor` attempts to cover completions, but detection accuracy for inline completions is lower than for agent/chat edits.
-- **`git.addAICoAuthor` is not enforceable** — It's a regular VS Code setting, not an [enterprise policy](https://code.visualstudio.com/docs/enterprise/policies). Developers can override it. Same constraint as OTel monitoring.
-- **Trailers are removable** — Developers can edit commit messages or use `--no-verify` to skip hooks. This is an honesty system.
+- **`git.addAICoAuthor` is not enforceable** — It's a regular VS Code setting, not an [enterprise policy](https://code.visualstudio.com/docs/enterprise/policies). Developers can override it.
+- **Trailers are removable** — Developers can edit commit messages before pushing. This is an honesty system.
 - **False positives are possible** — VS Code's `git.addAICoAuthor` [historically tagged commits even when AI wasn't actually used](https://github.com/microsoft/vscode/pull/310226) (part of why it was reverted from default-on)
 - **No standard trailer yet** — Industry is split between `Co-authored-by`, `Assisted-by`, and `AI-Generated-By`. The Linux kernel is exploring `Assisted-by`. Microsoft is tracking this in [vscode#313962](https://github.com/microsoft/vscode/issues/313962).
 - **Cross-tool inconsistency** — Different tools use different trailer formats and email addresses, requiring broad grep patterns
@@ -271,7 +281,7 @@ For comparison, GitHub Enterprise Cloud provides native metrics via the [Copilot
 | Time-to-merge comparison | DIY calculation | `median_minutes_to_merge_copilot_authored` |
 | Copilot code review tracking | Not available | `total_merged_reviewed_by_copilot` |
 | Per-user AI engagement | Not available | [Per-user metrics endpoints](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/copilot-usage-metrics/copilot-usage-metrics) |
-| Configuration required | VS Code settings + hooks (overridable) | None — works out of the box |
+| Configuration required | VS Code setting (overridable) | None — works out of the box |
 | Accuracy | Depends on trailer presence (honesty system) | Server-side tracking (100% for coding agent) |
 
 The native Cloud/EMU metrics track at the platform level. No client configuration, no trailers to manage, no opt-out risk.
@@ -280,8 +290,7 @@ The native Cloud/EMU metrics track at the platform level. No client configuratio
 
 ## Recommended Implementation Order
 
-1. Commit `.vscode/settings.json` with `"git.addAICoAuthor": "all"` to repositories (immediate, covers the most common agent workflow)
+1. **Test locally** — set `"git.addAICoAuthor": "all"` in your own VS Code settings and verify trailers appear on commits from agent mode
 2. Copilot CLI already tags by default — no action needed
-3. For orgs using Claude Code — already tags by default
-4. For orgs using Cursor/Windsurf or wanting a safety net — deploy a `prepare-commit-msg` hook via `core.hooksPath` or a hook manager
-5. Build a periodic query (weekly/monthly) against GHES commit search to track AI PR percentage over time
+3. **Deploy fleet-wide via MDM** — push the setting as a managed default through Intune (see [MDM section above](#deploying-via-mdm-intune-example))
+4. **Set up the daily job** — schedule the AI leverage script as a GitHub Actions workflow or cron to start collecting data
