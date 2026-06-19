@@ -4,7 +4,7 @@ Utility scripts for measuring AI adoption and developer productivity metrics.
 
 | Script | What it gives you | When you need it |
 |--------|-------------------|----------|
-| `ai-leverage-daily.sh` | **AI leverage %** and rejection rate by scanning `Co-authored-by` trailers (catches all AI tools: Copilot coding agent, IDE, CLI, Claude Code) | Always — the only way to see IDE and CLI usage, any platform |
+| `ai-leverage-daily.sh` | **AI leverage %** and rejection rate by scanning `Co-authored-by` trailers (detects tools that emit trailers: Copilot coding agent, IDE, CLI, Claude Code) | Always — the only way to see IDE and CLI usage, any platform |
 | `copilot-cloud-agent-metrics.sh` | **Coding agent + code review metrics**: time-to-merge, review coverage, suggestion acceptance, daily active users | Add it on Cloud/EMU when using the coding agent or Copilot code review |
 
 `ai-leverage-daily.sh` is the baseline. Trailers are the only signal that captures a developer using Copilot in their editor or the CLI, so run it regardless of platform. `copilot-cloud-agent-metrics.sh` adds the velocity and quality metrics that trailers can't provide, using server-side data that only exists on Cloud/EMU.
@@ -210,7 +210,7 @@ See [ghes-vs-cloud-comparison.md](./ghes-vs-cloud-comparison.md) for detailed an
 | Dimension | `ai-leverage-daily.sh` | `copilot-cloud-agent-metrics.sh` |
 |-----------|------------------------|----------------------------------|
 | **Primary metric** | AI leverage %, AI rejection rate | Time-to-merge, review coverage, active users |
-| **AI tools covered** | All (Copilot coding agent + IDE + CLI + Claude) | Copilot platform features only |
+| **AI tools covered** | Trailer-emitting tools (Copilot coding agent + IDE + CLI + Claude) | Copilot platform features only |
 | **How** | Scans `Co-authored-by` trailers | Queries Copilot usage metrics API |
 | **Platform** | Any (GHES or Cloud) | Cloud/EMU only |
 | **Permissions** | `repo` scope | Org admin or Copilot metrics access |
@@ -229,7 +229,7 @@ Generates a short-lived GitHub App installation token from a private key. Used i
   --private-key ~/.config/ai-attribution/octodemo-app.pem
 ```
 
-Outputs the token to stdout. Requires only `openssl` and `curl` (no extra dependencies).
+Outputs the token to stdout. Requires `openssl`, `curl`, and `jq`.
 
 **API used:** `POST /app/installations/{installation_id}/access_tokens` — see [Create an installation access token for an app](https://docs.github.com/en/enterprise-cloud@latest/rest/apps/apps#create-an-installation-access-token-for-an-app).
 

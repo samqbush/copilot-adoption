@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: June 12, 2026*
+*Last updated: June 19, 2026*
 
 ## Key resources
 

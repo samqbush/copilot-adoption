@@ -1,7 +1,7 @@
 #!/bin/bash
 # generate-installation-token.sh
 # Generates a GitHub App installation token from a private key.
-# Uses only openssl (pre-installed on macOS/Linux) — no extra dependencies.
+# Requires: openssl, curl, jq (all pre-installed or easily available on macOS/Linux).
 #
 # Usage:
 #   ./generate-installation-token.sh --app-id 12345 --installation-id 67890 --private-key path/to/key.pem
