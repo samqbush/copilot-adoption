@@ -9,6 +9,7 @@ toc: true
 
 *Last updated: June 19, 2026*
 
+
 How to track which Pull Requests contain AI-authored commits on GitHub Enterprise Server, where Cloud/EMU-only PR metrics are unavailable.
 
 ---
@@ -271,20 +272,66 @@ A rising rejection rate for AI-attributed PRs (compared to non-AI PRs) could ind
 
 ---
 
-## What Cloud/EMU Gives You Instead
+## Measuring the Full Picture: Two Scripts, Two Signals
 
-For comparison, GitHub Enterprise Cloud provides native metrics via the [Copilot Metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics):
+AI leverage from `ai-leverage-daily.sh` (trailer scanning) captures **all** AI-attributed PRs — including those from the Copilot coding agent, which adds `Co-authored-by: Copilot` trailers to its commits. This gives you the core AI leverage metric on any platform.
 
-| Capability | GHES (this runbook) | Cloud/EMU (native) |
+`copilot-cloud-agent-metrics.sh` adds **metrics you can't get from trailers**: time-to-merge comparisons, code review coverage, suggestion acceptance rates, and daily active user counts. It queries the [Copilot Metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics), which is only available on Cloud/EMU.
+
+| Script | What it gives you | Platform |
 |---|---|---|
-| AI PR metrics | Manual query via trailers | [`total_merged_created_by_copilot`](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics) |
-| Time-to-merge comparison | DIY calculation | `median_minutes_to_merge_copilot_authored` |
-| Copilot code review tracking | Not available | `total_merged_reviewed_by_copilot` |
-| Per-user AI engagement | Not available | [Per-user metrics endpoints](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/copilot-usage-metrics/copilot-usage-metrics) |
-| Configuration required | VS Code setting (overridable) | None — works out of the box |
-| Accuracy | Depends on trailer presence (honesty system) | Server-side tracking (100% for coding agent) |
+| `ai-leverage-daily.sh` | AI leverage %, AI rejection rate, multi-tool coverage (Copilot + Claude) | Any (GHES or Cloud) |
+| `copilot-cloud-agent-metrics.sh` | Time-to-merge, code review stats, suggestion acceptance, daily active users | Cloud/EMU only |
 
-The native Cloud/EMU metrics track at the platform level. No client configuration, no trailers to manage, no opt-out risk.
+### When you need which
+
+| Scenario | Scripts needed |
+|---|---|
+| GHES customer | `ai-leverage-daily.sh` only |
+| Cloud/EMU, want AI leverage % only | `ai-leverage-daily.sh` only |
+| Cloud/EMU, want full ESSP metrics (velocity, quality, throughput) | **Both scripts** |
+
+### Real-world example: octodemo (June 18, 2026)
+
+Running both scripts against the same org on the same day:
+
+| Metric | `ai-leverage-daily.sh` | `copilot-cloud-agent-metrics.sh` |
+|---|---|---|
+| Total merged PRs | 23 | 23 |
+| AI-attributed merged | **8 (34.8%)** | **2 (8.7%)** |
+| AI rejection rate | 11.1% | — |
+| PRs reviewed by Copilot | — | 345 |
+| Median time to merge | — | 0.53 min |
+| Median TTM (Copilot-authored) | — | 10.25 min |
+| Daily active Copilot users | — | 812 |
+
+The trailer script found 8 AI PRs (including coding agent PRs). The Metrics API found only 2 `total_merged_created_by_copilot` — a narrower count that only includes PRs the coding agent fully created. The trailer script's higher number reflects IDE/CLI AI usage plus coding agent, giving the broader AI leverage picture.
+
+### What the Copilot Metrics API adds beyond trailers
+
+| Capability | `ai-leverage-daily.sh` | `copilot-cloud-agent-metrics.sh` |
+|---|---|---|
+| AI leverage (all tools) | ✅ | — (narrower: coding agent only) |
+| Coding agent PRs | ✅ (via trailer) | ✅ `total_merged_created_by_copilot` |
+| Time-to-merge comparison | ❌ | ✅ `median_minutes_to_merge_copilot_authored` |
+| Copilot code review | ❌ | ✅ `total_merged_reviewed_by_copilot` |
+| Review suggestion acceptance | ❌ | ✅ `total_copilot_applied_suggestions` |
+| Multi-tool coverage (Claude, etc.) | ✅ | ❌ Copilot only |
+| AI rejection rate | ✅ | ❌ |
+| Daily active users | ❌ | ✅ |
+| Works on GHES | ✅ | ❌ Cloud/EMU only |
+
+See [ai-commit-attribution/ghes-vs-cloud-comparison.md](./ai-commit-attribution/ghes-vs-cloud-comparison.md) for the detailed analysis.
+
+### Scripts
+
+Both scripts are in the [ai-commit-attribution/scripts/](./ai-commit-attribution/scripts/) directory:
+
+- **[`ai-leverage-daily.sh`](./ai-commit-attribution/scripts/ai-leverage-daily.sh)** — trailer scanning for IDE/CLI AI usage (any platform)
+- **[`copilot-cloud-agent-metrics.sh`](./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh)** — Copilot coding agent + code review metrics (Cloud/EMU only)
+- **[`generate-installation-token.sh`](./ai-commit-attribution/scripts/generate-installation-token.sh)** — GitHub App token generation
+
+See [ai-commit-attribution/github-app-setup.md](./ai-commit-attribution/github-app-setup.md) for GitHub App setup instructions (recommended for large orgs due to the 15,000 req/hr rate limit vs 5,000 for PATs).
 
 ---
 
@@ -293,4 +340,5 @@ The native Cloud/EMU metrics track at the platform level. No client configuratio
 1. **Test locally** — set `"git.addAICoAuthor": "all"` in your own VS Code settings and verify trailers appear on commits from agent mode
 2. Copilot CLI already tags by default — no action needed
 3. **Deploy fleet-wide via MDM** — push the setting as a managed default through Intune (see [MDM section above](#deploying-via-mdm-intune-example))
-4. **Set up the daily job** — schedule the AI leverage script as a GitHub Actions workflow or cron to start collecting data
+4. **Set up the daily job** — schedule `ai-leverage-daily.sh` as a GitHub Actions workflow or cron
+5. **If using Copilot coding agent or PR review on Cloud** — add `copilot-cloud-agent-metrics.sh` to your daily job to capture platform-level metrics
