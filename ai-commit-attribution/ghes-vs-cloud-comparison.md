@@ -79,8 +79,8 @@ They count different things, so the numbers differ. That difference is the usefu
 | PRs created | — | 396 | Not tracked by trailer scanning |
 | PRs created by Copilot | — | 18 | Not tracked by trailer scanning |
 | PRs reviewed by Copilot | — | 345 | Not tracked by trailer scanning |
-| Median time to merge | — | 0.53 min | Not tracked by trailer scanning |
-| Median TTM (Copilot-authored) | — | 10.25 min | Not tracked by trailer scanning |
+| Median time to merge | 142.5 min | 0.53 min | Different scopes: all merged PRs vs coding-agent PRs |
+| Median TTM (AI-attributed) | 98.3 min | 10.25 min | Trailer scan: any AI co-author; API: coding-agent-authored |
 | Code review suggestions | — | 103 | Not tracked by trailer scanning |
 | Daily active users | — | 812 | Not tracked by trailer scanning |
 
@@ -100,7 +100,7 @@ The trailer scanner found **8 AI-attributed merged PRs** while the Copilot usage
 - Does not count PRs where a human created the PR but used Copilot in their editor
 - Does not count Claude Code — it's a Copilot-specific metric
 
-**Key takeaway:** Use `ai-leverage-daily.sh` for the AI leverage percentage. Use `copilot-cloud-agent-metrics.sh` for the additional ESSP metrics that trailers can't provide (velocity, review quality, throughput).
+**Key takeaway:** Use `ai-leverage-daily.sh` for the AI leverage percentage and PR velocity (time-to-merge, computed from PR timestamps on any platform). Use `copilot-cloud-agent-metrics.sh` for the additional ESSP metrics trailers can't provide (review quality, throughput, coding-agent-scoped velocity).
 
 ---
 
@@ -112,8 +112,8 @@ The [Engineering System Success Playbook](https://github.com/resources/insights/
 |---|---|---|---|
 | **Activity** | AI leverage (% merged PRs with AI) | ✅ 34.8% | ✅ 8.7% (narrower definition) |
 | **Activity** | Daily active Copilot users | ❌ | ✅ 812 |
-| **Velocity** | Time to merge | ❌ | ✅ 0.53 min median |
-| **Velocity** | Time to merge (AI-authored) | ❌ | ✅ 10.25 min median |
+| **Velocity** | Time to merge | ✅ 142.5 min median | ✅ 0.53 min (coding-agent PRs) |
+| **Velocity** | Time to merge (AI-attributed) | ✅ 98.3 min median | ✅ 10.25 min (coding-agent PRs) |
 | **Quality** | AI rejection rate | ✅ 11.1% | ❌ |
 | **Quality** | Code review (suggestions/applied) | ❌ | ✅ 103 suggestions, 2 applied |
 | **Throughput** | PRs created | ❌ | ✅ 396 total, 18 by Copilot |
@@ -123,11 +123,12 @@ The [Engineering System Success Playbook](https://github.com/resources/insights/
 
 Trailer scanning has no view into these. You need the usage metrics API (Cloud/EMU):
 
-1. **Time-to-merge comparison** — is AI-authored code merging faster or slower? (On octodemo: Copilot-authored PRs take 10.25 min vs 0.53 min median — though this likely reflects different PR complexity rather than AI slowness)
-2. **Copilot code review adoption** — 345 PRs reviewed by Copilot out of 396 created (87% review coverage)
-3. **PR creation volume by Copilot** — 18 PRs created by Copilot coding agent
-4. **Code review suggestion acceptance** — only 2 of 103 suggestions applied (1.9% acceptance rate)
-5. **Daily active Copilot users** — 812 users active on this day
+1. **Copilot code review adoption** — 345 PRs reviewed by Copilot out of 396 created (87% review coverage)
+2. **PR creation volume by Copilot** — 18 PRs created by Copilot coding agent
+3. **Code review suggestion acceptance** — only 2 of 103 suggestions applied (1.9% acceptance rate)
+4. **Daily active Copilot users** — 812 users active on this day
+
+The trailer scan *does* compute overall and AI-attributed time-to-merge from each PR's `created_at`/`merged_at`, so velocity is not Cloud-only. The metrics API adds a time-to-merge value pre-scoped to coding-agent-authored PRs, useful when you want that subset broken out without filtering trailers yourself.
 
 ### What the metrics API can't tell you
 
@@ -189,9 +190,9 @@ The trailer scan only needs read access to commits and PRs (`repo` scope), which
 | **Accuracy** | Depends on trailers being present (honesty system) | Server-side tracking (100% for coding agent) |
 | **AI tools covered** | Copilot CLI, VS Code agent, Claude Code | Copilot only |
 | **AI definition** | "Any PR with an AI co-author trailer" | "PR created by Copilot coding agent" |
-| **ESSP coverage** | AI leverage + rejection rate | AI leverage + velocity + quality + throughput |
+| **ESSP coverage** | AI leverage + rejection rate + velocity | AI leverage + velocity + quality + throughput |
 | **Permissions needed** | `repo` scope | Org admin or Copilot metrics access |
 | **Platform** | Any (GHES or Cloud/EMU) | Cloud/EMU only |
 | **API cost** | ~2 calls per closed PR (via Search API) | 1-2 calls/day |
 
-Run the trailer scan everywhere — it is the only way to see IDE and CLI usage, and it works on any platform. On Cloud/EMU, add the usage metrics API when you have coding agent or code review activity to account for. The trailer scan gives you the broad AI leverage number and the rejection rate; the metrics API adds velocity, review quality, and throughput.
+Run the trailer scan everywhere — it is the only way to see IDE and CLI usage, and it works on any platform. It gives you the broad AI leverage number, the rejection rate, and PR velocity (time-to-merge from PR timestamps). On Cloud/EMU, add the usage metrics API when you have coding agent or code review activity to account for; it adds review quality, throughput, and a coding-agent-scoped velocity number.

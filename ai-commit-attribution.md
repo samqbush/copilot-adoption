@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Measuring AI in Pull Requests (Not Lines of Code)
+description: Measure AI's contribution to merged PRs with trailer scanning and the Copilot usage metrics API
 toc: true
 ---
 
@@ -8,9 +9,6 @@ toc: true
 {:.no_toc}
 
 *Last updated: June 19, 2026*
-
-
-A practical way to answer "how much are we using AI?" by measuring AI's contribution to Pull Requests instead of counting lines of code.
 
 ---
 
@@ -45,7 +43,7 @@ There are two ways to detect AI involvement in a PR, and you need both because t
 AI tools can add a `Co-authored-by` [trailer](https://docs.github.com/en/enterprise-cloud@latest/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) to commit messages. This is a standard Git feature. If the trailer lands on a commit, you can scan for it later. This catches IDE (VS Code) and Copilot CLI usage, and the Copilot coding agent too, since the agent tags its own commits.
 
 **2. The Copilot usage metrics API (Cloud/EMU only).**
-GitHub tracks the Copilot coding agent and Copilot code review server-side and exposes the counts through the [Copilot usage metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics). No trailers, no client configuration. The coding agent already shows up in the trailer scan, but the API gives you its exact count separately, plus review coverage and time-to-merge that trailers cannot provide.
+GitHub tracks the Copilot coding agent and Copilot code review server-side and exposes the counts through the [Copilot usage metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics). No trailers, no client configuration. The coding agent already shows up in the trailer scan, but the API gives you its exact count separately, plus review coverage and suggestion acceptance that the trailer scan cannot derive.
 
 Which detection method you need depends on which Copilot features are in play. That is what the two scripts below are for.
 
@@ -57,12 +55,12 @@ This guide ships two example scripts. Run one or both depending on which Copilot
 
 | Script | What it measures | When you need it |
 |---|---|---|
-| `ai-leverage-daily.sh` | AI leverage % and AI rejection rate by scanning `Co-authored-by` trailers (Copilot CLI, VS Code, Claude Code) | **Always.** This is the only way to see IDE and CLI AI usage. |
-| `copilot-cloud-agent-metrics.sh` | Coding agent PRs, code review coverage, suggestion acceptance, time-to-merge, daily active users | **Add it if you are on Cloud/EMU** and use the Copilot coding agent or Copilot code review. |
+| `ai-leverage-daily.sh` | AI leverage %, AI rejection rate, and median time-to-merge by scanning `Co-authored-by` trailers (Copilot CLI, VS Code, Claude Code) | **Always.** This is the only way to see IDE and CLI AI usage. |
+| `copilot-cloud-agent-metrics.sh` | Coding agent PRs, code review coverage, suggestion acceptance, daily active users | **Add it if you are on Cloud/EMU** and use the Copilot coding agent or Copilot code review. |
 
-`ai-leverage-daily.sh` is the baseline. Trailers are the only signal that captures a developer using Copilot in their editor or in the CLI, and that usage is invisible to the metrics API. Start here regardless of platform.
+`ai-leverage-daily.sh` is the baseline. Trailers are the only signal that captures a developer using Copilot in their editor or in the CLI, and that usage is invisible to the metrics API. It also computes median time-to-merge straight from each PR's `created_at` and `merged_at` timestamps, so you get PR velocity on any GitHub edition. Start here regardless of platform.
 
-`copilot-cloud-agent-metrics.sh` adds two things. First, it isolates the Copilot coding agent subset of your PRs, which you can subtract from the trailer total to see how much leverage comes from IDE and CLI usage. Second, it reports metrics trailers cannot provide at all: code review coverage, suggestion acceptance, and velocity numbers like time-to-merge. It only works on Cloud/EMU because the usage metrics API is Cloud-only.
+`copilot-cloud-agent-metrics.sh` adds two things. First, it isolates the Copilot coding agent subset of your PRs, which you can subtract from the trailer total to see how much leverage comes from IDE and CLI usage. Second, it reports metrics the trailer scan cannot derive: code review coverage, suggestion acceptance, daily active users, and a server-side time-to-merge pre-scoped to coding-agent PRs. It only works on Cloud/EMU because the usage metrics API is Cloud-only.
 
 > [!NOTE]
 > The scripts are example implementations meant for manual testing and as a starting point you can adapt. For ongoing measurement, run them on a daily schedule in whatever pipeline you already use. See [Running it on a schedule](#running-it-on-a-schedule).
@@ -88,8 +86,10 @@ This script finds recently closed PRs, then checks each one's commits for an AI 
 | Step | Endpoint | Docs |
 |---|---|---|
 | Find closed PRs in the org and time window | `GET /search/issues` | [Search issues and pull requests](https://docs.github.com/en/enterprise-cloud@latest/rest/search/search#search-issues-and-pull-requests) |
-| Get a PR's merge status (`merged_at` vs `closed_at`) | `GET /repos/{owner}/{repo}/pulls/{pull_number}` | [Get a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#get-a-pull-request) |
+| Get a PR's merge status and timestamps (`created_at`, `merged_at`, `closed_at`) | `GET /repos/{owner}/{repo}/pulls/{pull_number}` | [Get a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#get-a-pull-request) |
 | List a PR's commits to scan trailers | `GET /repos/{owner}/{repo}/pulls/{pull_number}/commits` | [List commits on a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#list-commits-on-a-pull-request) |
+
+The same PR response carries `created_at` and `merged_at`, so the script computes median time-to-merge locally — no Cloud-only API required.
 
 It needs read access to repository contents and pull requests (`repo` scope on a PAT, or Contents + Pull requests read on a GitHub App).
 
@@ -129,10 +129,12 @@ Trailer scanning only finds what is tagged. Copilot CLI tags commits by default,
 | **Copilot CLI** | Yes | `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` |
 | **VS Code agent mode** | No (opt-in) | `Co-authored-by: Copilot <copilot@github.com>` |
 | **Claude Code** | Yes | `Co-Authored-By: Claude <noreply@anthropic.com>` |
-| **Cursor agent** | No | none |
+| **Cursor agent** | Yes | `Made with Cursor` (not `Co-authored-by` format) |
 | **Windsurf agent** | No | none |
 
 VS Code shipped the setting default-on for a few weeks in spring 2026 ([PR 310226](https://github.com/microsoft/vscode/pull/310226) flipped the default to `all`), then walked it back to `off` ([PR 313931](https://github.com/microsoft/vscode/pull/313931)) after a debate over what `Co-authored-by` should mean for an AI. It is opt-in again today. Note the two different Copilot emails: the CLI uses the GitHub noreply address, while the VS Code setting uses `copilot@github.com`. Your scan pattern has to match both. The script uses `co-authored-by:.*(copilot|claude)`, which catches all of them.
+
+**Cursor is a special case.** Cursor's Agent does tag commits by default — its CLI config field [`attribution.attributeCommitsToAgent`](https://cursor.com/docs/cli/reference/configuration) defaults to `true` and adds a `Made with Cursor` trailer (with a matching `Made with Cursor` footer on PRs via `attributePRsToAgent`). The catch is the format: it is a `Made with Cursor` line, not a `Co-authored-by` trailer, so the default scan pattern above does **not** catch it. If your developers use Cursor, extend the scan to also match `made with cursor`. Cursor users can disable the trailer in Settings → Agents → Attribution, or by setting `attributeCommitsToAgent` to `false` in `~/.cursor/cli-config.json`.
 
 ### The VS Code setting
 
@@ -206,7 +208,7 @@ if (Test-Path $settingsPath) {
 ```
 
 > [!IMPORTANT]
-> Cursor and Windsurf do not add AI attribution trailers and do not expose a signal you can detect externally. Commits from those tools will not show up in your AI leverage number unless the developer adds a trailer by hand.
+> Cursor's Agent tags commits with a `Made with Cursor` trailer by default, but it is not in `Co-authored-by` format, so the default scan pattern misses it unless you extend the pattern to also match `made with cursor`. Windsurf does not add any AI attribution trailer and exposes no externally detectable signal, so its commits will not show up in your AI leverage number unless the developer adds a trailer by hand.
 
 ---
 
@@ -237,7 +239,9 @@ Output (stdout is clean JSON; progress goes to stderr):
   "ai_leverage_pct": 34.8,
   "total_closed_without_merge": 46,
   "ai_attributed_closed": 1,
-  "ai_rejection_rate_pct": 11.1
+  "ai_rejection_rate_pct": 11.1,
+  "median_time_to_merge_min": 142.5,
+  "median_ai_time_to_merge_min": 98.3
 }
 ```
 
@@ -245,6 +249,10 @@ Output (stdout is clean JSON; progress goes to stderr):
 |---|---|---|
 | AI leverage | AI-attributed merged PRs ÷ total merged PRs | Activity |
 | AI rejection rate | AI-attributed closed-without-merge ÷ all AI-attributed PRs | Quality |
+| Median time to merge | Median of `merged_at − created_at` across merged PRs | Velocity |
+| AI vs human velocity | `median_ai_time_to_merge_min` vs `median_time_to_merge_min` | Velocity |
+
+Time-to-merge comes from each PR's own `created_at` and `merged_at`, which the standard pulls API returns on any GitHub edition, so the baseline script reports velocity without the Cloud-only metrics API. Both medians are `null` when nothing merged in the window.
 
 A rising rejection rate for AI PRs, compared to non-AI PRs, can mean AI-generated code is not passing review. Treat it as a prompt to talk to the team, not a conclusion.
 
@@ -265,7 +273,7 @@ Pulls Copilot coding agent and code review metrics from the usage metrics API.
 ./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh octodemo --enterprise my-enterprise --28day
 ```
 
-The coding agent adds a `Co-authored-by: Copilot` trailer too, so its PRs already count toward the trailer scan's total. What this script adds is the breakdown. The coding-agent-only count (`total_merged_created_by_copilot`) lets you subtract that subset from the trailer total to see how much of your AI leverage comes from IDE, CLI, and Claude instead. It also reports things trailers cannot show at all: code review coverage (`total_reviewed_by_copilot`), suggestion acceptance, median time-to-merge, and daily active users. See the [scripts README](./ai-commit-attribution/README.md) for the full output schema and ESSP mapping.
+The coding agent adds a `Co-authored-by: Copilot` trailer too, so its PRs already count toward the trailer scan's total. What this script adds is the breakdown. The coding-agent-only count (`total_merged_created_by_copilot`) lets you subtract that subset from the trailer total to see how much of your AI leverage comes from IDE, CLI, and Claude instead. It also reports things the trailer scan cannot derive: code review coverage (`total_reviewed_by_copilot`), suggestion acceptance, daily active users, and a server-side time-to-merge pre-scoped to coding-agent PRs. (Overall and AI-attributed time-to-merge for all PRs already comes from the baseline scan.) See the [scripts README](./ai-commit-attribution/README.md) for the full output schema and ESSP mapping.
 
 ### Running it on a schedule
 
@@ -290,11 +298,11 @@ Trailer scanning counts **any** PR with an AI co-author, so it is the superset f
 | AI-attributed merged | 8 (34.8%) | 2 (8.7%) |
 | AI rejection rate | 11.1% | — |
 | PRs reviewed by Copilot | — | 345 |
-| Median time to merge | — | 0.53 min |
-| Median TTM (Copilot-authored) | — | 10.25 min |
+| Median time to merge | 142.5 min | 0.53 min |
+| Median TTM (AI-attributed) | 98.3 min | 10.25 min |
 | Daily active Copilot users | — | 812 |
 
-The trailer scan found 8 AI PRs; the metrics API found 2. Both are right, and the gap is the useful part. The coding agent tags its commits, so its 2 PRs are already inside the trailer scan's 8. Subtract the agent count and you learn that 6 of the 8 came from developers using Copilot in their editor or the CLI. That split is exactly why you run the trailer scan everywhere and add the metrics API when you have coding agent or review activity to break out.
+The trailer scan found 8 AI PRs; the metrics API found 2. Both are right, and the gap is the useful part. The coding agent tags its commits, so its 2 PRs are already inside the trailer scan's 8. Subtract the agent count and you learn that 6 of the 8 came from developers using Copilot in their editor or the CLI. That split is exactly why you run the trailer scan everywhere and add the metrics API when you have coding agent or review activity to break out. The two time-to-merge columns differ because they measure different sets: the baseline median covers every merged PR (and its AI-attributed subset), while the metrics API median is scoped to coding-agent-authored PRs only.
 
 See [ghes-vs-cloud-comparison.md](./ai-commit-attribution/ghes-vs-cloud-comparison.md) for the full side-by-side with real data.
 
@@ -306,6 +314,7 @@ See [ghes-vs-cloud-comparison.md](./ai-commit-attribution/ghes-vs-cloud-comparis
 - **`git.addAICoAuthor` is not enforceable.** It is a regular VS Code setting, not an [enterprise policy](https://code.visualstudio.com/docs/enterprise/policies). Developers can turn it off.
 - **Trailers are removable.** A developer can edit a commit message before pushing. This is an honesty system, not an audit trail.
 - **No standard trailer yet.** The industry is split between `Co-authored-by`, `Assisted-by`, and `AI-Generated-By`. The Linux kernel is looking at `Assisted-by`; Microsoft is tracking it in [vscode#313962](https://github.com/microsoft/vscode/issues/313962).
-- **Cursor and Windsurf are invisible.** Neither tags commits nor exposes a detectable signal.
+- **Cursor uses a non-standard trailer.** Cursor's Agent tags commits with `Made with Cursor` by default ([`attributeCommitsToAgent`](https://cursor.com/docs/cli/reference/configuration) defaults to `true`), but it is not a `Co-authored-by` trailer, so the default scan pattern misses it. Extend the pattern to match `made with cursor` if you have Cursor users, and note developers can disable it.
+- **Windsurf is invisible.** It neither tags commits nor exposes a detectable signal.
 
 None of this makes the number useless. It makes it a directional adoption metric rather than a compliance audit. If you need an enforceable, server-side count, that is what the Copilot usage metrics API gives you on Cloud/EMU, within its narrower coding-agent definition.

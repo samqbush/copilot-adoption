@@ -1,5 +1,5 @@
 title: GitHub Copilot Adoption Resources
-description: "Curated resources for rolling out GitHub Copilot at scale — with links to official documentation and unique cost management and user management guides"
+description: "Guides for cost management, AI commit attribution, and OpenTelemetry monitoring — plus curated links to official Copilot rollout documentation"
 theme: jekyll-theme-cayman
 baseurl: "/copilot-adoption"
 url: "https://samqbush.github.io"

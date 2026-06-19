@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Managing Copilot usage-based billing
+description: AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
 toc: true
 ---
 
@@ -8,8 +9,6 @@ toc: true
 {:.no_toc}
 
 *Last updated: June 12, 2026*
-
-GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits (AICs) where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
 
 ## Key resources
 

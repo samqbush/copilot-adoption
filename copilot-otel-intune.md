@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Copilot OpenTelemetry via Intune
+description: Centrally deploy OpenTelemetry monitoring for Copilot across Windows and macOS using Microsoft Intune
 toc: true
 ---
 
@@ -8,8 +9,6 @@ toc: true
 {:.no_toc}
 
 *Last updated: June 19, 2026*
-
-How to centrally manage OpenTelemetry (OTel) monitoring for GitHub Copilot across a fleet of developer machines — both **VS Code Copilot agents** and the **standalone Copilot CLI** — using **Microsoft Intune** on Windows and macOS.
 
 ---
 

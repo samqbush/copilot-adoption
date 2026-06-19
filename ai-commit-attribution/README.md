@@ -63,7 +63,9 @@ JSON report to stdout:
   "ai_leverage_pct": 34.8,
   "total_closed_without_merge": 46,
   "ai_attributed_closed": 1,
-  "ai_rejection_rate_pct": 11.1
+  "ai_rejection_rate_pct": 11.1,
+  "median_time_to_merge_min": 142.5,
+  "median_ai_time_to_merge_min": 98.3
 }
 ```
 
@@ -71,6 +73,10 @@ JSON report to stdout:
 |--------|---------|-----------|
 | AI Leverage | AI-merged PRs ÷ total merged PRs | Activity |
 | AI Rejection Rate | AI-closed-without-merge ÷ all AI PRs | Quality |
+| PR Velocity (time-to-merge) | Median of `merged_at − created_at` across merged PRs | Velocity |
+| AI vs Human velocity delta | Compare `median_ai_time_to_merge_min` vs `median_time_to_merge_min` | Velocity |
+
+Time-to-merge is computed client-side from the PR's own `created_at` and `merged_at` timestamps, which the standard pulls API returns on **any** GitHub edition (GHES, GHEC, GHEC+EMU). It does not require the Cloud-only usage metrics API. Values are `null` when no PRs merged in the window.
 
 Progress and debug info goes to stderr, so you can pipe stdout directly:
 ```bash

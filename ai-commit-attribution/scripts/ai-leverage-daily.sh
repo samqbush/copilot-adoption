@@ -81,6 +81,27 @@ TOTAL_CLOSED=0
 AI_MERGED=0
 AI_CLOSED=0
 
+# Time-to-merge accumulators (seconds), collected for median calculation
+MERGE_DURATIONS=()
+AI_MERGE_DURATIONS=()
+
+# Median of a list of integers passed as arguments. Echoes "null" if empty.
+median() {
+  local n=$#
+  if [[ "$n" -eq 0 ]]; then
+    echo "null"
+    return
+  fi
+  local sorted
+  sorted=$(printf '%s\n' "$@" | sort -n)
+  if (( n % 2 == 1 )); then
+    echo "$sorted" | awk -v idx=$(( n / 2 + 1 )) 'NR==idx { print; exit }'
+  else
+    echo "$sorted" | awk -v lo=$(( n / 2 )) -v hi=$(( n / 2 + 1 )) \
+      'NR==lo { a=$1 } NR==hi { print (a + $1) / 2; exit }'
+  fi
+}
+
 echo "Scanning org: $ORG (PRs closed since $SINCE)" >&2
 
 # Check if any commit in a PR has an AI co-author trailer
@@ -150,8 +171,16 @@ while IFS= read -r ITEM; do
 
   if [[ "$MERGED_AT" != "null" ]]; then
     ((TOTAL_MERGED++)) || true
+    # Time to merge = merged_at - created_at, in seconds. Both fields come from
+    # the standard pulls API, so this works on any GitHub edition (no Cloud API).
+    DURATION=$(echo "$PR_DETAIL" | jq -r \
+      'if .merged_at and .created_at then ((.merged_at | fromdateiso8601) - (.created_at | fromdateiso8601)) else empty end')
+    if [[ -n "$DURATION" ]]; then
+      MERGE_DURATIONS+=("$DURATION")
+    fi
     if pr_has_ai "$REPO" "$PR_NUM"; then
       ((AI_MERGED++)) || true
+      [[ -n "$DURATION" ]] && AI_MERGE_DURATIONS+=("$DURATION")
       echo "  [$PR_IDX/$PR_COUNT] ✓ $REPO#$PR_NUM — AI-attributed MERGE" >&2
     else
       echo "  [$PR_IDX/$PR_COUNT]   $REPO#$PR_NUM — merged" >&2
@@ -178,6 +207,22 @@ AI_LEVERAGE=$(awk "BEGIN { if ($TOTAL_MERGED > 0) printf \"%.1f\", $AI_MERGED * 
 AI_TOTAL=$((AI_MERGED + AI_CLOSED))
 AI_REJECTION=$(awk "BEGIN { if ($AI_TOTAL > 0) printf \"%.1f\", $AI_CLOSED * 100.0 / $AI_TOTAL; else print \"0.0\" }")
 
+# Median time-to-merge, computed client-side from PR timestamps. Convert
+# seconds to minutes (rounded to 1 decimal); emit JSON null when no data.
+MEDIAN_TTM_SEC=$(median ${MERGE_DURATIONS[@]+"${MERGE_DURATIONS[@]}"})
+MEDIAN_AI_TTM_SEC=$(median ${AI_MERGE_DURATIONS[@]+"${AI_MERGE_DURATIONS[@]}"})
+to_minutes() {
+  if [[ "$1" == "null" ]]; then
+    echo "null"
+  else
+    awk -v s="$1" 'BEGIN { printf "%.1f", s / 60.0 }'
+  fi
+}
+MEDIAN_TTM_MIN=$(to_minutes "$MEDIAN_TTM_SEC")
+MEDIAN_AI_TTM_MIN=$(to_minutes "$MEDIAN_AI_TTM_SEC")
+
+echo "  Median time-to-merge: ${MEDIAN_TTM_MIN} min (AI-attributed: ${MEDIAN_AI_TTM_MIN} min)" >&2
+
 # Output JSON report to stdout
 cat <<EOF
 {
@@ -190,6 +235,8 @@ cat <<EOF
   "ai_leverage_pct": $AI_LEVERAGE,
   "total_closed_without_merge": $TOTAL_CLOSED,
   "ai_attributed_closed": $AI_CLOSED,
-  "ai_rejection_rate_pct": $AI_REJECTION
+  "ai_rejection_rate_pct": $AI_REJECTION,
+  "median_time_to_merge_min": $MEDIAN_TTM_MIN,
+  "median_ai_time_to_merge_min": $MEDIAN_AI_TTM_MIN
 }
 EOF
