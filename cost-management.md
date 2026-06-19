@@ -1,15 +1,14 @@
 ---
 layout: default
 title: Managing Copilot usage-based billing
+description: AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
 toc: true
 ---
 
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: June 12, 2026*
-
-GitHub Copilot usage-based billing (UBB) uses a shared pool of AI Credits (AICs) where all licensed users draw from a central enterprise pool. When the pool runs out, metered billing kicks in, and layered budgets control what happens next.
+*Last updated: June 19, 2026*
 
 ## Key resources
 
@@ -263,9 +262,10 @@ Publish a simple end-of-month summary ("Pool was 74% consumed, no one was blocke
 Budgets control how much each user *can* spend — but the most effective cost lever is making every credit count. Well-scoped agent sessions, deliberate model selection, and deterministic guardrails (tests, linters, security scans) all reduce retries and wasted tokens, which directly lowers credit consumption without limiting developer productivity.
 
 Key resources for developers:
-
+**GitHub Docs**
+- **Optimize AI usage** — GitHub's official five strategies for higher-quality agents that complete tasks in fewer attempts: model selection, prompt guidance, the research-plan-implement workflow, deterministic guardrails, and concise `copilot-instructions.md` files: [Optimize AI usage](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/optimize-ai-usage)
+**Field Maintained Information**
 - **Interactive token optimization guide** — Scenarios, a cost calculator, a model-selection playbook, and copy-paste templates: [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html)
-- **Optimize AI usage** — GitHub's five strategies for higher-quality agents that complete tasks in fewer attempts: model selection, prompt guidance, the research-plan-implement workflow, deterministic guardrails, and concise `copilot-instructions.md` files: [Optimize AI usage](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/optimize-ai-usage)
 
 > [!TIP]
 > Teams that invest in agent quality guardrails often see **fewer retries and lower total token spend** — even when individual steps use slightly more tokens upfront. Pair this with the budget strategy above: when power users hit their limits less often, you spend less time adjusting budgets and more time shipping. For developers who want hands-on practice, share the [Context Engineering Lab](https://copilot-academy.github.io/labs/context-engineering-lab) — a 2-hour workshop on measuring and reducing token consumption.
@@ -298,6 +298,3 @@ When someone reports being blocked, work through these checks in order:
 > [!NOTE]
 > A common misconception is that placing a user in a Cost Center with a higher budget will let them exceed their Universal User Budget. It won't. Cost Center budgets track overage spend, not pooled entitlement usage. The only way to give a user more headroom within the pool is to raise their Universal User Budget or assign an Individual User Budget.
 
----
-
-*Budget guidance adapted from [xrvk](https://github.com/xrvk)*

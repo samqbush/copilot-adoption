@@ -1,6 +1,7 @@
 ---
 layout: default
 title: GitHub Copilot Adoption Resources
+description: Guides for cost management, AI commit attribution, and OpenTelemetry monitoring — plus curated links to official Copilot rollout documentation
 ---
 
 > [!NOTE]
@@ -26,5 +27,7 @@ The highest-impact adoption strategies focus on raising the floor across your or
 
 The following pages cover topics not yet addressed by official documentation and remain actively maintained.
 
-- [Strategies for Managing Copilot Usage-Based Billing](./cost-management) — Practical guide to AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
-- [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html) — Interactive guide to token optimization with context rot scenarios, a cost calculator, a model-selection playbook, and copy-paste templates for reducing token consumption
+- [Managing Copilot Usage-Based Billing](./cost-management)
+- [Measuring AI in Pull Requests](./ai-commit-attribution)
+- [Copilot OpenTelemetry via Intune](./copilot-otel-intune)
+
