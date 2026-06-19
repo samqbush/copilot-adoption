@@ -1,56 +1,150 @@
 ---
 layout: default
-title: AI Commit Attribution — GHES Runbook
+title: Measuring AI in Pull Requests (Not Lines of Code)
 toc: true
 ---
 
-# AI Commit Attribution — GHES Runbook
+# Measuring AI in Pull Requests (Not Lines of Code)
 {:.no_toc}
 
 *Last updated: June 19, 2026*
 
 
-How to track which Pull Requests contain AI-authored commits on GitHub Enterprise Server, where Cloud/EMU-only PR metrics are unavailable.
+A practical way to answer "how much are we using AI?" by measuring AI's contribution to Pull Requests instead of counting lines of code.
 
 ---
 
-## Why This Matters
+## The Problem: The Wrong Question
 
-GitHub Enterprise Cloud exposes native API metrics for AI-attributed PRs — fields like `total_merged_created_by_copilot` in the [Copilot Metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics). GHES customers don't have access to these metrics.
+A leader reads that "47% of our code is written by AI" and asks the Copilot admin to prove it. The admin opens the Copilot dashboard, finds a lines-suggested or lines-accepted number, and tries to turn it into a percentage of the codebase.
 
-However, the underlying mechanism is portable: AI tools add a `Co-authored-by` [trailer](https://docs.github.com/en/enterprise-cloud@latest/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) to git commit messages. This is a standard Git feature that works on any platform. If you make sure these trailers land on commits and then query for them, you get equivalent visibility on GHES.
+That number does not mean what people think it means. Lines of code is a bad unit for this question:
+
+- **Accepted suggestions are not kept code.** A developer can accept an inline completion, then rewrite or delete it before committing. The dashboard still counts the acceptance.
+- **Lines are not value.** A 200-line generated boilerplate file and a 5-line bug fix that saves the weekend are not comparable, but LoC treats the big file as 40x more "AI."
+- **It rewards the wrong behavior.** Optimizing for "lines written by AI" pushes teams toward verbose, generated code, which is the opposite of what you want.
+- **It is not auditable.** There is no way to point at a specific commit and say "this line was AI and that one was not."
+
+So when a leader asks "how much are we using AI?", counting lines sends you down a path that produces a number you cannot defend.
+
+## The Better Question: AI Leverage
+
+GitHub's [Engineering System Success Playbook](https://github.com/resources/insights/engineering-system-success-playbook) (ESSP) frames the useful metric as **AI leverage**: the share of merged Pull Requests that involved AI. The [Well-Architected Framework](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/) summarizes the same idea.
+
+The PR is the right unit because it is the unit of shipped work. A PR got reviewed, merged, and went to production. Ask "what percentage of our merged PRs had AI involved?" and you get a number you can actually defend: you can list the exact PRs behind it, and it does not lurch around just because someone generated one big boilerplate file. It tracks AI's reach into real output instead of counting keystrokes.
+
+This guide shows how to measure AI leverage across the Copilot features your developers actually use.
 
 ---
 
-## Tool Landscape: What Tags Commits Today?
+## How AI Shows Up in a PR
 
-| Tool | Adds trailer by default? | Trailer format | Source |
-|---|---|---|---|
-| **Copilot CLI** | ✅ Yes | `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` | Built into CLI system prompt |
-| **VS Code Agent Mode** | ❌ No (opt-in) | `Co-authored-by: Copilot <copilot@github.com>` | Was default in [v1.118](https://code.visualstudio.com/updates/v1_118) (April 2026), [reverted in v1.119](https://github.com/microsoft/vscode/pull/310226) after community backlash (372 👎). Opt-in via `git.addAICoAuthor` setting. |
-| **Claude Code** | ✅ Yes | `Co-Authored-By: Claude <noreply@anthropic.com>` | Default on; disable with `attribution.commits: false` in [Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings) |
-| **Cursor Agent** | ❌ No | — | No automatic attribution as of June 2026 |
-| **Windsurf Agent** | ❌ No | — | No automatic attribution as of June 2026 |
+There are two ways to detect AI involvement in a PR, and you need both because they cover different Copilot features.
 
+**1. Co-authored-by trailers (any platform).**
+AI tools can add a `Co-authored-by` [trailer](https://docs.github.com/en/enterprise-cloud@latest/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) to commit messages. This is a standard Git feature. If the trailer lands on a commit, you can scan for it later. This catches IDE (VS Code) and Copilot CLI usage, and the Copilot coding agent too, since the agent tags its own commits.
+
+**2. The Copilot usage metrics API (Cloud/EMU only).**
+GitHub tracks the Copilot coding agent and Copilot code review server-side and exposes the counts through the [Copilot usage metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics). No trailers, no client configuration. The coding agent already shows up in the trailer scan, but the API gives you its exact count separately, plus review coverage and time-to-merge that trailers cannot provide.
+
+Which detection method you need depends on which Copilot features are in play. That is what the two scripts below are for.
+
+---
+
+## The Two Scripts
+
+This guide ships two example scripts. Run one or both depending on which Copilot features your developers use.
+
+| Script | What it measures | When you need it |
+|---|---|---|
+| `ai-leverage-daily.sh` | AI leverage % and AI rejection rate by scanning `Co-authored-by` trailers (Copilot CLI, VS Code, Claude Code) | **Always.** This is the only way to see IDE and CLI AI usage. |
+| `copilot-cloud-agent-metrics.sh` | Coding agent PRs, code review coverage, suggestion acceptance, time-to-merge, daily active users | **Add it if you are on Cloud/EMU** and use the Copilot coding agent or Copilot code review. |
+
+`ai-leverage-daily.sh` is the baseline. Trailers are the only signal that captures a developer using Copilot in their editor or in the CLI, and that usage is invisible to the metrics API. Start here regardless of platform.
+
+`copilot-cloud-agent-metrics.sh` adds two things. First, it isolates the Copilot coding agent subset of your PRs, which you can subtract from the trailer total to see how much leverage comes from IDE and CLI usage. Second, it reports metrics trailers cannot provide at all: code review coverage, suggestion acceptance, and velocity numbers like time-to-merge. It only works on Cloud/EMU because the usage metrics API is Cloud-only.
 
 > [!NOTE]
-> **Note the different email addresses**: Copilot CLI uses the GitHub noreply format (`223556219+Copilot@users.noreply.github.com`) while VS Code's built-in setting uses `copilot@github.com`. Both are valid, but your query patterns need to match both.
+> The scripts are example implementations meant for manual testing and as a starting point you can adapt. For ongoing measurement, run them on a daily schedule in whatever pipeline you already use. See [Running it on a schedule](#running-it-on-a-schedule).
+
+### Picking your scripts
+
+| Your setup | Scripts to run |
+|---|---|
+| GHES, or developers only use IDE/CLI | `ai-leverage-daily.sh` |
+| Cloud/EMU, want AI leverage % only | `ai-leverage-daily.sh` |
+| Cloud/EMU, using coding agent and/or Copilot code review | both |
 
 ---
 
-## Configuration: Ensuring AI Commits Are Tagged
+## Underlying APIs
 
-### VS Code Setting (IDE-Level)
+The scripts are examples. If you want to build your own tooling, here are the exact endpoints each one calls so you do not have to read the source. All links point to the GitHub REST API reference.
 
-The VS Code Git extension has a built-in [`git.addAICoAuthor`](https://github.com/microsoft/vscode/blob/main/extensions/git/package.json) setting with three values:
+### ai-leverage-daily.sh
+
+This script finds recently closed PRs, then checks each one's commits for an AI co-author trailer.
+
+| Step | Endpoint | Docs |
+|---|---|---|
+| Find closed PRs in the org and time window | `GET /search/issues` | [Search issues and pull requests](https://docs.github.com/en/enterprise-cloud@latest/rest/search/search#search-issues-and-pull-requests) |
+| Get a PR's merge status (`merged_at` vs `closed_at`) | `GET /repos/{owner}/{repo}/pulls/{pull_number}` | [Get a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#get-a-pull-request) |
+| List a PR's commits to scan trailers | `GET /repos/{owner}/{repo}/pulls/{pull_number}/commits` | [List commits on a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#list-commits-on-a-pull-request) |
+
+It needs read access to repository contents and pull requests (`repo` scope on a PAT, or Contents + Pull requests read on a GitHub App).
+
+### copilot-cloud-agent-metrics.sh
+
+This script pulls pre-aggregated PR metrics from the Copilot usage metrics reports. Each endpoint returns `download_links` to an NDJSON report that the script then downloads and parses.
+
+| Report | Endpoint | Docs |
+|---|---|---|
+| Org, single day | `GET /orgs/{org}/copilot/metrics/reports/organization-1-day?day=YYYY-MM-DD` | [Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics) |
+| Org, 28-day rolling | `GET /orgs/{org}/copilot/metrics/reports/organization-28-day/latest` | [Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics) |
+| Enterprise, single day | `GET /enterprises/{enterprise}/copilot/metrics/reports/enterprise-1-day?day=YYYY-MM-DD` | [Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics) |
+| Enterprise, 28-day rolling | `GET /enterprises/{enterprise}/copilot/metrics/reports/enterprise-28-day/latest` | [Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics) |
+
+It needs the **Copilot usage metrics** policy enabled, plus org admin, billing manager, or the "View Copilot Metrics" permission. A PAT needs `manage_billing:copilot` or `read:enterprise`.
+
+### GitHub App auth (used by both scripts)
+
+If you authenticate as a GitHub App for the higher rate limit, both scripts call one more endpoint to mint a token from your App's private key.
+
+| Step | Endpoint | Docs |
+|---|---|---|
+| Create an installation access token | `POST /app/installations/{installation_id}/access_tokens` | [Create an installation access token](https://docs.github.com/en/enterprise-cloud@latest/rest/apps/apps#create-an-installation-access-token-for-an-app) |
+
+See [github-app-setup.md](./ai-commit-attribution/github-app-setup.md) for the one-time App creation steps.
+
+---
+
+## Making IDE Usage Measurable
+
+Trailer scanning only finds what is tagged. Copilot CLI tags commits by default, but VS Code does not. If you want IDE Copilot usage to show up in your AI leverage number, you have to turn the trailer on and push it to your developers.
+
+### Which tools tag commits today
+
+| Tool | Adds trailer by default? | Trailer format |
+|---|---|---|
+| **Copilot CLI** | Yes | `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` |
+| **VS Code agent mode** | No (opt-in) | `Co-authored-by: Copilot <copilot@github.com>` |
+| **Claude Code** | Yes | `Co-Authored-By: Claude <noreply@anthropic.com>` |
+| **Cursor agent** | No | none |
+| **Windsurf agent** | No | none |
+
+VS Code shipped the setting default-on for a few weeks in spring 2026 ([PR 310226](https://github.com/microsoft/vscode/pull/310226) flipped the default to `all`), then walked it back to `off` ([PR 313931](https://github.com/microsoft/vscode/pull/313931)) after a debate over what `Co-authored-by` should mean for an AI. It is opt-in again today. Note the two different Copilot emails: the CLI uses the GitHub noreply address, while the VS Code setting uses `copilot@github.com`. Your scan pattern has to match both. The script uses `co-authored-by:.*(copilot|claude)`, which catches all of them.
+
+### The VS Code setting
+
+VS Code's Git extension has a [`git.addAICoAuthor`](https://github.com/microsoft/vscode/blob/main/extensions/git/package.json) setting:
 
 | Value | Behavior |
 |---|---|
-| `"off"` | Never add trailer **(default)** |
-| `"chatAndAgent"` | Add trailer when code from chat or agent edits is included |
-| `"all"` | Add trailer when any AI-generated code is included (inline completions, chat, and agent edits) |
+| `"off"` | Never add the trailer (default) |
+| `"chatAndAgent"` | Add the trailer when code from chat or agent edits is included |
+| `"all"` | Add the trailer when any AI-generated code is included, including inline completions |
 
-Test locally by adding it to your VS Code user settings:
+Test it locally first:
 
 ```json
 // VS Code user settings (Cmd+Shift+P → "Preferences: Open User Settings (JSON)")
@@ -59,17 +153,11 @@ Test locally by adding it to your VS Code user settings:
 }
 ```
 
-**Key constraint: This is NOT an enforceable enterprise policy.** The VS Code [enterprise policy allowlist](https://code.visualstudio.com/docs/enterprise/policies) does not include `git.addAICoAuthor`. This means:
+Make a commit from agent mode and confirm the trailer appears.
 
-- It will **not** appear in ADMX/Group Policy templates or Intune Settings Catalog
-- It **cannot** be locked — developers can override it in their user settings
-- It will **not** show the "managed by your organization" lock icon in VS Code
+### Deploying it fleet-wide via MDM
 
-This is the same constraint as [Copilot OpenTelemetry settings](https://code.visualstudio.com/docs/agents/guides/monitoring-agents) — you can push it as an overridable default, but you cannot enforce it. The [Copilot OpenTelemetry via Intune](./copilot-otel-intune) guide covers the full Intune deployment pattern; the MDM scripts below follow that same approach for `git.addAICoAuthor`.
-
-#### Deploying via MDM (Intune example)
-
-Push `git.addAICoAuthor` as a default into each developer's VS Code `settings.json` via an MDM script.
+`git.addAICoAuthor` is a regular VS Code setting, not an enterprise policy. It is not on the VS Code [policy allowlist](https://code.visualstudio.com/docs/enterprise/policies), so it will not appear in ADMX/Group Policy or the Intune Settings Catalog, and you cannot lock it. You can still push it as a default through an MDM script, the same approach the [Copilot OpenTelemetry via Intune](./copilot-otel-intune) guide uses. Developers can override it, but most will not bother, which is fine for an adoption-measurement use case.
 
 **macOS** — Intune → Devices → Scripts → shell script, run as root:
 
@@ -117,228 +205,107 @@ if (Test-Path $settingsPath) {
 }
 ```
 
-> [!NOTE]
-> These are overridable defaults. A developer can change the setting in their VS Code preferences. For observability use cases (measuring AI adoption) this is acceptable — most developers won't bother overriding it. For compliance/audit requirements where override is unacceptable, the server-side metrics on Cloud/EMU are the only enforceable path.
-
 > [!IMPORTANT]
-> **Known gap:** Cursor and Windsurf do not add AI attribution trailers and do not expose environment signals that would allow external detection. Commits from those tools will not show up in AI leverage queries unless the developer manually adds a trailer.
+> Cursor and Windsurf do not add AI attribution trailers and do not expose a signal you can detect externally. Commits from those tools will not show up in your AI leverage number unless the developer adds a trailer by hand.
 
 ---
 
-## Measuring AI Leverage: Querying PRs on GHES
+## Running the Scripts
 
-Once trailers are landing on commits, you can measure what GitHub's [Engineering System Success Playbook](https://github.com/resources/insights/engineering-system-success-playbook) (ESSP) calls **AI leverage** — the percentage of merged PRs that contain at least one AI-authored commit.
+### ai-leverage-daily.sh
 
-See also: [Well-Architected Framework: Engineering System Metrics](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/) for a TLDR of the ESSP
-
-The goal: **What percentage of merged PRs in a given period contained at least one AI-authored commit?**
-
-### Trailer Patterns to Search For
-
-Different tools use different trailer formats. Your queries need to match all variants in use:
-
-| Tool | Trailer format |
-|---|---|
-| Copilot CLI | `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` |
-| VS Code (`git.addAICoAuthor`) | `Co-authored-by: Copilot <copilot@github.com>` |
-| Claude Code | `Co-Authored-By: Claude <noreply@anthropic.com>` |
-
-A broad match pattern that catches both Copilot trailer variants: `Co-authored-by:.*Copilot` — this works because "Copilot" appears as the author name in both formats, before the email address.
-
-### Approach: Daily GHES REST API Job
-
-Run this as a daily GitHub Actions workflow or cron job. The script iterates all repos in the org, pulls closed PRs from the last 24 hours, classifies each as merged or closed-without-merge, and checks commit messages for Copilot trailers.
-
-This gives you two signals from the [ESSP](https://github.com/resources/insights/engineering-system-success-playbook):
-- **AI leverage (throughput)** — what % of merged PRs had AI involvement?
-- **AI rejection rate (quality)** — what % of AI-attributed PRs were closed without merging? A high rejection rate may indicate AI-generated code that doesn't meet quality standards.
+Scans every repo's recently closed PRs and reports the share that had an AI co-author trailer.
 
 ```bash
-#!/bin/bash
-# ai-leverage-daily.sh
-# Daily job: calculates AI leverage and AI rejection rate for an org on GHES.
-# Designed for cron / GitHub Actions. Processes the previous day's closed PRs.
-#
-# Usage: GHES_TOKEN=xxx GHES_HOSTNAME=github.example.com ./ai-leverage-daily.sh MY_ORG
-#
-# Output: JSON report to stdout (pipe to file, dashboard, or artifact)
+# Uses your gh CLI auth or GH_TOKEN
+./ai-commit-attribution/scripts/ai-leverage-daily.sh octodemo
 
-set -euo pipefail
-
-ORG="${1:?Usage: $0 <org>}"
-SINCE=$(date -u -v-1d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%dT%H:%M:%SZ)
-API="https://${GHES_HOSTNAME}/api/v3"
-AUTH="Authorization: token ${GHES_TOKEN}"
-ACCEPT="Accept: application/vnd.github+json"
-
-TOTAL_MERGED=0
-TOTAL_CLOSED=0
-AI_MERGED=0
-AI_CLOSED=0
-
-# Paginated GET — returns all pages concatenated as a JSON array
-paginate() {
-  local url="$1" page=1 sep="["
-  while true; do
-    local body
-    body=$(curl -s -H "$AUTH" -H "$ACCEPT" "${url}&page=${page}&per_page=100")
-    local count
-    count=$(echo "$body" | jq 'length')
-    echo "$body" | jq -c '.[]' | while read -r item; do echo "${sep}${item}"; sep=","; done
-    [[ "$count" -lt 100 ]] && break
-    ((page++))
-    sleep 0.3
-  done
-  echo "]"
-}
-
-# Check if any commit in a PR has a Copilot trailer
-pr_has_ai() {
-  local repo="$1" pr_num="$2"
-  curl -s -H "$AUTH" -H "$ACCEPT" "$API/repos/$repo/pulls/$pr_num/commits?per_page=100" | \
-    jq -r '[.[].commit.message] | join("\n")' | \
-    grep -qi "co-authored-by:.*copilot" && return 0 || return 1
-}
-
-# Get all repos in the org
-REPOS=$(curl -s -H "$AUTH" -H "$ACCEPT" "$API/orgs/$ORG/repos?type=all&per_page=100" | \
-  jq -r '.[].full_name')
-
-for REPO in $REPOS; do
-  # Fetch PRs closed/merged since yesterday
-  PRS_JSON=$(curl -s -H "$AUTH" -H "$ACCEPT" \
-    "$API/repos/$REPO/pulls?state=closed&sort=updated&direction=desc&per_page=100")
-
-  # Process each PR closed within our window
-  echo "$PRS_JSON" | jq -c --arg since "$SINCE" \
-    '.[] | select(.closed_at >= $since)' | while read -r PR; do
-
-    PR_NUM=$(echo "$PR" | jq -r '.number')
-    MERGED_AT=$(echo "$PR" | jq -r '.merged_at')
-
-    if [[ "$MERGED_AT" != "null" ]]; then
-      ((TOTAL_MERGED++)) || true
-      if pr_has_ai "$REPO" "$PR_NUM"; then
-        ((AI_MERGED++)) || true
-      fi
-    else
-      ((TOTAL_CLOSED++)) || true
-      if pr_has_ai "$REPO" "$PR_NUM"; then
-        ((AI_CLOSED++)) || true
-      fi
-    fi
-    sleep 0.2
-  done
-done
-
-# Output report as JSON
-cat <<EOF
-{
-  "date": "$(date -u +%Y-%m-%d)",
-  "org": "$ORG",
-  "total_merged_prs": $TOTAL_MERGED,
-  "ai_attributed_merged": $AI_MERGED,
-  "ai_leverage_pct": $(echo "scale=1; if ($TOTAL_MERGED > 0) $AI_MERGED * 100 / $TOTAL_MERGED else 0" | bc),
-  "total_closed_without_merge": $TOTAL_CLOSED,
-  "ai_attributed_closed": $AI_CLOSED,
-  "ai_rejection_rate_pct": $(echo "scale=1; a=$AI_MERGED+$AI_CLOSED; if (a > 0) $AI_CLOSED * 100 / a else 0" | bc)
-}
-EOF
+# Scan a specific window
+./ai-commit-attribution/scripts/ai-leverage-daily.sh octodemo --since 2026-06-18T00:00:00Z
 ```
 
-**What this measures:**
+Output (stdout is clean JSON; progress goes to stderr):
+
+```json
+{
+  "date": "2026-06-19",
+  "org": "octodemo",
+  "since": "2026-06-18T19:30:04Z",
+  "prs_checked": 116,
+  "total_merged_prs": 23,
+  "ai_attributed_merged": 8,
+  "ai_leverage_pct": 34.8,
+  "total_closed_without_merge": 46,
+  "ai_attributed_closed": 1,
+  "ai_rejection_rate_pct": 11.1
+}
+```
 
 | Metric | Formula | ESSP zone |
 |---|---|---|
-| AI leverage | AI-attributed merged PRs ÷ total merged PRs | Business Outcomes (Activity) |
+| AI leverage | AI-attributed merged PRs ÷ total merged PRs | Activity |
 | AI rejection rate | AI-attributed closed-without-merge ÷ all AI-attributed PRs | Quality |
-| PR merge rate | Total merged PRs ÷ total developers | Velocity |
 
-A rising rejection rate for AI-attributed PRs (compared to non-AI PRs) could indicate that AI-generated code isn't passing review — worth investigating with the team before drawing conclusions.
+A rising rejection rate for AI PRs, compared to non-AI PRs, can mean AI-generated code is not passing review. Treat it as a prompt to talk to the team, not a conclusion.
+
+### copilot-cloud-agent-metrics.sh
+
+Pulls Copilot coding agent and code review metrics from the usage metrics API.
+
+```bash
+# Yesterday (default)
+./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh octodemo
+
+# A specific day, the last N days, or the 28-day rolling report
+./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh octodemo --day 2026-06-18
+./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh octodemo --days 7
+./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh octodemo --28day
+
+# Enterprise level
+./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh octodemo --enterprise my-enterprise --28day
+```
+
+The coding agent adds a `Co-authored-by: Copilot` trailer too, so its PRs already count toward the trailer scan's total. What this script adds is the breakdown. The coding-agent-only count (`total_merged_created_by_copilot`) lets you subtract that subset from the trailer total to see how much of your AI leverage comes from IDE, CLI, and Claude instead. It also reports things trailers cannot show at all: code review coverage (`total_reviewed_by_copilot`), suggestion acceptance, median time-to-merge, and daily active users. See the [scripts README](./ai-commit-attribution/README.md) for the full output schema and ESSP mapping.
+
+### Running it on a schedule
+
+The scripts are for manual testing and as a starting point. For ongoing measurement, run `ai-leverage-daily.sh` (and `copilot-cloud-agent-metrics.sh` if you need it) once a day in whatever pipeline you already operate. A scheduled GitHub Actions workflow, a Jenkins job, a GitLab CI schedule, or a plain cron entry all work. Pipe the JSON output to a dashboard, a database, or a build artifact.
+
+For anything beyond a small org, authenticate as a GitHub App rather than a PAT. App installation tokens get 15,000 requests/hour versus 5,000 for a PAT, and they expire after an hour. See [github-app-setup.md](./ai-commit-attribution/github-app-setup.md).
 
 > [!NOTE]
-> **Rate limits:** GHES has rate limits [disabled by default](https://docs.github.com/en/enterprise-server@3.21/admin/configuring-settings/configuring-rate-limits/configuring-rate-limits-for-your-instance). If your instance has them enabled, or you're adapting this for GHEC (15,000 requests/hour), a daily cadence keeps volumes manageable — a 1,000-repo org with ~50 PRs closed per day uses roughly 1,000 + 50 = ~1,050 API calls per run.
+> The trailer scan finds closed PRs through the Search API instead of walking every repo, so its cost scales with the number of closed PRs, not the number of repos. Each closed PR costs about two calls (one for merge status, one for its commits), so a day with 50 closed PRs is roughly 100 calls. The metrics API script uses one or two calls per run.
 
 ---
 
-## Limitations & Gaps
+## Two Signals, One Picture
 
-- **IDE completions are NOT tracked** — This approach only covers agent/CLI sessions where AI makes commits. A developer using Copilot inline suggestions in the editor gets no trailer. The `"all"` value for `git.addAICoAuthor` attempts to cover completions, but detection accuracy for inline completions is lower than for agent/chat edits.
-- **`git.addAICoAuthor` is not enforceable** — It's a regular VS Code setting, not an [enterprise policy](https://code.visualstudio.com/docs/enterprise/policies). Developers can override it.
-- **Trailers are removable** — Developers can edit commit messages before pushing. This is an honesty system.
-- **False positives are possible** — VS Code's `git.addAICoAuthor` [historically tagged commits even when AI wasn't actually used](https://github.com/microsoft/vscode/pull/310226) (part of why it was reverted from default-on)
-- **No standard trailer yet** — Industry is split between `Co-authored-by`, `Assisted-by`, and `AI-Generated-By`. The Linux kernel is exploring `Assisted-by`. Microsoft is tracking this in [vscode#313962](https://github.com/microsoft/vscode/issues/313962).
-- **Cross-tool inconsistency** — Different tools use different trailer formats and email addresses, requiring broad grep patterns
+On Cloud/EMU the two scripts answer different questions, and the gap between them is the point.
 
----
-
-## Measuring the Full Picture: Two Scripts, Two Signals
-
-AI leverage from `ai-leverage-daily.sh` (trailer scanning) captures **all** AI-attributed PRs — including those from the Copilot coding agent, which adds `Co-authored-by: Copilot` trailers to its commits. This gives you the core AI leverage metric on any platform.
-
-`copilot-cloud-agent-metrics.sh` adds **metrics you can't get from trailers**: time-to-merge comparisons, code review coverage, suggestion acceptance rates, and daily active user counts. It queries the [Copilot Metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics), which is only available on Cloud/EMU.
-
-| Script | What it gives you | Platform |
-|---|---|---|
-| `ai-leverage-daily.sh` | AI leverage %, AI rejection rate, multi-tool coverage (Copilot + Claude) | Any (GHES or Cloud) |
-| `copilot-cloud-agent-metrics.sh` | Time-to-merge, code review stats, suggestion acceptance, daily active users | Cloud/EMU only |
-
-### When you need which
-
-| Scenario | Scripts needed |
-|---|---|
-| GHES customer | `ai-leverage-daily.sh` only |
-| Cloud/EMU, want AI leverage % only | `ai-leverage-daily.sh` only |
-| Cloud/EMU, want full ESSP metrics (velocity, quality, throughput) | **Both scripts** |
-
-### Real-world example: octodemo (June 18, 2026)
-
-Running both scripts against the same org on the same day:
+Trailer scanning counts **any** PR with an AI co-author, so it is the superset for AI leverage: coding agent PRs (which add trailers), plus IDE and CLI usage, plus Claude Code. The usage metrics API counts a narrower thing, `total_merged_created_by_copilot`, which is only PRs the coding agent fully created. Running both on octodemo for the same day:
 
 | Metric | `ai-leverage-daily.sh` | `copilot-cloud-agent-metrics.sh` |
 |---|---|---|
 | Total merged PRs | 23 | 23 |
-| AI-attributed merged | **8 (34.8%)** | **2 (8.7%)** |
+| AI-attributed merged | 8 (34.8%) | 2 (8.7%) |
 | AI rejection rate | 11.1% | — |
 | PRs reviewed by Copilot | — | 345 |
 | Median time to merge | — | 0.53 min |
 | Median TTM (Copilot-authored) | — | 10.25 min |
 | Daily active Copilot users | — | 812 |
 
-The trailer script found 8 AI PRs (including coding agent PRs). The Metrics API found only 2 `total_merged_created_by_copilot` — a narrower count that only includes PRs the coding agent fully created. The trailer script's higher number reflects IDE/CLI AI usage plus coding agent, giving the broader AI leverage picture.
+The trailer scan found 8 AI PRs; the metrics API found 2. Both are right, and the gap is the useful part. The coding agent tags its commits, so its 2 PRs are already inside the trailer scan's 8. Subtract the agent count and you learn that 6 of the 8 came from developers using Copilot in their editor or the CLI. That split is exactly why you run the trailer scan everywhere and add the metrics API when you have coding agent or review activity to break out.
 
-### What the Copilot Metrics API adds beyond trailers
-
-| Capability | `ai-leverage-daily.sh` | `copilot-cloud-agent-metrics.sh` |
-|---|---|---|
-| AI leverage (all tools) | ✅ | — (narrower: coding agent only) |
-| Coding agent PRs | ✅ (via trailer) | ✅ `total_merged_created_by_copilot` |
-| Time-to-merge comparison | ❌ | ✅ `median_minutes_to_merge_copilot_authored` |
-| Copilot code review | ❌ | ✅ `total_merged_reviewed_by_copilot` |
-| Review suggestion acceptance | ❌ | ✅ `total_copilot_applied_suggestions` |
-| Multi-tool coverage (Claude, etc.) | ✅ | ❌ Copilot only |
-| AI rejection rate | ✅ | ❌ |
-| Daily active users | ❌ | ✅ |
-| Works on GHES | ✅ | ❌ Cloud/EMU only |
-
-See [ai-commit-attribution/ghes-vs-cloud-comparison.md](./ai-commit-attribution/ghes-vs-cloud-comparison.md) for the detailed analysis.
-
-### Scripts
-
-Both scripts are in the [ai-commit-attribution/scripts/](./ai-commit-attribution/scripts/) directory:
-
-- **[`ai-leverage-daily.sh`](./ai-commit-attribution/scripts/ai-leverage-daily.sh)** — trailer scanning for IDE/CLI AI usage (any platform)
-- **[`copilot-cloud-agent-metrics.sh`](./ai-commit-attribution/scripts/copilot-cloud-agent-metrics.sh)** — Copilot coding agent + code review metrics (Cloud/EMU only)
-- **[`generate-installation-token.sh`](./ai-commit-attribution/scripts/generate-installation-token.sh)** — GitHub App token generation
-
-See [ai-commit-attribution/github-app-setup.md](./ai-commit-attribution/github-app-setup.md) for GitHub App setup instructions (recommended for large orgs due to the 15,000 req/hr rate limit vs 5,000 for PATs).
+See [ghes-vs-cloud-comparison.md](./ai-commit-attribution/ghes-vs-cloud-comparison.md) for the full side-by-side with real data.
 
 ---
 
-## Recommended Implementation Order
+## Limitations
 
-1. **Test locally** — set `"git.addAICoAuthor": "all"` in your own VS Code settings and verify trailers appear on commits from agent mode
-2. Copilot CLI already tags by default — no action needed
-3. **Deploy fleet-wide via MDM** — push the setting as a managed default through Intune (see [MDM section above](#deploying-via-mdm-intune-example))
-4. **Set up the daily job** — schedule `ai-leverage-daily.sh` as a GitHub Actions workflow or cron
-5. **If using Copilot coding agent or PR review on Cloud** — add `copilot-cloud-agent-metrics.sh` to your daily job to capture platform-level metrics
+- **Inline completions need the `all` setting.** `git.addAICoAuthor` only tags inline completions at the `all` level. The `chatAndAgent` value tags chat and agent edits but skips completions by design, so a fleet on `chatAndAgent` undercounts editor usage.
+- **`git.addAICoAuthor` is not enforceable.** It is a regular VS Code setting, not an [enterprise policy](https://code.visualstudio.com/docs/enterprise/policies). Developers can turn it off.
+- **Trailers are removable.** A developer can edit a commit message before pushing. This is an honesty system, not an audit trail.
+- **No standard trailer yet.** The industry is split between `Co-authored-by`, `Assisted-by`, and `AI-Generated-By`. The Linux kernel is looking at `Assisted-by`; Microsoft is tracking it in [vscode#313962](https://github.com/microsoft/vscode/issues/313962).
+- **Cursor and Windsurf are invisible.** Neither tags commits nor exposes a detectable signal.
+
+None of this makes the number useless. It makes it a directional adoption metric rather than a compliance audit. If you need an enforceable, server-side count, that is what the Copilot usage metrics API gives you on Cloud/EMU, within its narrower coding-agent definition.

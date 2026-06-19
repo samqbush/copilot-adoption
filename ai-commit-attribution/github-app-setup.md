@@ -1,6 +1,8 @@
 # GitHub App Setup: AI Commit Attribution
 
-This guide walks through creating and installing a GitHub App for the `ai-leverage-daily.sh` script. The App provides 15,000 API requests/hour (vs 5,000 for a PAT) and uses short-lived tokens.
+This guide walks through creating and installing a GitHub App for the AI attribution scripts. The App provides 15,000 API requests/hour (vs 5,000 for a PAT) and uses short-lived tokens.
+
+The permissions you grant depend on which scripts you run. `ai-leverage-daily.sh` needs repository read access. `copilot-cloud-agent-metrics.sh` additionally needs the Copilot metrics permission. Both are covered in Step 1.
 
 ---
 
@@ -26,10 +28,15 @@ This guide walks through creating and installing a GitHub App for the `ai-levera
 3. Under **Webhook**:
    - **Uncheck** "Active" (we don't need webhook events)
 
-4. Under **Permissions → Repository permissions**:
+4. Under **Permissions → Repository permissions** (required for `ai-leverage-daily.sh`):
    - **Contents**: Read-only
    - **Pull requests**: Read-only
    - **Metadata**: Read-only (auto-selected)
+
+   Under **Permissions → Organization permissions** (only if you also run `copilot-cloud-agent-metrics.sh`):
+   - **Organization Copilot metrics**: Read-only
+
+   > For enterprise-level metrics (the `--enterprise` flag), the org permission above is not enough. The App must be installed on the enterprise and granted **View Enterprise Copilot Metrics**, and the "Copilot usage metrics" policy must be enabled for the enterprise. See [Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics).
 
 5. Under **Where can this GitHub App be installed?**:
    - Select **Only on this account**
@@ -108,6 +115,20 @@ source ~/.config/ai-attribution/config
 > gh api /orgs/octodemo/repos --jq '.[].name' | head
 > ```
 
+### Running the metrics script
+
+The same App credentials work for `copilot-cloud-agent-metrics.sh`, as long as you granted the **Organization Copilot metrics** permission in Step 1 and the **Copilot usage metrics** policy is enabled for the org (or enterprise):
+
+```bash
+source ~/.config/ai-attribution/config
+./scripts/copilot-cloud-agent-metrics.sh octodemo \
+  --app-id "$APP_ID" \
+  --installation-id "$INSTALLATION_ID" \
+  --private-key "$PRIVATE_KEY_PATH"
+```
+
+If the App lacks the metrics permission, the API returns `Resource not accessible by integration`. Add the permission to the App, then re-accept the updated permissions on the installation.
+
 ---
 
 ## Rate Limits
@@ -117,7 +138,7 @@ source ~/.config/ai-attribution/config
 | Personal Access Token | 5,000/hr | Shared across all your PAT usage |
 | GitHub App (installation token) | 15,000/hr | Dedicated to this App |
 
-A full octodemo scan (~4,100 API calls) uses **27%** of the App's hourly budget vs **82%** of a PAT's.
+The trailer scan finds closed PRs via the Search API rather than walking every repo, so it costs about two calls per closed PR. A busy day of ~500 closed PRs is roughly 1,000 calls, well within either budget.
 
 ---
 

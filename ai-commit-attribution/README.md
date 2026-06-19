@@ -2,20 +2,28 @@
 
 Utility scripts for measuring AI adoption and developer productivity metrics.
 
-| Script | What it gives you | Platform |
+| Script | What it gives you | When you need it |
 |--------|-------------------|----------|
-| `ai-leverage-daily.sh` | **AI leverage %** and rejection rate by scanning `Co-authored-by` trailers (catches all AI tools: Copilot coding agent, IDE, CLI, Claude Code) | Any (GHES or Cloud) |
-| `copilot-cloud-agent-metrics.sh` | **Additional ESSP metrics**: time-to-merge, code review coverage, suggestion acceptance, daily active users | Cloud/EMU only |
+| `ai-leverage-daily.sh` | **AI leverage %** and rejection rate by scanning `Co-authored-by` trailers (catches all AI tools: Copilot coding agent, IDE, CLI, Claude Code) | Always — the only way to see IDE and CLI usage, any platform |
+| `copilot-cloud-agent-metrics.sh` | **Coding agent + code review metrics**: time-to-merge, review coverage, suggestion acceptance, daily active users | Add it on Cloud/EMU when using the coding agent or Copilot code review |
 
-`ai-leverage-daily.sh` is the primary script — it captures all AI-attributed PRs including coding agent PRs (which add trailers). `copilot-cloud-agent-metrics.sh` supplements it with velocity and quality metrics that trailers can't provide.
+`ai-leverage-daily.sh` is the baseline. Trailers are the only signal that captures a developer using Copilot in their editor or the CLI, so run it regardless of platform. `copilot-cloud-agent-metrics.sh` adds the velocity and quality metrics that trailers can't provide, using server-side data that only exists on Cloud/EMU.
 
-See [GHES vs Cloud Comparison](./ghes-vs-cloud-comparison.md) for a detailed side-by-side analysis with real data.
+See [Trailer Scanning vs Copilot usage metrics API](./ghes-vs-cloud-comparison.md) for a side-by-side with real octodemo data.
 
 ---
 
 ## ai-leverage-daily.sh
 
-Calculates the percentage of merged PRs that contain AI-authored commits (Copilot CLI, VS Code Copilot, Claude Code) by scanning commit trailers across all repos in a GitHub org.
+Calculates the percentage of merged PRs that contain AI-authored commits (Copilot CLI, VS Code Copilot, Claude Code) by scanning commit trailers across a GitHub org. It finds closed PRs through the Search API rather than iterating every repo, so cost scales with the number of closed PRs.
+
+**APIs used:**
+
+| Step | Endpoint | Docs |
+|------|----------|------|
+| Find closed PRs | `GET /search/issues` | [Search issues and pull requests](https://docs.github.com/en/enterprise-cloud@latest/rest/search/search#search-issues-and-pull-requests) |
+| Get PR merge status | `GET /repos/{owner}/{repo}/pulls/{pull_number}` | [Get a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#get-a-pull-request) |
+| List PR commits | `GET /repos/{owner}/{repo}/pulls/{pull_number}/commits` | [List commits on a pull request](https://docs.github.com/en/enterprise-cloud@latest/rest/pulls/pulls#list-commits-on-a-pull-request) |
 
 ### Quick Start (PAT auth)
 
@@ -73,7 +81,16 @@ Progress and debug info goes to stderr, so you can pipe stdout directly:
 
 ## copilot-cloud-agent-metrics.sh
 
-Fetches native Copilot PR metrics from the [Copilot Metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-metrics). This is the Cloud/EMU equivalent — no trailer scanning needed. Server-side tracking means zero client configuration and 100% accuracy for Copilot coding agent PRs.
+Fetches native Copilot PR metrics from the [Copilot usage metrics API](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics). Server-side tracking means zero client configuration and accurate counts for Copilot coding agent PRs. Cloud/EMU only.
+
+**APIs used:** each endpoint returns `download_links` to an NDJSON report that the script downloads and parses. All are documented under [Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics).
+
+| Report | Endpoint |
+|--------|----------|
+| Org, single day | `GET /orgs/{org}/copilot/metrics/reports/organization-1-day?day=YYYY-MM-DD` |
+| Org, 28-day rolling | `GET /orgs/{org}/copilot/metrics/reports/organization-28-day/latest` |
+| Enterprise, single day | `GET /enterprises/{enterprise}/copilot/metrics/reports/enterprise-1-day?day=YYYY-MM-DD` |
+| Enterprise, 28-day rolling | `GET /enterprises/{enterprise}/copilot/metrics/reports/enterprise-28-day/latest` |
 
 ### Quick Start
 
@@ -107,7 +124,7 @@ source ~/.config/ai-attribution/config
   --private-key "$PRIVATE_KEY_PATH"
 ```
 
-> **Note:** The Copilot Metrics API requires org admin or explicit "Copilot usage metrics" access. If your App returns `Resource not accessible by integration`, you need to add the `organization_copilot_seat_management: read` permission to the App or use a PAT with org admin scope.
+> **Note:** The Copilot usage metrics API requires the **Copilot usage metrics** policy to be enabled, plus org admin, billing manager, or the fine-grained **Organization Copilot metrics** (read) permission. If your App returns `Resource not accessible by integration`, grant it the **Organization Copilot metrics** permission (or use a PAT with org admin scope). See [github-app-setup.md](./github-app-setup.md).
 
 ### Output (daily)
 
@@ -180,18 +197,18 @@ See [ghes-vs-cloud-comparison.md](./ghes-vs-cloud-comparison.md) for detailed an
 
 | Scenario | Scripts needed |
 |----------|---------------|
-| GHES customer | `ai-leverage-daily.sh` only |
+| GHES, or IDE/CLI usage only | `ai-leverage-daily.sh` only |
 | Cloud/EMU, AI leverage % only | `ai-leverage-daily.sh` only |
-| Cloud/EMU, full ESSP metrics (velocity, quality, throughput) | **Both scripts** |
+| Cloud/EMU, using coding agent and/or Copilot code review | **Both scripts** |
 
 | Dimension | `ai-leverage-daily.sh` | `copilot-cloud-agent-metrics.sh` |
 |-----------|------------------------|----------------------------------|
 | **Primary metric** | AI leverage %, AI rejection rate | Time-to-merge, review coverage, active users |
 | **AI tools covered** | All (Copilot coding agent + IDE + CLI + Claude) | Copilot platform features only |
-| **How** | Scans `Co-authored-by` trailers | Queries Copilot Metrics API |
+| **How** | Scans `Co-authored-by` trailers | Queries Copilot usage metrics API |
 | **Platform** | Any (GHES or Cloud) | Cloud/EMU only |
 | **Permissions** | `repo` scope | Org admin or Copilot metrics access |
-| **API cost** | ~100-1000+ calls/day | 1-2 calls/day |
+| **API cost** | ~2 calls per closed PR | 1-2 calls/day |
 
 ---
 
@@ -207,6 +224,8 @@ Generates a short-lived GitHub App installation token from a private key. Used i
 ```
 
 Outputs the token to stdout. Requires only `openssl` and `curl` (no extra dependencies).
+
+**API used:** `POST /app/installations/{installation_id}/access_tokens` — see [Create an installation access token for an app](https://docs.github.com/en/enterprise-cloud@latest/rest/apps/apps#create-an-installation-access-token-for-an-app).
 
 ---
 

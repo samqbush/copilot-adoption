@@ -27,6 +27,6 @@ The highest-impact adoption strategies focus on raising the floor across your or
 The following pages cover topics not yet addressed by official documentation and remain actively maintained.
 
 - [Strategies for Managing Copilot Usage-Based Billing](./cost-management) — Practical guide to AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
-- [AI Commit Attribution — GHES Runbook](./ai-commit-attribution) — How to track AI-authored commits on GitHub Enterprise Server using co-author trailers, VS Code settings, git hooks, and the GHES REST API
+- [Measuring AI in Pull Requests](./ai-commit-attribution) — Stop counting lines of code. Measure AI's contribution to merged PRs with two example scripts: trailer scanning for IDE and CLI usage, and the Copilot usage metrics API for coding agent and code review.
 - [Copilot OpenTelemetry via Intune](./copilot-otel-intune) — Centrally deploy OpenTelemetry monitoring for Copilot (VS Code agents + CLI) across Windows and macOS using Microsoft Intune
 
