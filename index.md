@@ -27,4 +27,6 @@ The highest-impact adoption strategies focus on raising the floor across your or
 The following pages cover topics not yet addressed by official documentation and remain actively maintained.
 
 - [Strategies for Managing Copilot Usage-Based Billing](./cost-management) — Practical guide to AI Credits, budget controls, and strategies for predictable spending under GitHub's Usage-Based Billing model
-- [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html) — Interactive guide to token optimization with context rot scenarios, a cost calculator, a model-selection playbook, and copy-paste templates for reducing token consumption
+- [AI Commit Attribution — GHES Runbook](./ai-commit-attribution) — How to track AI-authored commits on GitHub Enterprise Server using co-author trailers, VS Code settings, git hooks, and the GHES REST API
+- [Copilot OpenTelemetry via Intune](./copilot-otel-intune) — Centrally deploy OpenTelemetry monitoring for Copilot (VS Code agents + CLI) across Windows and macOS using Microsoft Intune
+
