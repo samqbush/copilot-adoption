@@ -28,6 +28,7 @@ The highest-impact adoption strategies focus on raising the floor across your or
 The following pages cover topics not yet addressed by official documentation and remain actively maintained.
 
 - [Managing Copilot Usage-Based Billing](./cost-management)
+- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing)
 - [Measuring AI in Pull Requests](./ai-commit-attribution)
 - [Copilot OpenTelemetry via Intune](./copilot-otel-intune)
 
