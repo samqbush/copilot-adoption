@@ -128,16 +128,17 @@ if [[ -z "$LINK" ]]; then
   exit 1
 fi
 
-echo "Downloading report file..." >&2
-REPORT_NDJSON=$(curl -sS "$LINK")
+echo "Downloading and assembling report file..." >&2
 
 # Emit a single JSON object: request metadata + the report rows as an array.
-# NDJSON rows are slurped into .report; empty lines are ignored.
+# We stream the download straight into jq (no intermediate shell variable) so
+# large reports aren't held in memory twice and the raw bytes aren't reinterpreted
+# by echo. NDJSON rows are slurped into .report; empty lines are ignored.
 jq -n \
   --arg scope "$SCOPE" \
   --arg slug "$SLUG" \
   --arg day "$DAY" \
   --argjson rolling "$([[ -n "$ROLLING" ]] && echo true || echo false)" \
   --argjson meta "$(echo "$RESPONSE" | jq '{report_day, report_start_day, report_end_day}')" \
-  --slurpfile rows <(echo "$REPORT_NDJSON" | jq -c 'select(length>0)') \
+  --slurpfile rows <(curl -sS "$LINK" | jq -c 'select(length>0)') \
   '{scope: $scope, slug: $slug, day: $day, rolling: $rolling, report_meta: $meta, report: $rows}'

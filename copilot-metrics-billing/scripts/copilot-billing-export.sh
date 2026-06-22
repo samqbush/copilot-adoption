@@ -83,9 +83,15 @@ BASE="https://api.github.com/enterprises/$ENTERPRISE/settings/billing/reports"
 
 # 1. Create the report (returns 202 + an id). Only one report runs at a time per
 #    enterprise — a 409 means another export is still in progress.
+#    The payload is built with jq so quotes/odd characters in the inputs can't
+#    break the JSON or inject extra fields.
 echo "Creating $REPORT_TYPE billing report for $ENTERPRISE ($START -> $END)..." >&2
-CREATE=$(api -X POST "$BASE" \
-  -d "{\"report_type\":\"$REPORT_TYPE\",\"start_date\":\"$START\",\"end_date\":\"$END\"}")
+PAYLOAD=$(jq -n \
+  --arg report_type "$REPORT_TYPE" \
+  --arg start_date "$START" \
+  --arg end_date "$END" \
+  '{report_type: $report_type, start_date: $start_date, end_date: $end_date}')
+CREATE=$(api -X POST "$BASE" -H "Content-Type: application/json" -d "$PAYLOAD")
 
 REPORT_ID=$(echo "$CREATE" | jq -r '.id // empty')
 if [[ -z "$REPORT_ID" ]]; then
