@@ -8,7 +8,7 @@ toc: true
 # Measuring AI in Pull Requests (Not Lines of Code)
 {:.no_toc}
 
-*Last updated: June 19, 2026*
+*Last updated: June 23, 2026*
 
 ---
 
@@ -127,7 +127,7 @@ Trailer scanning only finds what is tagged. Copilot CLI tags commits by default,
 | Tool | Adds trailer by default? | Trailer format |
 |---|---|---|
 | **Copilot CLI** | Yes | `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` |
-| **VS Code agent mode** | No (opt-in) | `Co-authored-by: Copilot <copilot@github.com>` |
+| **VS Code agent mode** | No — see [known gap](#agent-mode-gap) | `Co-authored-by: Copilot <copilot@github.com>` |
 | **Claude Code** | Yes | `Co-Authored-By: Claude <noreply@anthropic.com>` |
 | **Cursor agent** | Yes | `Made with Cursor` (not `Co-authored-by` format) |
 | **Windsurf agent** | No | none |
@@ -156,6 +156,13 @@ Test it locally first:
 ```
 
 Make a commit from agent mode and confirm the trailer appears.
+
+#### Agent mode gap {#agent-mode-gap}
+
+> [!WARNING]
+> `git.addAICoAuthor` does **not** work for VS Code Agent Mode — even if you click the Commit button in the Source Control panel after the agent edits files. Agent Mode writes files directly to disk, so VS Code's AI contribution tracker classifies those edits as external filesystem changes rather than AI-generated code. The trailer is only added for inline completions (NES) and chat/apply edits that go through the editor API.
+>
+> This is tracked in [vscode#316317](https://github.com/microsoft/vscode/issues/316317) and [vscode#297415](https://github.com/microsoft/vscode/issues/297415). Until the VS Code team fixes this, use the [enterprise plugin approach](#agent-mode-trailer-plugin) instead to get trailers on agent mode commits.
 
 ### Deploying it fleet-wide via MDM
 
@@ -209,6 +216,119 @@ if (Test-Path $settingsPath) {
 
 > [!IMPORTANT]
 > Cursor's Agent tags commits with a `Made with Cursor` trailer by default, but it is not in `Co-authored-by` format, so the default scan pattern misses it unless you extend the pattern to also match `made with cursor`. Windsurf does not add any AI attribution trailer and exposes no externally detectable signal, so its commits will not show up in your AI leverage number unless the developer adds a trailer by hand.
+
+---
+
+## Enforcing Trailers via Enterprise Plugin {#agent-mode-trailer-plugin}
+
+`git.addAICoAuthor` only works for inline completions and NES. For VS Code Agent Mode, you need a different approach. (Copilot CLI and the Copilot coding agent already add the trailer by default.)
+
+There is no way to push a `.github/copilot-instructions.md` file to every repo in an organization at once, so the scalable solution is [enterprise plugin standards](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/agents/about-enterprise-plugin-standards). Create a plugin with a `SessionStart` hook that injects the trailer instruction into every agent session, publish it to an internal marketplace, and deploy it enterprise-wide via `managed-settings.json`.
+
+> [!NOTE]
+> Enterprise plugin standards are in **public preview** and apply to Copilot CLI and VS Code (1.122+). JetBrains is not yet supported. See [About enterprise-managed plugin standards](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/agents/about-enterprise-plugin-standards).
+
+### 1. Plugin structure
+
+```text
+ai-commit-trailer/
+├── plugin.json
+├── hooks.json
+└── scripts/
+    └── inject-trailer-instruction.sh
+```
+
+**`plugin.json`**
+
+```json
+{
+  "name": "ai-commit-trailer",
+  "description": "Injects Co-authored-by trailer instruction into every agent session",
+  "version": "1.0.0",
+  "author": {
+    "name": "Your Org"
+  },
+  "hooks": "hooks.json"
+}
+```
+
+**`hooks.json`**
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "./scripts/inject-trailer.sh"
+      }
+    ]
+  }
+}
+```
+
+**`scripts/inject-trailer.sh`**
+
+```bash
+#!/bin/bash
+# Reads stdin (SessionStart event JSON), outputs additionalContext
+# telling the agent to always include the Co-authored-by trailer.
+cat <<'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "When creating git commits, always include the following trailer at the end of the commit message, separated by a blank line:\n\nCo-authored-by: Copilot <copilot@github.com>"
+  }
+}
+EOF
+```
+
+### 2. Marketplace
+
+Host the plugin in a GitHub repository with a `.github/plugin/marketplace.json`:
+
+```json
+{
+  "name": "your-org-plugins",
+  "owner": {
+    "name": "Your Organization"
+  },
+  "metadata": {
+    "description": "Internal Copilot plugins",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ai-commit-trailer",
+      "description": "Adds Co-authored-by trailer to agent commits",
+      "version": "1.0.0",
+      "source": "./plugins/ai-commit-trailer"
+    }
+  ]
+}
+```
+
+### 3. Enterprise deployment
+
+In your enterprise's `.github-private` repository, create `copilot/managed-settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "your-org-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "your-org/copilot-plugins"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ai-commit-trailer@your-org-plugins": true
+  }
+}
+```
+
+Once merged to the default branch, every enterprise user on the Copilot plan gets the plugin auto-installed on next authentication. The hook fires at session start and injects the trailer context.
 
 ---
 
@@ -311,6 +431,7 @@ See [ghes-vs-cloud-comparison.md](./ai-commit-attribution/ghes-vs-cloud-comparis
 ## Limitations
 
 - **Inline completions need the `all` setting.** `git.addAICoAuthor` only tags inline completions at the `all` level. The `chatAndAgent` value tags chat and agent edits but skips completions by design, so a fleet on `chatAndAgent` undercounts editor usage.
+- **`git.addAICoAuthor` does not work for Agent Mode.** VS Code Agent Mode writes files directly to disk, so the AI contribution tracker never registers those edits. The trailer is not added even if you click the Commit button after agent edits. Use the [enterprise plugin approach](#agent-mode-trailer-plugin) instead. Tracked in [vscode#316317](https://github.com/microsoft/vscode/issues/316317).
 - **`git.addAICoAuthor` is not enforceable.** It is a regular VS Code setting, not an [enterprise policy](https://code.visualstudio.com/docs/enterprise/policies). Developers can turn it off.
 - **Trailers are removable.** A developer can edit a commit message before pushing. This is an honesty system, not an audit trail.
 - **No standard trailer yet.** The industry is split between `Co-authored-by`, `Assisted-by`, and `AI-Generated-By`. The Linux kernel is looking at `Assisted-by`; Microsoft is tracking it in [vscode#313962](https://github.com/microsoft/vscode/issues/313962).
