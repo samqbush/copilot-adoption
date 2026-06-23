@@ -155,7 +155,7 @@ Test it locally first:
 }
 ```
 
-Make a commit from agent mode and confirm the trailer appears.
+Make a commit after using inline completions or NES and confirm the trailer appears.
 
 #### Agent mode gap {#agent-mode-gap}
 
@@ -223,7 +223,7 @@ if (Test-Path $settingsPath) {
 
 `git.addAICoAuthor` only works for inline completions and NES. For VS Code Agent Mode, you need a different approach. (Copilot CLI and the Copilot coding agent already add the trailer by default.)
 
-There is no way to push a `.github/copilot-instructions.md` file to every repo in an organization at once, so the scalable solution is [enterprise plugin standards](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/agents/about-enterprise-plugin-standards). Create a plugin with a `SessionStart` hook that injects the trailer instruction into every agent session, publish it to an internal marketplace, and deploy it enterprise-wide via `managed-settings.json`.
+There is no way to push a `.github/copilot-instructions.md` file to every repo in an organization at once, so the scalable solution is [enterprise plugin standards](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/agents/about-enterprise-plugin-standards). Create a plugin with a `SessionStart` hook that injects the trailer context into every agent session, publish it to an internal marketplace, and deploy it enterprise-wide via `managed-settings.json`.
 
 > [!NOTE]
 > Enterprise plugin standards are in **public preview** and apply to Copilot CLI and VS Code (1.122+). JetBrains is not yet supported. See [About enterprise-managed plugin standards](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/agents/about-enterprise-plugin-standards).
@@ -235,7 +235,7 @@ ai-commit-trailer/
 ├── plugin.json
 ├── hooks.json
 └── scripts/
-    └── inject-trailer-instruction.sh
+    └── inject-trailer.sh
 ```
 
 **`plugin.json`**
@@ -243,7 +243,7 @@ ai-commit-trailer/
 ```json
 {
   "name": "ai-commit-trailer",
-  "description": "Injects Co-authored-by trailer instruction into every agent session",
+  "description": "Adds Co-authored-by trailer to every agent session via SessionStart hook",
   "version": "1.0.0",
   "author": {
     "name": "Your Org"
@@ -271,8 +271,9 @@ ai-commit-trailer/
 
 ```bash
 #!/bin/bash
-# Reads stdin (SessionStart event JSON), outputs additionalContext
-# telling the agent to always include the Co-authored-by trailer.
+# Outputs additionalContext telling the agent to always include the
+# Co-authored-by trailer. Stdin (SessionStart event JSON) is ignored.
+cat > /dev/null
 cat <<'EOF'
 {
   "hookSpecificOutput": {
