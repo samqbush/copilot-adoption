@@ -4,8 +4,13 @@ title: GitHub Copilot Adoption Resources
 description: Guides for cost management, AI commit attribution, and OpenTelemetry monitoring — plus curated links to official Copilot rollout documentation
 ---
 
-> [!NOTE]
-> **This guide has been retired.** The phased rollout checklist that previously lived here is now fully covered by GitHub's official documentation. Please use the official resources below for up-to-date guidance on rolling out GitHub Copilot at scale.
+These pages are maintained as opinionated implementation guides — worked examples you can copy and adapt, not documentation. Think of it in three tiers:
+
+- **The aircraft manual** — [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/): what every switch does.
+- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): what to weigh, why, and the design trade-offs — deliberately tool-agnostic.
+- **A flown mission** — these guides: one concrete, runnable way to actually do it on a real stack.
+
+The docs and the framework tell you *what* and *why*. These guides hand you a working flight plan for the *how* — with specific tooling, real config, and the trade-offs behind each choice. That said, every pilot has the right to make their own calls in the air — this is just one Top Gun instructor's flight plan, so take what works for your mission and adapt the waypoints.
 
 ## Official Resources
 

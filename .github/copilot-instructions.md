@@ -7,6 +7,21 @@ Custom plugins are used and supported by GitHub pages.  This website uses the be
 
 Admonition syntax should follow styling for jekyll-gfm-admonitions
 
+### Content Purpose
+
+These pages are opinionated implementation guides — worked examples readers can copy and adapt, not documentation. Position content across three tiers:
+
+- **Aircraft manual** — [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/): what every switch does.
+- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): what to weigh, why, and the design trade-offs — deliberately tool-agnostic.
+- **A flown mission** — these guides: one concrete, runnable way to actually do it on a real stack.
+
+Rules of the road:
+- Do not restate what the docs or WAF already cover. Link out to them and move on.
+- Defer to WAF for framework and design thinking — don't re-derive governance principles or invent competing pillars.
+- Pick one concrete stack and show it working end to end (specific tooling, real config, actual commands). WAF stays vendor-neutral on purpose; these guides deliberately don't.
+- Frame each guide as one reference implementation, not the only way — adapt-to-your-stack, not gospel.
+- The differentiator to keep clear: WAF is tool-agnostic design thinking; these guides are tool-specific worked examples you can lift and adapt.
+
 ### Page Edit Conventions
 
 When editing a content page, update its "Last updated" date (e.g. `*Last updated: <Month D, YYYY>*` near the top) to the current date to reflect the change.

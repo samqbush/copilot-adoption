@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: June 26, 2026*
+*Last updated: July 1, 2026*
 
 ## Key resources
 
@@ -16,7 +16,7 @@ toc: true
 - **Billing mechanics** — how credits, metering, and charges work: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
 - **Budget definitions** — how the four budget controls interact, how billing flows through them, and when usage is blocked: [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)
 - **Budget setup** — recommended step-by-step setup for your enterprise: [Getting started with budget controls](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/getting-started-with-budget-controls)
-- **Cost center spend controls** — scale budgets to your team structure with enterprise team attribution, cost center user-level budgets, and AI credit pool caps: [Assign enterprise teams to cost centers](https://github.blog/changelog/2026-06-25-assign-enterprise-teams-to-cost-centers) (changelog). Setup and concept docs publish from [Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing) as each feature reaches GA.
+- **Cost center spend controls** — scale budgets to your team structure with enterprise team attribution, cost center user-level budgets, and AI credit pool caps. Changelogs: [Assign enterprise teams to cost centers](https://github.blog/changelog/2026-06-25-assign-enterprise-teams-to-cost-centers), [Per-user AI credit budgets for cost centers](https://github.blog/changelog/2026-06-30-per-user-ai-credit-budgets-available-for-cost-centers)<!-- TODO: add AI credit pool caps changelog link when it posts (issue github/billing-product#922) -->. Setup and concept docs publish from [Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale) as each feature reaches GA.
 - **Hands-on training** — end-to-end fundamentals course: [GitHub Usage-Based Billing](https://learn.github.com/courses/gitHubusagebasedbillingmodule) (GitHub Learn)
 - **Budget planning tool** — visualize the budget hierarchy, model scenarios, and push changes via the API from a single browser tab: [Copilot Budget Command Calculator](https://github.com/xrvk/copilot-budget-command-calculator) (community tool — built by a GitHub Solutions Engineer, not an official GitHub product)
 
@@ -24,7 +24,7 @@ This page covers budget sizing guidance and operational tips, plus a troubleshoo
 
 
 > [!IMPORTANT]
-> Budgets act at different layers. **User-level budgets** — Universal, Individual, and the new **cost center user-level budget** — are always active and cap how much each person can draw from the pool, even while it still has capacity. **AI credit pool caps** limit a cost center's share of the shared included credits, and **enterprise budgets** cap total metered overage after the pool is gone.
+> The controls act at different layers: **user-level budgets** cap each person's draw from the pool, **AI credit pool caps** bound a cost center's share of the included pool, and the **enterprise budget** caps total metered overage. This page is about how to combine them well — for exactly what each one does and how the system evaluates them, see [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing).
 
 ---
 
@@ -64,22 +64,16 @@ After August 2026 the credit-arbitrage advantage disappears. Both tiers include 
 
 ## Budget strategies
 
-**Terminology used on this page:**
+**Acronyms used on this page** (full definitions in [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)):
 
-- **Universal User-Level Budget (UULB)** — the default per-user spending cap applied to all users
-- **Cost Center User-Level Budget (CCULB)** — a single per-user cap applied to every member of a cost center
-- **Individual User Budget (IUB)** — a per-user override that replaces the UULB or CCULB for a specific person
-- **AI credit pool cap** — limits how much of the shared included pool a cost center can draw, auto-calculated from its licenses
-- **Enterprise team attribution** — assigning an enterprise team to a cost center so membership and billing follow the team automatically
-- **Enterprise Budget** — an enterprise-wide cap on total metered overage
+- **UULB** — Universal User-Level Budget (default per-user cap for all users)
+- **CCULB** — Cost Center User-Level Budget (per-user cap for one cost center's members)
+- **IUB** — Individual User Budget (per-user override for a specific person)
+- **AI credit pool cap** — bounds a cost center's draw on the shared included pool
+- **Enterprise team attribution** — assigning an enterprise team to a cost center so membership follows the team
+- **Enterprise Budget** — enterprise-wide cap on total metered overage
 
-**How the layers work:**
-
-1. Licenses create a shared credit pool (all users draw from one balance).
-2. User-level budgets — Universal, cost center, and Individual — limit how much each person can draw from the pool. The most restrictive one that applies to a user wins.
-3. After the pool is exhausted, those same user-level budgets authorize metered overage up to the same per-user limit.
-4. A cost center AI credit pool cap limits how much of the shared *included* credits a cost center can draw before its members move to metered overage.
-5. The enterprise budget caps total metered overage across the enterprise — it has no effect while pooled credits remain.
+One interaction matters most for the strategies below: user-level budgets (UULB, CCULB, IUB) stay active in **both** phases — they cap each person's draw from the pool *and* authorize metered overage afterward — while the AI credit pool cap and enterprise budget only bite once included credits run low. That's why the sum of your user-level budgets is an implicit overage ceiling.
 
 ---
 
@@ -87,26 +81,18 @@ After August 2026 the credit-arbitrage advantage disappears. Both tiers include 
 
 Set spend controls against the team structure you already manage instead of against thousands of individual users. Three controls work together:
 
-1. **Attribute enterprise teams to cost centers.** Add an enterprise team as a resource on a cost center and every member's usage is attributed there automatically. As people join or leave the team — manually or through IdP/SCIM sync — membership updates on its own, with no per-user reassignment. A user is attributed to exactly one cost center; direct assignment wins, and when someone is on multiple teams pointing at different cost centers, the oldest team by creation date decides.
+1. **Attribute enterprise teams to cost centers.** Add an enterprise team as a resource on a cost center and every member's usage is attributed there automatically. As people join or leave the team — manually or through IdP/SCIM sync — membership updates on its own, with no per-user reassignment. When a user is attributed to more than one cost center, GitHub resolves it deterministically; see [Cost center allocation](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/cost-center-allocation) for the precedence rules. *How:* in your enterprise's **Billing and licensing → Cost centers** settings, create or edit a cost center and add the enterprise team under **Resources** ([Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale)).
 
-2. **Set a cost center user-level budget.** One per-user cap applies to every member of the cost center — directly assigned or team-based — and follows membership as it changes. This is the control that replaces managing budgets one user at a time. It overrides the universal budget for those members, and you can still grant an individual override to a specific person who needs more.
+2. **Set a cost center user-level budget.** One per-user cap applies to every member of the cost center — directly assigned or team-based — and follows membership as it changes. This is the control that replaces managing budgets one user at a time. It overrides the universal budget for those members, and you can still grant an individual override to a specific person who needs more. *How:* this is API-only right now — call the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center` and the cost center's name in `budget_entity_name` (see the note below for the UI timeline).
 
-3. **Enable the cost center AI credit pool cap.** This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool that another team's licenses paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. When a capped cost center reaches its limit, you choose: block further included usage, or let members continue as paid overage (if enterprise overages are enabled).
+3. **Enable the cost center AI credit pool cap.** This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool that another team's licenses paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. When a capped cost center reaches its limit, you choose: block further included usage, or let members continue as paid overage (if enterprise overages are enabled). *How:* enable it per cost center in the same **Cost centers** settings ([Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale)).
 
-**Budget precedence (most restrictive wins):**
-
-| Priority | Budget | Scope |
-|----------|--------|-------|
-| 1 | Individual user override | A single user |
-| 2 | Cost center user-level budget | All members of a cost center |
-| 3 | Universal user budget | All licensed users |
-
-A user can be stopped by any scope that applies to them, even when a lower-priority budget still has room. AI credit pool caps only fully contain spend when *every* licensed user sits in a cost center that has them enabled — anyone left out can still draw from the shared enterprise pool.
+**Which controls the most restrictive user-level budget?** When several apply to one person — individual, cost center, and universal — the most specific one wins ([precedence rules](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)). In practice that means a CCULB tightens the universal floor for a team, and an individual override loosens or tightens it for one person. A user can be stopped by any scope that applies to them, even when a lower-priority budget still has room. AI credit pool caps only fully contain spend when *every* licensed user sits in a cost center that has them enabled — anyone left out can still draw from the shared enterprise pool.
 
 This setup still needs an [enterprise budget backstop](#enterprise-budget-backstop) behind it.
 
 > [!NOTE]
-> These controls roll out over a few weeks and ship via the API first, with the UI following at or shortly after each feature's GA. If you need to configure before your next billing cycle, use the API. Official setup docs are linked in [Key resources](#key-resources) as they publish.
+> Availability as of June 30, 2026: step 1 (enterprise team attribution) and step 3 (pool caps) are in the billing UI today. Step 2 (the cost center user-level budget) is **REST API only** — UI support is coming. The [`gh-ulb`](https://github.com/colinbeales/gh-ulb) CLI extension wraps the budgets API if you'd rather not script the call yourself. Official setup docs are linked in [Key resources](#key-resources) as each feature reaches GA.
 
 
 ### Migrating from individual user budgets
@@ -120,8 +106,8 @@ Both worked, but neither scaled — adding and maintaining individual budgets fo
 
 | If you set up… | Move to… |
 |----------------|----------|
-| A high universal budget (Path A) | Keep the universal budget as your floor. Group teams into cost centers and set a cost center user-level budget where a tighter, team-specific cap makes sense. |
-| A tight universal budget plus many individual overrides (Path B) | Replace the per-user overrides with a cost center user-level budget on the team that shared that cap. Keep individual overrides only for genuine outliers. |
+| A high universal budget (Path A) | Keep the universal budget as your floor. Group teams into cost centers and set a cost center user-level budget where a tighter, team-specific cap makes sense — steps 1–2 above show where to do each. |
+| A tight universal budget plus many individual overrides (Path B) | Replace the per-user overrides with a cost center user-level budget on the team that shared that cap (steps 1–2 above). Keep individual overrides only for genuine outliers. |
 
 Your existing individual user budgets keep working. They sit at the top of the precedence order, so they still override the cost center budget for the specific people you set them on. The goal isn't to delete them — it's to stop needing a new one every time a team's needs change.
 
@@ -163,16 +149,6 @@ The backstop can be $0 if you want zero overage — users draw from the pool and
 
 > [!TIP]
 > To size the backstop precisely, GitHub's [Optimizing your budget configuration](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/optimizing-your-budget-configuration#sizing-your-budgets) tutorial walks through the formula: multiply your users by their user-level budgets, subtract your pool value (the sum of your Copilot seat license costs — each seat's per-seat price × number of seats), and the difference is the maximum metered spend your enterprise budget needs to cover. It also includes common configurations by org structure.
-
-
-### Managing individual overrides at scale
-
-With cost center user-level budgets doing the heavy lifting, individual overrides should be the exception rather than the rule. When you do need to set several at once:
-
-> [!TIP]
-> Setting individual user budgets through the UI is tedious at scale. Two options:
-> - **REST API** — [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint lets you script bulk budget assignments
-> - **gh CLI extension** — [`gh-ulb`](https://github.com/colinbeales/gh-ulb) wraps the API if you don't want to write the scripts yourself
 
 
 ### Build your champions program
@@ -257,8 +233,7 @@ When someone reports being blocked, work through these checks in order:
    - No: check whether their license or feature access was removed.
 
 > [!TIP]
-> Mid-month blocks while the pool still has credits are almost always a user-level budget — most often the Universal or cost center user-level budget. Walk every scope that applies to the user; the most restrictive one is the cap that's binding.
-
-> [!NOTE]
-> A cost center user-level budget behaves like any other user budget: it limits each member's total AI credit usage, included and metered alike, so it can stop a user even while pooled credits remain. The cost center AI credit pool cap is different — it limits the whole cost center's draw on the shared *included* pool. Together they bound both the individual and the group.
+> **Start with one question: does the shared pool still have credits?** It splits the diagnosis in two.
+> - **Pool still has credits.** The block is almost always a user-level budget. Check the scopes most-restrictive-first — Individual (IUB), then cost center (CCULB), then Universal (UULB) — and raise the one that's binding. If none are, check whether that user's cost center hit its own [AI credit pool cap](#the-recommended-setup-enterprise-teams--cost-centers): a cost center can exhaust its included share while the enterprise pool still has room.
+> - **Pool depleted.** User-level budgets still bind in the metered phase, so check them in the same order first. Past them, the [Enterprise Budget backstop](#enterprise-budget-backstop) is what caps total overage — raise it if it's the limit that fired.
 
