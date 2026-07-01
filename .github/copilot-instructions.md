@@ -12,8 +12,8 @@ Admonition syntax should follow styling for jekyll-gfm-admonitions
 These pages are opinionated implementation guides — worked examples readers can copy and adapt, not documentation. Position content across three tiers:
 
 - **Aircraft manual** — [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/): what every switch does.
-- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): what to weigh, why, and the design trade-offs — deliberately tool-agnostic.
-- **A flown mission** — these guides: one concrete, runnable way to actually do it on a real stack.
+- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): the design principles behind a good rollout — *what* to consider and *why* — but it stops short of naming specific tools.
+- **A proven flight plan** — these guides: one concrete, runnable way to actually do it on a real stack.
 
 Rules of the road:
 - Do not restate what the docs or WAF already cover. Link out to them and move on.

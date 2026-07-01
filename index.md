@@ -7,8 +7,8 @@ description: "Opinionated, runnable guides for rolling out GitHub Copilot at sca
 These pages are maintained as opinionated implementation guides — worked examples you can copy and adapt, not documentation. Think of it in three tiers:
 
 - **The aircraft manual** — [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/): what every switch does.
-- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): what to weigh, why, and the design trade-offs — deliberately tool-agnostic.
-- **A flown mission** — these guides: one concrete, runnable way to actually do it on a real stack.
+- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): the design principles behind a good rollout — *what* to consider and *why* — but it stops short of naming specific tools.
+- **A proven flight plan** — these guides: one concrete, runnable way to actually do it on a real stack.
 
 The docs and the framework tell you *what* and *why*. These guides hand you a working flight plan for the *how* — with specific tooling, real config, and the trade-offs behind each choice. That said, every pilot has the right to make their own calls in the air — this is just one Top Gun instructor's flight plan, so take what works for your mission and adapt the waypoints.
 
@@ -30,7 +30,7 @@ The highest-impact adoption strategies focus on raising the floor across your or
 
 ## The Guides
 
-Each of these is a flown mission — one concrete, runnable implementation on a real stack, not the only way to do it. Lift the flight plan and adapt the waypoints to your own tooling.
+Each of these is a proven flight plan — one concrete, runnable implementation on a real stack, not the only way to do it. Lift the flight plan and adapt the waypoints to your own tooling.
 
 - [Managing Copilot Usage-Based Billing](./cost-management) — budget sizing math, promo-window credit arbitrage, and a troubleshooting checklist for when developers get blocked.
 - [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing) — the credentials, endpoints, and daily pull to keep your own history before GitHub's 28-day window rolls off.
