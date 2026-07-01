@@ -12,13 +12,23 @@ toc: true
 
 ## Key resources
 
-- **Governance framework** — layered budget design, cost center configuration, operating model, and API automation: [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) (GitHub Well-Architected Framework)
-- **Billing mechanics** — how credits, metering, and charges work: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
-- **Budget definitions** — how the four budget controls interact, how billing flows through them, and when usage is blocked: [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)
-- **Budget setup** — recommended step-by-step setup for your enterprise: [Getting started with budget controls](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/getting-started-with-budget-controls)
-- **Cost center spend controls** — scale budgets to your team structure with enterprise team attribution, cost center user-level budgets, and AI credit pool caps. Changelogs: [Assign enterprise teams to cost centers](https://github.blog/changelog/2026-06-25-assign-enterprise-teams-to-cost-centers), [Per-user AI credit budgets for cost centers](https://github.blog/changelog/2026-06-30-per-user-ai-credit-budgets-available-for-cost-centers)<!-- TODO: add AI credit pool caps changelog link when it posts (issue github/billing-product#922) -->. Setup and concept docs publish from [Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale) as each feature reaches GA.
-- **Hands-on training** — end-to-end fundamentals course: [GitHub Usage-Based Billing](https://learn.github.com/courses/gitHubusagebasedbillingmodule) (GitHub Learn)
-- **Budget planning tool** — visualize the budget hierarchy, model scenarios, and push changes via the API from a single browser tab: [Copilot Budget Command Calculator](https://github.com/xrvk/copilot-budget-command-calculator) (community tool — built by a GitHub Solutions Engineer, not an official GitHub product)
+New to Copilot billing? Read the **Start here** links first. They cover the vocabulary and setup this guide builds on. The rest is deeper or alternative reading you can come back to.
+
+### Start here
+
+- **Billing mechanics** — what AI credits are, how metering and charges work, and how the shared pool functions: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
+- **Budget definitions** — the four budget controls, how they interact, how billing flows through them, and when usage is blocked. This is where the acronyms on this page (UULB, CCULB, IUB) come from: [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)
+- **Budget setup** — a short step-by-step setup sequence for your enterprise: [Getting started with budget controls](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/budgets/getting-started-with-budget-controls)
+- **Cost center spend controls at scale** — enterprise team attribution, cost center user-level budgets, AI credit pool caps, and API automation for large fleets:
+  - [Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale)
+  - [Assign enterprise teams to cost centers](https://github.blog/changelog/2026-06-25-assign-enterprise-teams-to-cost-centers)
+  - [Per-user AI credit budgets for cost centers](https://github.blog/changelog/2026-06-30-per-user-ai-credit-budgets-available-for-cost-centers)<!-- TODO: add AI credit pool caps changelog link when it posts (issue github/billing-product#922) -->
+
+### Going deeper
+
+- **Governance framework** — the FinOps thinking behind layered budgets, cost center design, and operating model: [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) (GitHub Well-Architected Framework)
+- **Hands-on training** — an end-to-end fundamentals course if you prefer a guided format or need to train a team: [GitHub Usage-Based Billing](https://learn.github.com/courses/gitHubusagebasedbillingmodule) (GitHub Learn)
+- **Budget planning tool** — model the budget hierarchy, run scenarios, and push changes via the API from one browser tab: [Copilot Budget Command Calculator](https://github.com/xrvk/copilot-budget-command-calculator) (community tool — built by a GitHub Solutions Engineer, not an official GitHub product). Best used once you understand the mechanics above.
 
 This page covers budget sizing guidance and operational tips, plus a troubleshooting checklist for when developers get blocked. It complements the official documentation linked above. Treat it as one reference implementation, not the only way: a worked example with real numbers and specific controls that you adapt to your own enterprise.
 
@@ -92,7 +102,7 @@ Set spend controls against the team structure you already manage instead of agai
 This setup still needs an [enterprise budget backstop](#enterprise-budget-backstop) behind it.
 
 > [!NOTE]
-> Availability as of June 30, 2026: step 1 (enterprise team attribution) and step 3 (pool caps) are in the billing UI today. Step 2 (the cost center user-level budget) is **REST API only** — UI support is coming. The [`gh-ulb`](https://github.com/colinbeales/gh-ulb) CLI extension wraps the budgets API if you'd rather not script the call yourself. Official setup docs are linked in [Key resources](#key-resources) as each feature reaches GA.
+> Availability as of June 30, 2026: step 1 (enterprise team attribution) and step 3 (pool caps) are in the billing UI today. Step 2 (the cost center user-level budget) is **REST API only** — UI support is coming, so for now you script the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) call yourself. Official setup docs are linked in [Key resources](#key-resources) as each feature reaches GA.
 
 
 ### Migrating from individual user budgets

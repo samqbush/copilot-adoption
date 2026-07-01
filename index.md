@@ -1,7 +1,7 @@
 ---
 layout: default
-title: GitHub Copilot Adoption Resources
-description: Guides for cost management, AI commit attribution, and OpenTelemetry monitoring — plus curated links to official Copilot rollout documentation
+title: "Copilot: The Ready Room"
+description: "Opinionated, runnable guides for rolling out GitHub Copilot at scale — the how the docs leave out."
 ---
 
 These pages are maintained as opinionated implementation guides — worked examples you can copy and adapt, not documentation. Think of it in three tiers:
