@@ -12,7 +12,7 @@ These pages are maintained as opinionated implementation guides — worked examp
 
 The docs and the framework tell you *what* and *why*. These guides hand you a working flight plan for the *how* — with specific tooling, real config, and the trade-offs behind each choice. That said, every pilot has the right to make their own calls in the air — this is just one Top Gun instructor's flight plan, so take what works for your mission and adapt the waypoints.
 
-## Official Resources
+## Copilot Adoption Official Resources
 
 - [Rolling Out GitHub Copilot at Scale](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale) — GitHub's official rollout guide
 - [Well-Architected: Adopting Copilot at Scale](https://wellarchitected.github.com/library/productivity/recommendations/adopting-copilot-at-scale/) — GitHub's Well-Architected Framework guidance
@@ -28,12 +28,12 @@ The highest-impact adoption strategies focus on raising the floor across your or
 
 3. **Create an Internal Plugin Marketplace** — Curate and share custom plugins/skills so teams can leverage each other's work. See the [Copilot Plugins Marketplace docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace) and the open-source [awesome-copilot](https://github.com/github/awesome-copilot) collection for inspiration.
 
-## Unique Resources (Still Maintained)
+## The Guides
 
-The following pages cover topics not yet addressed by official documentation and remain actively maintained.
+Each of these is a flown mission — one concrete, runnable implementation on a real stack, not the only way to do it. Lift the flight plan and adapt the waypoints to your own tooling.
 
-- [Managing Copilot Usage-Based Billing](./cost-management)
-- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing)
-- [Measuring AI in Pull Requests](./ai-commit-attribution)
-- [Copilot OpenTelemetry via Intune](./copilot-otel-intune)
+- [Managing Copilot Usage-Based Billing](./cost-management) — budget sizing math, promo-window credit arbitrage, and a troubleshooting checklist for when developers get blocked.
+- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing) — the credentials, endpoints, and daily pull to keep your own history before GitHub's 28-day window rolls off.
+- [Measuring AI in Pull Requests](./ai-commit-attribution) — measure AI leverage across merged PRs with trailer scanning and the Copilot usage metrics API.
+- [Copilot OpenTelemetry via Intune](./copilot-otel-intune) — centrally deploy OTel monitoring across Windows and macOS with Microsoft Intune.
 

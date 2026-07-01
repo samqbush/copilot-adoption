@@ -20,7 +20,7 @@ toc: true
 - **Hands-on training** — end-to-end fundamentals course: [GitHub Usage-Based Billing](https://learn.github.com/courses/gitHubusagebasedbillingmodule) (GitHub Learn)
 - **Budget planning tool** — visualize the budget hierarchy, model scenarios, and push changes via the API from a single browser tab: [Copilot Budget Command Calculator](https://github.com/xrvk/copilot-budget-command-calculator) (community tool — built by a GitHub Solutions Engineer, not an official GitHub product)
 
-This page covers budget sizing guidance and operational tips, plus a troubleshooting checklist for when developers get blocked. It complements the official documentation linked above.
+This page covers budget sizing guidance and operational tips, plus a troubleshooting checklist for when developers get blocked. It complements the official documentation linked above. Treat it as one reference implementation, not the only way: a worked example with real numbers and specific controls that you adapt to your own enterprise.
 
 
 > [!IMPORTANT]
@@ -153,11 +153,7 @@ The backstop can be $0 if you want zero overage — users draw from the pool and
 
 ### Build your champions program
 
-The developers who consistently hit their budgets are your power users — whether you knew them upfront or discovered them through notifications. They're also the foundation of a good AI adoption story:
-
-- Identify them through budget notifications and usage data
-- Collect their stories: what they're shipping faster, what problems Copilot is solving for them
-- Use those stories to demonstrate business value and justify continued investment
+Your budget data is a ready-made way to *find* champions. The developers who consistently hit their budgets are your power users — surface them through budget notifications and usage data, then collect their stories (what they're shipping faster, what problems Copilot is solving) to demonstrate business value. For how to structure and run the program itself, see the [Well-Architected champion program guidance](https://wellarchitected.github.com/library/collaboration/recommendations/champion-program/).
 
 > [!NOTE]
 > This turns cost management into a discovery exercise. Budget notifications become a signal for where AI is delivering real returns, not just a spending alert.

@@ -21,6 +21,7 @@ Rules of the road:
 - Pick one concrete stack and show it working end to end (specific tooling, real config, actual commands). WAF stays vendor-neutral on purpose; these guides deliberately don't.
 - Frame each guide as one reference implementation, not the only way — adapt-to-your-stack, not gospel.
 - The differentiator to keep clear: WAF is tool-agnostic design thinking; these guides are tool-specific worked examples you can lift and adapt.
+- Write for the reader (a Copilot admin), not about the authors. Never narrate the authoring process or position the guide as "us vs GitHub." Keep editorial reasoning — "our framing," "this page adds," "the gap we fill," "GitHub says X but we say Y" — out of the published text. If a distinction matters to the reader (e.g. a term GitHub uses differently), state it neutrally as a heads-up, not as a we-vs-them argument.
 
 ### Page Edit Conventions
 

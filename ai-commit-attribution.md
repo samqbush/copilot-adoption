@@ -8,30 +8,30 @@ toc: true
 # Measuring AI in Pull Requests (Not Lines of Code)
 {:.no_toc}
 
-*Last updated: June 23, 2026*
+*Last updated: July 1, 2026*
 
 ---
 
-## The Problem: The Wrong Question
+## The mission
 
-A leader reads that "47% of our code is written by AI" and asks the Copilot admin to prove it. The admin opens the Copilot dashboard, finds a lines-suggested or lines-accepted number, and tries to turn it into a percentage of the codebase.
+Measure **AI leverage** — the share of your merged Pull Requests that involved AI — on your own stack, using two signals: `Co-authored-by` commit trailers (any GitHub edition) and the Copilot usage metrics API (Cloud/EMU). This guide hands you one reference implementation: two example scripts, the exact APIs behind them, and the MDM and plugin plumbing to make IDE usage show up in the number. It's one worked example, not the only way — adapt the waypoints to your stack.
 
-That number does not mean what people think it means. Lines of code is a bad unit for this question:
+Why the PR and not lines of code, in two sentences: counting lines suggested or accepted rewards verbose generated code and can't be tied to shipped work, so it produces a number you can't defend. The PR is the unit of shipped work, so "what share of merged PRs involved AI?" is a number you *can* list, audit, and defend — the full argument is in [Why the PR is the unit](#why-the-pr-is-the-unit).
 
-- **Accepted suggestions are not kept code.** A developer can accept an inline completion, then rewrite or delete it before committing. The dashboard still counts the acceptance.
-- **Lines are not value.** A 200-line generated boilerplate file and a 5-line bug fix that saves the weekend are not comparable, but LoC treats the big file as 40x more "AI."
-- **It rewards the wrong behavior.** Optimizing for "lines written by AI" pushes teams toward verbose, generated code, which is the opposite of what you want.
-- **It is not auditable.** There is no way to point at a specific commit and say "this line was AI and that one was not."
+---
 
-So when a leader asks "how much are we using AI?", counting lines sends you down a path that produces a number you cannot defend.
+## Why the PR is the unit {#why-the-pr-is-the-unit}
 
-## The Better Question: AI Leverage
+The reflex is to answer "how much are we using AI?" with a lines-suggested or lines-accepted number off the Copilot dashboard. Lines of code is the wrong unit for it:
 
-GitHub's [Engineering System Success Playbook](https://github.com/resources/insights/engineering-system-success-playbook) (ESSP) frames the useful metric as **AI leverage**: the share of merged Pull Requests that involved AI. The [Well-Architected Framework](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/) summarizes the same idea.
+- **Accepted suggestions are not kept code.** A developer can accept an inline completion, then rewrite or delete it before committing — the dashboard still counts the acceptance.
+- **Lines are not value.** A 200-line generated boilerplate file and a 5-line fix that saved the weekend are not comparable, but LoC treats the big file as 40x more "AI."
+- **It rewards the wrong behavior, and it is not auditable.** Optimizing for "lines written by AI" pushes teams toward verbose generated code, and there is no way to point at a commit and prove which lines were AI.
 
-The PR is the right unit because it is the unit of shipped work. A PR got reviewed, merged, and went to production. Ask "what percentage of our merged PRs had AI involved?" and you get a number you can actually defend: you can list the exact PRs behind it, and it does not lurch around just because someone generated one big boilerplate file. It tracks AI's reach into real output instead of counting keystrokes.
+The PR is the unit of shipped work — reviewed, merged, in production. Ask "what share of our merged PRs involved AI?" and you get a number you can defend: you can list the exact PRs behind it, and it does not lurch when someone generates one big file. It tracks AI's reach into real output instead of keystrokes.
 
-This guide shows how to measure AI leverage across the Copilot features your developers actually use.
+> [!NOTE]
+> **Heads-up on the term "AI leverage."** GitHub's [Engineering System Success Playbook](https://github.com/resources/insights/engineering-system-success-playbook) (ESSP) and [Well-Architected Framework](https://wellarchitected.github.com/library/productivity/recommendations/engineering-system-metrics/) use *"AI leverage"* to mean something different: an estimated time-savings cost model — roughly *time saved × salary × headcount ÷ AI cost* — whose headline input (time saved) comes from developer surveys, not an API. The telemetry GitHub does define (the Copilot Metrics API's [suggestion and acceptance rate](https://wellarchitected.github.com/library/productivity/scenarios/measuring-genai-impact/)) measures *adoption*, and carries the same problems as counting lines. Neither framework measures AI's reach into merged PRs. So when "AI leverage" appears on this page, it means the share of merged PRs that involved AI — a PR-level, telemetry-backed metric, related to but distinct from the business-outcome metric of the same name in ESSP/WAF. Use ESSP and WAF for the four-zone model and the general point that raw output counts are weak signals.
 
 ---
 
