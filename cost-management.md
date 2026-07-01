@@ -130,9 +130,9 @@ Pool caps only fully contain spend when *every* licensed user sits in a cost cen
 
 User-level budgets keep working after the pool is exhausted, authorizing metered overage up to the same per-user limit. The sum of every UULB, CCULB, and IUB is an implicit aggregate ceiling that can run well past your intended spend. An enterprise budget makes that ceiling explicit.
 
-1. **Start from real usage.** Download your [usage report](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/prepare-for-usage-based-billing) or load it into the [billing preview tool](https://copilot-billing-preview.github.com/) for projected monthly spend.
-2. **Set the budget above projected spend** with "Stop usage" enabled — roughly 1.5–2× your highest projected month, so it only fires in an abnormal month.
-3. **Add threshold alerts at 75% and 90%** to react before it fires.
+1. **Start from last month's real usage.** Open the **AI usage** tab in your **Billing and licensing** settings to see included credits used and any overage beyond your plan ([Monitoring your GitHub AI Credits usage](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/manage-and-track-spending/monitor-ai-usage)). That overage figure is your starting number.
+2. **Set the budget at last month's overage spend** with "Stop usage" enabled. It caps the aggregate at a number you've already seen rather than a projection.
+3. **Add threshold alerts at 75% and 90%** so you can react before it fires.
 
 | Example (100 Copilot Business users, promotional period) | Value |
 |----------------------------------------------------------|-------|
@@ -154,7 +154,7 @@ Earlier setups capped spend one user at a time: a high universal budget with rea
 
 | If you set up… | Move to… |
 |----------------|----------|
-| A high universal budget | Keep it as your floor. Group teams into cost centers and set a CCULB where a tighter, team-specific cap makes sense (steps 1–2). |
+| A high universal budget | Lower it to a sensible floor that covers baseline usage, then use CCULBs to raise the cap for teams that need more. A high universal budget is a high ceiling for everyone by default, since CCULB overrides UULB in both directions. Raise it per team instead of leaving the floor high (steps 1–2). |
 | A tight universal budget plus many individual overrides | Replace the per-user overrides with a CCULB on the team that shared that cap (steps 1–2). Keep individual overrides only for genuine outliers. |
 
 Existing IUBs keep working. They sit at the top of the precedence order, so they still override the CCULB for the specific people you set them on.
