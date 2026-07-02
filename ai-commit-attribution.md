@@ -8,7 +8,7 @@ toc: true
 # Measuring AI in Pull Requests (Not Lines of Code)
 {:.no_toc}
 
-*Last updated: July 1, 2026*
+*Last updated: July 2, 2026*
 
 ---
 

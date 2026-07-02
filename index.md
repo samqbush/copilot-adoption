@@ -1,7 +1,7 @@
 ---
 layout: default
 title: "Copilot: The Ready Room"
-description: "Opinionated, runnable guides for rolling out GitHub Copilot at scale — the how the docs leave out."
+description: "Opinionated, runnable guides for rolling out GitHub Copilot at scale, with real config and worked examples."
 ---
 
 These pages are maintained as opinionated implementation guides — worked examples you can copy and adapt, not documentation. Think of it in three tiers:
@@ -10,7 +10,7 @@ These pages are maintained as opinionated implementation guides — worked examp
 - **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): the design principles behind a good rollout — *what* to consider and *why* — but it stops short of naming specific tools.
 - **A proven flight plan** — these guides: one concrete, runnable way to actually do it on a real stack.
 
-The docs and the framework tell you *what* and *why*. These guides hand you a working flight plan for the *how* — with specific tooling, real config, and the trade-offs behind each choice. That said, every pilot has the right to make their own calls in the air — this is just one Top Gun instructor's flight plan, so take what works for your mission and adapt the waypoints.
+Each guide is a working flight plan for the *how*: specific tooling, real config, and the trade-offs behind each choice. Treat it as one reference implementation. Take what works for your environment and adapt the rest.
 
 ## Copilot Adoption Official Resources
 

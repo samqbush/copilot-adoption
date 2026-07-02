@@ -35,17 +35,17 @@ CONFIG="${COPILOT_METRICS_CONFIG:-$ROOT_DIR/.secrets/config}"
 OUT_DIR=""
 PASSTHROUGH=()
 
+die() { echo "ERROR: $*" >&2; exit 1; }
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --config) CONFIG="$2"; shift 2 ;;
-    --out-dir) OUT_DIR="$2"; shift 2 ;;
+    --config) [[ $# -ge 2 ]] || die "--config requires a value"; CONFIG="$2"; shift 2 ;;
+    --out-dir) [[ $# -ge 2 ]] || die "--out-dir requires a value"; OUT_DIR="$2"; shift 2 ;;
     -h|--help) sed -n '2,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     --) shift; PASSTHROUGH+=("$@"); break ;;
     *) PASSTHROUGH+=("$1"); shift ;;
   esac
 done
-
-die() { echo "ERROR: $*" >&2; exit 1; }
 
 # --- Load secrets ----------------------------------------------------------
 if [[ ! -f "$CONFIG" ]]; then
@@ -62,6 +62,9 @@ set -a; source "$CONFIG"; set +a
 for tool in curl jq openssl; do
   command -v "$tool" >/dev/null 2>&1 || die "Required tool not found: $tool"
 done
+# gh is optional here (App creds are required below), but the collector scripts
+# can fall back to `gh auth token`, so warn early if it's missing.
+command -v gh >/dev/null 2>&1 || echo "WARN: 'gh' not found; the 'gh auth token' auth fallback will be unavailable." >&2
 
 # --- Validate required values ---------------------------------------------
 : "${ENTERPRISE:?ENTERPRISE is not set in $CONFIG}"

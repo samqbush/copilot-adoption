@@ -8,9 +8,9 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: July 1, 2026*
+*Last updated: July 2, 2026*
 
-This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide fills the gap between them with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
+This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
 ## Key resources
 

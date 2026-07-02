@@ -1,5 +1,5 @@
 title: "Copilot: The Ready Room"
-description: "Opinionated, runnable guides for rolling out GitHub Copilot at scale — the how the docs leave out."
+description: "Opinionated, runnable guides for rolling out GitHub Copilot at scale, with real config and worked examples."
 theme: jekyll-theme-cayman
 baseurl: "/copilot-adoption"
 url: "https://samqbush.github.io"
