@@ -20,10 +20,11 @@ New to Copilot billing? Read the **Start here** links first for the vocabulary a
 
 - **Billing mechanics** — AI credits, metering, and the shared pool: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/usage-based-billing-for-organizations-and-enterprises)
 - **Budget definitions** — the four controls, how they interact, and when usage is blocked. Source of the acronyms below: [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)
-- **Cost center spend controls at scale** — enterprise team attribution, cost center user-level budgets, AI credit pool caps, and API automation:
+- **Cost center spend controls at scale** — enterprise team attribution, cost center user-level budgets, included usage caps, and API automation:
   - [Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale)
   - [Assign enterprise teams to cost centers](https://github.blog/changelog/2026-06-25-assign-enterprise-teams-to-cost-centers)
-  - [Per-user AI credit budgets for cost centers](https://github.blog/changelog/2026-06-30-per-user-ai-credit-budgets-available-for-cost-centers)<!-- TODO: add AI credit pool caps changelog link when it posts (issue github/billing-product#922) -->
+  - [Per-user AI credit budgets for cost centers](https://github.blog/changelog/2026-06-30-per-user-ai-credit-budgets-available-for-cost-centers)
+  - [Included usage caps for cost centers](https://github.blog/changelog/2026-07-02-cost-centers-now-support-included-usage-caps)
 - **Governance framework** — the FinOps thinking behind layered budgets and cost center design: [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) (WAF)
 
 
@@ -31,25 +32,28 @@ New to Copilot billing? Read the **Start here** links first for the vocabulary a
 - **UULB** universal user-level budget 
 - **CCULB** cost center user-level budget
 - **IUB** individual user budget
-- **AI credit pool cap** bounds a cost center's draw on the shared pool
+- **included usage cap** bounds a cost center's draw on the shared pool of included credits
 - **enterprise budget** caps total metered overage.
 
 Full definitions live in [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing).
 
 > [!IMPORTANT]
-> The controls act at different layers. User-level budgets (UULB, CCULB, IUB) cap each person's draw from the pool **and** authorize metered overage afterward. AI credit pool caps and the enterprise budget only bite once included credits run low. That single fact drives every decision below: the sum of your user-level budgets is an implicit overage ceiling.
+> The controls act at different layers. User-level budgets (UULB, CCULB, IUB) cap each person's draw from the pool **and** authorize metered overage afterward. Included usage caps and the enterprise budget only bite once included credits run low. That single fact drives every decision below: the sum of your user-level budgets is an implicit overage ceiling.
 
 ---
 
 ## Set spend controls that follow your team structure
 
-Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today and step 2 is REST API only (runnable calls below). Step 3 is not yet generally available — see the note in that step.
+Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today; steps 2 and 3 are REST API today with UI support following (runnable calls below).
 
 ### Step 1 — Attribute enterprise teams to cost centers
 
 Add an enterprise team as a resource on a cost center. Every member's usage attributes there automatically, and membership follows the team as people join or leave through IdP/SCIM sync — no per-user reassignment.
 
 In **Billing and licensing → Cost centers**, create or edit a cost center and add the enterprise team under **Resources**. When a user lands in more than one cost center, GitHub resolves it deterministically ([Cost center allocation](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/cost-center-allocation)).
+
+> [!NOTE]
+> An enterprise team can belong to only one cost center at a time. If you assign it to another cost center, GitHub moves it, so plan on one team per cost center. When you need a specific person's spend to land somewhere else, assign that user directly: a direct assignment takes precedence over their team's cost center ([Cost center allocation](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/cost-center-allocation)).
 
 ### Step 2 — Set a cost center user-level budget (CCULB)
 
@@ -117,14 +121,50 @@ done < cost-centers.csv   # lines: Platform Engineering,100
 > [!NOTE]
 > `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. UI support for CCULBs is coming — until then this call is the setup path.
 
-### Step 3 — Enable the cost center AI credit pool cap
+### Step 3 — Enable the cost center included usage cap
 
-This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool another team paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center in the same **Cost centers** settings ([Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale)). When a capped cost center hits its limit, choose whether members stop or continue as paid overage.
+This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool another team paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale). The cost center must contain at least one user or enterprise team first (steps 1–2).
+
+```bash
+# Cap a cost center's included usage to what its own licenses fund.
+# Requires an enterprise admin or billing manager token (gh auth login --scopes 'manage_billing:enterprise').
+ENTERPRISE="your-enterprise-slug"
+COST_CENTER_ID="the-cost-center-id"
+
+gh api --method PATCH \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" \
+  --input - <<'JSON'
+{ "ai_credit_pool_enabled": true }
+JSON
+```
+
+Confirm it landed:
+
+```bash
+gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" \
+  --jq '{id, ai_credit_pool_enabled}'
+```
+
+The cap tracks the licenses in the cost center: **3,000 included credits per Copilot Business license** and **7,000 per Copilot Enterprise license** each month (promotional values). Adding or removing licensed members re-sizes it for you — license increases apply immediately, decreases take effect next cycle, and credits already used aren't clawed back. When a capped cost center reaches its limit, you choose whether members stop or continue as paid overage (subject to their user-level budgets and the enterprise backstop).
 
 > [!NOTE]
-> The AI credit pool cap is not yet generally available and has no changelog announcement yet. This step describes expected behavior based on GitHub's [Control costs at scale](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale) guidance — treat it as forward-looking until the feature ships. This page will be updated with the confirmed setup path and changelog link once it drops.
+> Enabling the cap doesn't retroactively redistribute the shared pool. From the moment it's on, that cost center draws only the credits its own licenses fund; turn it off and its members can draw from the shared enterprise pool again. A UI toggle is coming to the cost center create/edit form — until then this call is the setup path.
 
-Pool caps only fully contain spend when *every* licensed user sits in a cost center that has them enabled. Anyone left out can still draw from the shared enterprise pool.
+Included usage caps only fully contain spend when *every* licensed user sits in a cost center that has one enabled. Anyone left out can still draw from the shared enterprise pool.
+
+#### When to turn this on
+
+The cap is an **aggregate team allowance, not a per-user reset.** It's the licenses in the cost center times their included credits — 10 Business seats fund one shared $300/month pool of included credits, not $30 stamped on each person. Your CCULB decides how unevenly that $300 gets spent underneath. A power user on a $100 CCULB keeps their full $100 of included credits as long as the *team* total stays under $300, because they're spending lighter teammates' unused share — still the team's own funded credits, not another cost center's. You only compress toward the per-license figure when the whole team maxes out at once, which is a team you wouldn't cap this way in the first place.
+
+So the cap isn't a productivity lever. It's a chargeback boundary for enterprises where several teams share one pool, and it earns its keep only when you care that a heavy team is quietly drawing down included credits that a lighter team's licenses funded. The behavior you pick at the limit is what decides whether it fights your CCULB:
+
+| Behavior at the cap | Use it for | Effect on power users |
+|---------------------|-----------|-----------------------|
+| **Block** | Teams you're containing — cost-controlled groups, contractors, low-priority work | Hard stop once the team spends its funded share; don't pair this with a generous CCULB |
+| **Continue as paid overage** | Teams you're empowering but still want attributed | None — members keep working under their CCULB; usage past the funded share bills to this cost center's metered line instead of the shared pool |
+
+Leave it off entirely if you're a single team or don't care whose licenses funded which credits — the [enterprise backstop](#step-4--put-an-enterprise-budget-backstop-behind-it-all) already caps total spend.
 
 ### Step 4 — Put an enterprise budget backstop behind it all
 
@@ -196,7 +236,7 @@ After August 2026 the arbitrage disappears: both tiers include credits proportio
 
 Start with one question: **does the shared pool still have credits?** It splits the diagnosis in two.
 
-- **Pool still has credits.** The block is almost always a user-level budget. Check the scopes most-restrictive-first — Individual (IUB), then cost center (CCULB), then Universal (UULB) — and raise the one that's binding. If none are, check whether that user's cost center hit its own [AI credit pool cap](#step-3--enable-the-cost-center-ai-credit-pool-cap): a cost center can exhaust its included share while the enterprise pool still has room.
+- **Pool still has credits.** The block is almost always a user-level budget. Check the scopes most-restrictive-first — Individual (IUB), then cost center (CCULB), then Universal (UULB) — and raise the one that's binding. If none are, check whether that user's cost center hit its own [included usage cap](#step-3--enable-the-cost-center-included-usage-cap): a cost center can exhaust its included share while the enterprise pool still has room.
 - **Pool depleted.** User-level budgets still bind in the metered phase, so check them in the same order first. Past them, the [enterprise backstop](#step-4--put-an-enterprise-budget-backstop-behind-it-all) is what caps total overage — raise it if that's the limit that fired.
 
 A user can be stopped by any scope that applies to them, even when a lower-priority budget still has room. The most specific scope wins ([precedence rules](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)). Nine times out of ten it's a user-level budget.
