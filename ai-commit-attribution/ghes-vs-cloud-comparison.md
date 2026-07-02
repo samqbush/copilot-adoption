@@ -76,9 +76,10 @@ They count different things, so the numbers differ. That difference is the usefu
 | AI leverage % | **34.8%** | **8.7%** | 26.1pp gap |
 | Closed without merge | 46 | — | Not tracked by Metrics API |
 | AI rejection rate | 11.1% | — | Not tracked by Metrics API |
-| PRs created | — | 396 | Not tracked by trailer scanning |
-| PRs created by Copilot | — | 18 | Not tracked by trailer scanning |
+| PRs created (total volume) | — | 396 | Trailer script reports closed PRs only, not creation volume |
+| PRs created/authored by Copilot | 2 (in merged set, via trailers) | 18 (created, any state) | ⚠️ Trailers **do** attribute coding-agent PRs — but only within the closed/merged set the script scans; the API counts bot-created PRs in any state, server-side |
 | PRs reviewed by Copilot | — | 345 | Not tracked by trailer scanning |
+| Merged PRs by AI adoption phase | — | per-phase totals | Cloud/EMU only — `totals_by_ai_adoption_phase.total_pull_requests_merged` |
 | Median time to merge | 142.5 min | 0.53 min | Different scopes: all merged PRs vs coding-agent PRs |
 | Median TTM (AI-attributed) | 98.3 min | 10.25 min | Trailer scan: any AI co-author; API: coding-agent-authored |
 | Code review suggestions | — | 103 | Not tracked by trailer scanning |
@@ -116,7 +117,9 @@ The [Engineering System Success Playbook](https://github.com/resources/insights/
 | **Velocity** | Time to merge (AI-attributed) | ✅ 98.3 min median | ✅ 10.25 min (coding-agent PRs) |
 | **Quality** | AI rejection rate | ✅ 11.1% | ❌ |
 | **Quality** | Code review (suggestions/applied) | ❌ | ✅ 103 suggestions, 2 applied |
-| **Throughput** | PRs created | ❌ | ✅ 396 total, 18 by Copilot |
+| **Throughput** | PRs created | ❌ raw volume | ✅ 396 total, 18 by Copilot |
+| **Throughput** | PRs authored by Copilot | ⚠️ via trailers (closed set) | ✅ 18 (server-side, any state) |
+| **Throughput** | Merged PRs by AI adoption phase | ❌ | ✅ Cloud/EMU only |
 | **Throughput** | PRs reviewed by Copilot | ❌ | ✅ 345 |
 
 ### What the trailer scan can't tell you
@@ -127,8 +130,15 @@ Trailer scanning has no view into these. You need the usage metrics API (Cloud/E
 2. **PR creation volume by Copilot** — 18 PRs created by Copilot coding agent
 3. **Code review suggestion acceptance** — only 2 of 103 suggestions applied (1.9% acceptance rate)
 4. **Daily active Copilot users** — 812 users active on this day
+5. **Merged PRs by AI adoption phase** — see below
 
 The trailer scan *does* compute overall and AI-attributed time-to-merge from each PR's `created_at`/`merged_at`, so velocity is not Cloud-only. The metrics API adds a time-to-merge value pre-scoped to coding-agent-authored PRs, useful when you want that subset broken out without filtering trailers yourself.
+
+### Merged PRs by AI adoption phase (Cloud/EMU only)
+
+As of June 26, 2026, the aggregated org/enterprise usage metrics reports include `total_pull_requests_merged` inside each `totals_by_ai_adoption_phase` entry — the raw count of PRs merged that day by users in each adoption cohort (`No Cohort`, `Phase 1`, `Phase 2`, `Phase 3`). This lets you see each phase's share of merged PRs, not just the per-user averages that shipped earlier.
+
+This is a Cloud/EMU-only data point — it comes from the same usage metrics API a GHES customer can't call. One important caveat for how you read it: the adoption phase is a property of the **user**, not the PR. `total_pull_requests_merged` counts *every* PR merged by users in that cohort, whether or not AI touched that specific PR. It is a **cohort-throughput correlation** ("do heavier Copilot users merge more?"), **not** AI attribution. Don't conflate it with the AI leverage % above — that one (trailers / `*_by_copilot`) is the metric that tells you AI was actually involved in a PR.
 
 ### What the metrics API can't tell you
 
@@ -190,7 +200,7 @@ The trailer scan only needs read access to commits and PRs (`repo` scope), which
 | **Accuracy** | Depends on trailers being present (honesty system) | Server-side tracking (100% for coding agent) |
 | **AI tools covered** | Copilot CLI, VS Code agent, Claude Code | Copilot only |
 | **AI definition** | "Any PR with an AI co-author trailer" | "PR created by Copilot coding agent" |
-| **ESSP coverage** | AI leverage + rejection rate + velocity | AI leverage + velocity + quality + throughput |
+| **ESSP coverage** | AI leverage + rejection rate + velocity | AI leverage + velocity + quality + throughput + adoption-phase cohorts |
 | **Permissions needed** | `repo` scope | Org admin or Copilot metrics access |
 | **Platform** | Any (GHES or Cloud/EMU) | Cloud/EMU only |
 | **API cost** | ~2 calls per closed PR (via Search API) | 1-2 calls/day |

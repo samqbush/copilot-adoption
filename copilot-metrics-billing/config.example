@@ -1,0 +1,28 @@
+# Copilot Metrics & Billing — local test config (EXAMPLE)
+#
+# Copy this file to .secrets/config and fill in your real values. The .secrets/
+# directory is gitignored, so nothing in it is ever committed.
+#
+#   cp config.example .secrets/config
+#   $EDITOR .secrets/config
+#   mv ~/Downloads/your-app.*.pem .secrets/app.pem && chmod 600 .secrets/app.pem
+#   ./scripts/run-test.sh
+#
+# Then run-test.sh loads this file and runs both the usage-metrics and billing
+# collection for the prior day.
+
+# Your enterprise slug (the part after github.com/enterprises/).
+ENTERPRISE=my-enterprise
+
+# GitHub App (usage metrics). From the App settings page and install URL.
+APP_ID=123456
+INSTALLATION_ID=7890123
+
+# Path to the App private key (.pem). Absolute, or relative to the
+# copilot-metrics-billing/ directory. Keep it inside .secrets/ so it stays
+# gitignored.
+PRIVATE_KEY=.secrets/app.pem
+
+# Classic PAT with manage_billing:enterprise (billing data). Held by an
+# enterprise owner or billing manager.
+GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxxxxxx

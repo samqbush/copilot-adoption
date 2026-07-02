@@ -7,6 +7,22 @@ Custom plugins are used and supported by GitHub pages.  This website uses the be
 
 Admonition syntax should follow styling for jekyll-gfm-admonitions
 
+### Content Purpose
+
+These pages are opinionated implementation guides — worked examples readers can copy and adapt, not documentation. Position content across three tiers:
+
+- **Aircraft manual** — [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/): what every switch does.
+- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): the design principles behind a good rollout — *what* to consider and *why* — but it stops short of naming specific tools.
+- **A proven flight plan** — these guides: one concrete, runnable way to actually do it on a real stack.
+
+Rules of the road:
+- Do not restate what the docs or WAF already cover. Link out to them and move on.
+- Defer to WAF for framework and design thinking — don't re-derive governance principles or invent competing pillars.
+- Pick one concrete stack and show it working end to end (specific tooling, real config, actual commands). WAF stays vendor-neutral on purpose; these guides deliberately don't.
+- Frame each guide as one reference implementation, not the only way — adapt-to-your-stack, not gospel.
+- The differentiator to keep clear: WAF is tool-agnostic design thinking; these guides are tool-specific worked examples you can lift and adapt.
+- Write for the reader (a Copilot admin), not about the authors. Never narrate the authoring process or position the guide as "us vs GitHub." Keep editorial reasoning — "our framing," "this page adds," "the gap we fill," "GitHub says X but we say Y" — out of the published text. If a distinction matters to the reader (e.g. a term GitHub uses differently), state it neutrally as a heads-up, not as a we-vs-them argument.
+
 ### Page Edit Conventions
 
 When editing a content page, update its "Last updated" date (e.g. `*Last updated: <Month D, YYYY>*` near the top) to the current date to reflect the change.

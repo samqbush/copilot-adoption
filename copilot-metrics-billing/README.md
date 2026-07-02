@@ -20,6 +20,32 @@ Enterprise GitHub App and the billing PAT.
 
 ---
 
+## Quick local testing
+
+To re-test the whole flow with a single command, put your credentials in an
+uncommitted secrets file and run the wrapper:
+
+```bash
+cp config.example .secrets/config        # then fill in your real values
+mv ~/Downloads/your-app.*.pem .secrets/app.pem && chmod 600 .secrets/app.pem
+./scripts/run-test.sh                     # collects yesterday into .secrets/output
+```
+
+`.secrets/` is gitignored, so the config file and `.pem` never get committed.
+`run-test.sh` loads the file, checks your credentials and tools, then runs
+`collect-daily.sh` for both usage metrics and billing. Pass any
+`collect-daily.sh` flag straight through:
+
+```bash
+./scripts/run-test.sh --day 2026-06-21    # a specific day
+./scripts/run-test.sh --skip-billing      # usage metrics only
+```
+
+The secrets file holds `ENTERPRISE`, `APP_ID`, `INSTALLATION_ID`, `PRIVATE_KEY`,
+and `GH_BILLING_TOKEN` — see [config.example](./config.example) for the format.
+
+---
+
 ## Why two auth mechanisms?
 
 GitHub Apps and fine-grained PATs **cannot access billing endpoints** — billing

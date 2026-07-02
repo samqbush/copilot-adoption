@@ -1,13 +1,18 @@
 ---
 layout: default
-title: GitHub Copilot Adoption Resources
-description: Guides for cost management, AI commit attribution, and OpenTelemetry monitoring — plus curated links to official Copilot rollout documentation
+title: "Copilot: The Ready Room"
+description: "Opinionated, runnable guides for rolling out GitHub Copilot at scale, with real config and worked examples."
 ---
 
-> [!NOTE]
-> **This guide has been retired.** The phased rollout checklist that previously lived here is now fully covered by GitHub's official documentation. Please use the official resources below for up-to-date guidance on rolling out GitHub Copilot at scale.
+These pages are maintained as opinionated implementation guides — worked examples you can copy and adapt, not documentation. Think of it in three tiers:
 
-## Official Resources
+- **The aircraft manual** — [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/): what every switch does.
+- **Flight doctrine** — the [Well-Architected Framework](https://wellarchitected.github.com/): the design principles behind a good rollout — *what* to consider and *why* — but it stops short of naming specific tools.
+- **A proven flight plan** — these guides: one concrete, runnable way to actually do it on a real stack.
+
+Each guide is a working flight plan for the *how*: specific tooling, real config, and the trade-offs behind each choice. Treat it as one reference implementation. Take what works for your environment and adapt the rest.
+
+## Copilot Adoption Official Resources
 
 - [Rolling Out GitHub Copilot at Scale](https://docs.github.com/en/copilot/rolling-out-github-copilot-at-scale) — GitHub's official rollout guide
 - [Well-Architected: Adopting Copilot at Scale](https://wellarchitected.github.com/library/productivity/recommendations/adopting-copilot-at-scale/) — GitHub's Well-Architected Framework guidance
@@ -23,12 +28,12 @@ The highest-impact adoption strategies focus on raising the floor across your or
 
 3. **Create an Internal Plugin Marketplace** — Curate and share custom plugins/skills so teams can leverage each other's work. See the [Copilot Plugins Marketplace docs](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/plugins-marketplace) and the open-source [awesome-copilot](https://github.com/github/awesome-copilot) collection for inspiration.
 
-## Unique Resources (Still Maintained)
+## The Guides
 
-The following pages cover topics not yet addressed by official documentation and remain actively maintained.
+Each of these is a proven flight plan — one concrete, runnable implementation on a real stack, not the only way to do it. Lift the flight plan and adapt the waypoints to your own tooling.
 
-- [Managing Copilot Usage-Based Billing](./cost-management)
-- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing)
-- [Measuring AI in Pull Requests](./ai-commit-attribution)
-- [Copilot OpenTelemetry via Intune](./copilot-otel-intune)
+- [Managing Copilot Usage-Based Billing](./cost-management) — budget sizing math, promo-window credit arbitrage, and a troubleshooting checklist for when developers get blocked.
+- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing) — the credentials, endpoints, and daily pull to keep your own history before GitHub's 28-day window rolls off.
+- [Measuring AI in Pull Requests](./ai-commit-attribution) — measure AI leverage across merged PRs with trailer scanning and the Copilot usage metrics API.
+- [Copilot OpenTelemetry via Intune](./copilot-otel-intune) — centrally deploy OTel monitoring across Windows and macOS with Microsoft Intune.
 
