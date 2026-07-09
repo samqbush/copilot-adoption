@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: July 2, 2026*
+*Last updated: July 7, 2026*
 
 This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
@@ -59,7 +59,7 @@ In **Billing and licensing → Cost centers**, create or edit a cost center and 
 
 One per-user cap applies to every member of the cost center and follows membership as it changes. This is the control that replaces managing budgets one user at a time. It overrides the universal budget for those members, and you can still grant an individual override to a specific person.
 
-This is API-only right now. Create it against the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center` and the cost center's name in `budget_entity_name`. The values you'll change per run are pulled into variables at the top:
+This is API-only right now. Create it against the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center`. The `budget_entity_name` field takes the cost center's **ID (a UUID), not its display name** — passing the name returns `404 The specified cost center or resource was not found`, so look the ID up first:
 
 ```bash
 # Set a per-user AI-credit cap for everyone in one cost center.
@@ -67,6 +67,10 @@ This is API-only right now. Create it against the [Create a budget](https://docs
 ENTERPRISE="your-enterprise-slug"
 COST_CENTER="Platform Engineering"
 AMOUNT=100   # whole dollars, per user
+
+# budget_entity_name is the cost center ID (UUID), not the name — resolve it:
+COST_CENTER_ID=$(gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers" \
+  --jq ".costCenters[] | select(.name==\"$COST_CENTER\") | .id")
 
 gh api --method POST \
   -H "X-GitHub-Api-Version: 2026-03-10" \
@@ -76,26 +80,29 @@ gh api --method POST \
   "budget_amount": $AMOUNT,
   "prevent_further_usage": true,
   "budget_scope": "multi_user_cost_center",
-  "budget_entity_name": "$COST_CENTER",
+  "budget_entity_name": "$COST_CENTER_ID",
   "budget_type": "BundlePricing",
-  "budget_product_sku": "ai_credits",
-  "budget_alerting": { "will_alert": true, "alert_recipients": ["billing-admin"] }
+  "budget_product_sku": "ai_credits"
 }
 JSON
 ```
 
-Confirm it landed:
+To also send threshold alerts, add `"budget_alerting": { "will_alert": true, "alert_recipients": ["octocat"] }` — every login in `alert_recipients` must be a real enterprise member, or the whole call fails with `400 Invalid alert recipients`.
+
+Confirm it landed. The `?scope=` query parameter is not honored (it returns an empty list), so pull all budgets and filter client-side. Note the read-back reports the cost center by **name**, even though you created it with the ID:
 
 ```bash
-gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_center" \
-  --jq '.budgets[] | {budget_entity_name, budget_amount, prevent_further_usage}'
+gh api "/enterprises/$ENTERPRISE/settings/billing/budgets" \
+  --jq '.budgets[] | select(.budget_scope=="multi_user_cost_center")
+        | {budget_entity_name, budget_amount, prevent_further_usage}'
 ```
 
-**Changing an existing CCULB** (for example, raising the cap) is a `PATCH` to the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint by budget ID. Look up the ID from the confirm call above, then patch just the fields you want to change:
+**Changing an existing CCULB** (for example, raising the cap) is a `PATCH` to the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint by budget ID. Look the ID up by cost center name (the read-back uses the name), then patch just the fields you want to change:
 
 ```bash
-BUDGET_ID=$(gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_center" \
-  --jq ".budgets[] | select(.budget_entity_name==\"$COST_CENTER\") | .id")
+BUDGET_ID=$(gh api "/enterprises/$ENTERPRISE/settings/billing/budgets" \
+  --jq ".budgets[] | select(.budget_scope==\"multi_user_cost_center\"
+        and .budget_entity_name==\"$COST_CENTER\") | .id")
 
 gh api --method PATCH -H "X-GitHub-Api-Version: 2026-03-10" \
   "/enterprises/$ENTERPRISE/settings/billing/budgets/$BUDGET_ID" \
@@ -104,16 +111,17 @@ gh api --method PATCH -H "X-GitHub-Api-Version: 2026-03-10" \
 JSON
 ```
 
-To roll out CCULBs across many cost centers, loop the create call with a name/amount table:
+To roll out CCULBs across many cost centers, loop the create call with a name/amount table, resolving each cost center's ID as you go:
 
 ```bash
 while IFS=, read -r cc amount; do
+  cc_id=$(gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers" \
+    --jq ".costCenters[] | select(.name==\"$cc\") | .id")
   gh api --method POST -H "X-GitHub-Api-Version: 2026-03-10" \
     "/enterprises/$ENTERPRISE/settings/billing/budgets" --input - <<JSON
 { "budget_amount": $amount, "prevent_further_usage": true,
-  "budget_scope": "multi_user_cost_center", "budget_entity_name": "$cc",
-  "budget_type": "BundlePricing", "budget_product_sku": "ai_credits",
-  "budget_alerting": { "will_alert": true, "alert_recipients": ["billing-admin"] } }
+  "budget_scope": "multi_user_cost_center", "budget_entity_name": "$cc_id",
+  "budget_type": "BundlePricing", "budget_product_sku": "ai_credits" }
 JSON
 done < cost-centers.csv   # lines: Platform Engineering,100
 ```
