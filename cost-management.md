@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: July 7, 2026*
+*Last updated: July 9, 2026*
 
 This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
@@ -44,33 +44,43 @@ Full definitions live in [Budgets for usage-based billing](https://docs.github.c
 
 ## Set spend controls that follow your team structure
 
-Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today; steps 2 and 3 are REST API today with UI support following (runnable calls below).
+Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today; steps 2 and 3 are created via the REST API (runnable calls below) — once a CCULB exists you can edit it in the billing UI.
 
 ### Step 1 — Attribute enterprise teams to cost centers
 
-Add an enterprise team as a resource on a cost center. Every member's usage attributes there automatically, and membership follows the team as people join or leave through IdP/SCIM sync — no per-user reassignment.
+Add an enterprise team as a resource on a cost center. Every member's usage attributes there automatically, and membership follows the team as people join or leave — whether the team is IdP-synced or managed manually, there's no per-user reassignment.
 
 In **Billing and licensing → Cost centers**, create or edit a cost center and add the enterprise team under **Resources**. When a user lands in more than one cost center, GitHub resolves it deterministically ([Cost center allocation](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/cost-center-allocation)).
 
 > [!NOTE]
-> An enterprise team can belong to only one cost center at a time. If you assign it to another cost center, GitHub moves it, so plan on one team per cost center. When you need a specific person's spend to land somewhere else, assign that user directly: a direct assignment takes precedence over their team's cost center ([Cost center allocation](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/cost-center-allocation)).
+> An enterprise team can belong to only one cost center at a time. If you assign it to another cost center, GitHub moves it — so plan on each team living in exactly one cost center. A cost center, on the other hand, can hold multiple teams (plus organizations, repositories, and users). When you need a specific person's spend to land somewhere else, assign that user directly: a direct assignment takes precedence over their team's cost center ([Cost center allocation](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/cost-center-allocation)).
 
 ### Step 2 — Set a cost center user-level budget (CCULB)
 
 One per-user cap applies to every member of the cost center and follows membership as it changes. This is the control that replaces managing budgets one user at a time. It overrides the universal budget for those members, and you can still grant an individual override to a specific person.
 
-This is API-only right now. Create it against the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center`. The `budget_entity_name` field takes the cost center's **ID (a UUID), not its display name** — passing the name returns `404 The specified cost center or resource was not found`, so look the ID up first:
+This is API-only to create. Create it against the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center` and the cost center's **ID** in `budget_entity_name`. The values you'll change per run are pulled into variables at the top.
+
+First, look up the cost center ID from its name:
 
 ```bash
-# Set a per-user AI-credit cap for everyone in one cost center.
 # Requires an enterprise admin or billing manager token (gh auth login --scopes 'manage_billing:enterprise').
 ENTERPRISE="your-enterprise-slug"
-COST_CENTER="Platform Engineering"
-AMOUNT=100   # whole dollars, per user
+NAME="Platform Engineering"
 
-# budget_entity_name is the cost center ID (UUID), not the name — resolve it:
-COST_CENTER_ID=$(gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers" \
-  --jq ".costCenters[] | select(.name==\"$COST_CENTER\") | .id")
+COST_CENTER_ID=$(gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "/enterprises/$ENTERPRISE/settings/billing/cost-centers?state=active" \
+  --jq ".costCenters[] | select(.name == \"$NAME\") | .id")
+
+echo $COST_CENTER_ID
+```
+
+Then create the per-user cap for everyone in that cost center:
+
+```bash
+AMOUNT=100   # whole dollars, per user
 
 gh api --method POST \
   -H "X-GitHub-Api-Version: 2026-03-10" \
@@ -87,65 +97,42 @@ gh api --method POST \
 JSON
 ```
 
-To also send threshold alerts, add `"budget_alerting": { "will_alert": true, "alert_recipients": ["octocat"] }` — every login in `alert_recipients` must be a real enterprise member, or the whole call fails with `400 Invalid alert recipients`.
-
-Confirm it landed. The `?scope=` query parameter is not honored (it returns an empty list), so pull all budgets and filter client-side. Note the read-back reports the cost center by **name**, even though you created it with the ID:
+Confirm it landed:
 
 ```bash
-gh api "/enterprises/$ENTERPRISE/settings/billing/budgets" \
-  --jq '.budgets[] | select(.budget_scope=="multi_user_cost_center")
-        | {budget_entity_name, budget_amount, prevent_further_usage}'
+gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_center" \
+  --jq '.budgets[] | {budget_entity_name, budget_amount, prevent_further_usage}'
 ```
 
-**Changing an existing CCULB** (for example, raising the cap) is a `PATCH` to the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint by budget ID. Look the ID up by cost center name (the read-back uses the name), then patch just the fields you want to change:
-
-```bash
-BUDGET_ID=$(gh api "/enterprises/$ENTERPRISE/settings/billing/budgets" \
-  --jq ".budgets[] | select(.budget_scope==\"multi_user_cost_center\"
-        and .budget_entity_name==\"$COST_CENTER\") | .id")
-
-gh api --method PATCH -H "X-GitHub-Api-Version: 2026-03-10" \
-  "/enterprises/$ENTERPRISE/settings/billing/budgets/$BUDGET_ID" \
-  --input - <<'JSON'
-{ "budget_amount": 150 }
-JSON
-```
-
-To roll out CCULBs across many cost centers, loop the create call with a name/amount table, resolving each cost center's ID as you go:
-
-```bash
-while IFS=, read -r cc amount; do
-  cc_id=$(gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers" \
-    --jq ".costCenters[] | select(.name==\"$cc\") | .id")
-  gh api --method POST -H "X-GitHub-Api-Version: 2026-03-10" \
-    "/enterprises/$ENTERPRISE/settings/billing/budgets" --input - <<JSON
-{ "budget_amount": $amount, "prevent_further_usage": true,
-  "budget_scope": "multi_user_cost_center", "budget_entity_name": "$cc_id",
-  "budget_type": "BundlePricing", "budget_product_sku": "ai_credits" }
-JSON
-done < cost-centers.csv   # lines: Platform Engineering,100
-```
+**Changing an existing CCULB** (for example, raising the cap) no longer needs the API: once created, the budget shows up in **Billing and licensing → Budgets and alerts**, and you can edit the amount, stop behavior, and alert recipients there like any other budget. If you're managing many cost centers and want to script updates, the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint takes a `PATCH` by budget ID with just the fields you want to change.
 
 > [!NOTE]
-> `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. UI support for CCULBs is coming — until then this call is the setup path.
+> `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. You can optionally add `"budget_alerting": { "will_alert": true, "alert_recipients": ["billing-admin"] }` to the create payload to notify someone as the budget is consumed.
 
 ### Step 3 — Enable the cost center included usage cap
 
-This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool another team paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale). The cost center must contain at least one user or enterprise team first (steps 1–2).
+This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool another team paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale). A capped cost center may contain **only user and enterprise team resources** — no organizations or repositories — so restructure it first if needed (steps 1–2).
 
 ```bash
 # Cap a cost center's included usage to what its own licenses fund.
 # Requires an enterprise admin or billing manager token (gh auth login --scopes 'manage_billing:enterprise').
 ENTERPRISE="your-enterprise-slug"
-COST_CENTER_ID="the-cost-center-id"
+COST_CENTER_ID="the-cost-center-id"   # look it up by name as in step 2
+
+# The update endpoint requires the current name in the body — fetch it first.
+NAME=$(gh api -H "X-GitHub-Api-Version: 2026-03-10" \
+  "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" --jq '.name')
 
 gh api --method PATCH \
   -H "X-GitHub-Api-Version: 2026-03-10" \
   "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" \
-  --input - <<'JSON'
-{ "ai_credit_pool_enabled": true }
+  --input - <<JSON
+{ "name": "$NAME", "ai_credit_pool_enabled": true }
 JSON
 ```
+
+> [!NOTE]
+> `name` is a required field on the update endpoint even when you're not renaming — omitting it returns a `422`.
 
 Confirm it landed:
 
