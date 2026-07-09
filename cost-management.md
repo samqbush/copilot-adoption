@@ -68,13 +68,14 @@ First, look up the cost center ID from its name:
 ENTERPRISE="your-enterprise-slug"
 NAME="Platform Engineering"
 
-COST_CENTER_ID=$(gh api \
+COST_CENTER_ID=$(gh api --paginate \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2026-03-10" \
   "/enterprises/$ENTERPRISE/settings/billing/cost-centers?state=active" \
   --jq ".costCenters[] | select(.name == \"$NAME\") | .id")
 
-echo $COST_CENTER_ID
+[ -z "$COST_CENTER_ID" ] && { echo "Cost center '$NAME' not found" >&2; exit 1; }
+echo "$COST_CENTER_ID"
 ```
 
 Then create the per-user cap for everyone in that cost center:
@@ -107,7 +108,7 @@ gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_
 **Changing an existing CCULB** (for example, raising the cap) no longer needs the API: once created, the budget shows up in **Billing and licensing → Budgets and alerts**, and you can edit the amount, stop behavior, and alert recipients there like any other budget. If you're managing many cost centers and want to script updates, the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint takes a `PATCH` by budget ID with just the fields you want to change.
 
 > [!NOTE]
-> `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. You can optionally add `"budget_alerting": { "will_alert": true, "alert_recipients": ["billing-admin"] }` to the create payload to notify someone as the budget is consumed.
+> `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. You can optionally add `"budget_alerting": { "will_alert": true, "alert_recipients": ["a-real-member-login"] }` to the create payload to notify someone as the budget is consumed — each recipient must be an existing enterprise member's login, or the request fails with a `400`.
 
 ### Step 3 — Enable the cost center included usage cap
 
@@ -126,9 +127,7 @@ NAME=$(gh api -H "X-GitHub-Api-Version: 2026-03-10" \
 gh api --method PATCH \
   -H "X-GitHub-Api-Version: 2026-03-10" \
   "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" \
-  --input - <<JSON
-{ "name": "$NAME", "ai_credit_pool_enabled": true }
-JSON
+  -f name="$NAME" -F ai_credit_pool_enabled=true
 ```
 
 > [!NOTE]
