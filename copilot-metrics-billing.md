@@ -162,7 +162,6 @@ adapted into your pipeline.
 | `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. |
 | `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. |
 | `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir. |
-| `run-test.sh` | Tests each credential on its own and pulls the last 28 days for a manual look. |
 | `generate-installation-token.sh` | Mints the short-lived App token (used internally by the usage script). |
 
 **To deploy**, copy the
@@ -172,22 +171,24 @@ identifiers, private key, and billing PAT as repo variables and secrets. It
 collects the prior day on a schedule and uploads the files as a workflow
 artifact.
 
-**To verify your credentials first**, run `run-test.sh` locally. It checks the
-GitHub App and the billing PAT independently and pulls the last 28 days so you
-can eyeball last month's data:
+**To verify your credentials first**, download the one script you're testing and
+run it with `--last-28-days`, saving the output so you can eyeball last month's
+data. No clone required:
 
 ```bash
-cp copilot-metrics-billing/config.example copilot-metrics-billing/.secrets/config  # fill in values
-./copilot-metrics-billing/scripts/run-test.sh                # both credentials
-./copilot-metrics-billing/scripts/run-test.sh --billing-only  # just the PAT
+export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-usage-metrics.sh" "$base/generate-installation-token.sh"
+chmod +x copilot-usage-metrics.sh generate-installation-token.sh
+
+./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
+  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
+  > usage-last-28-days.json
+jq '.report' usage-last-28-days.json
 ```
 
-Output:
-
-```
-usage-enterprise-my-enterprise-28day-2026-07-10.json
-billing-ai_credit-my-enterprise-last28days-2026-07-10.csv
-```
+The [enterprise setup guide](./copilot-metrics-billing/enterprise-setup.md) walks
+through both credential tests (App and billing PAT) in context.
 
 See the [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
 for full options and output schemas.

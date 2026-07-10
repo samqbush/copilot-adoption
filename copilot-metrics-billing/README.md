@@ -9,9 +9,9 @@ There are two ways to use them:
 - **Deploy** — the [example GitHub Action](#deploy-the-github-action) collects
   the prior day automatically on a schedule and uploads the files as artifacts.
   This is the easy, unattended path.
-- **Verify locally** — [`run-test.sh`](#verify-locally-test-each-credential)
-  tests each credential independently and pulls the **last 28 days** so you can
-  eyeball last month's data by hand.
+- **Verify first** — [test each credential](#verify-each-credential) on its own
+  by pulling the **last 28 days** with a single script, so you can confirm the
+  setup works and eyeball last month's data before automating anything.
 
 > **Two different things — don't confuse them:**
 > - **Usage metrics** = engagement/adoption data (active users, completions, chat). No dollar amounts.
@@ -22,7 +22,6 @@ There are two ways to use them:
 | `copilot-usage-metrics.sh` | The pre-aggregated daily usage-metrics report (enterprise or org), as JSON | Enterprise GitHub App *(or PAT with `read:enterprise`)* |
 | `copilot-billing-export.sh` | The `ai_credit` billing CSV — every user, day, and model with dollar amounts | Classic PAT with `manage_billing:enterprise` |
 | `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir | Both of the above |
-| `run-test.sh` | Tests each credential independently and pulls the last 28 days into `.secrets/output` | Both of the above |
 | `generate-installation-token.sh` | Mints a short-lived GitHub App installation token (used internally by the usage script) | App private key |
 
 The [`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
@@ -67,43 +66,46 @@ steps, so one credential failing still lets the other collect and upload.
 
 ---
 
-## Verify locally: test each credential
+## Verify each credential
 
-Before (or instead of) deploying, confirm each credential works on its own and
-pull the **last 28 days** so you can eyeball last month's data. Put your
-credentials in an uncommitted secrets file and run the checker:
+Before (or instead of) deploying, confirm each credential works on its own by
+pulling the **last 28 days** and saving it to a file you can read. You don't need
+to clone anything — download the one script you're testing and run it.
 
-```bash
-cp config.example .secrets/config        # then fill in your real values
-mv ~/Downloads/your-app.*.pem .secrets/app.pem && chmod 600 .secrets/app.pem
-./scripts/run-test.sh                     # tests BOTH credentials
-```
-
-`.secrets/` is gitignored, so the config file and `.pem` never get committed.
-`run-test.sh` loads the file and tests each domain independently:
+**Usage metrics (GitHub App):**
 
 ```bash
-./scripts/run-test.sh --usage-only        # just the GitHub App (usage metrics)
-./scripts/run-test.sh --billing-only       # just the classic PAT (billing)
+export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-usage-metrics.sh" "$base/generate-installation-token.sh"
+chmod +x copilot-usage-metrics.sh generate-installation-token.sh
+
+./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
+  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
+  > usage-last-28-days.json
+jq '.report' usage-last-28-days.json      # the metrics rows
 ```
 
-Each domain validates only the tools and credentials it needs, so
-`--billing-only` doesn't require the App and `--usage-only` doesn't require the
-billing PAT. On success you get a clear `✓ GitHub App OK` / `✓ Billing PAT OK`
-with the coverage and row count, and the pulled files land in `.secrets/output`:
+**Billing (classic PAT):**
 
+```bash
+export ENTERPRISE=<your-enterprise> GH_BILLING_TOKEN=ghp_xxx
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-billing-export.sh" && chmod +x copilot-billing-export.sh
+
+./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out billing-last-28-days.csv
+head billing-last-28-days.csv             # or open it in a spreadsheet
 ```
-usage-enterprise-<ent>-28day-<today>.json      # 28-day rolling report (one aggregate)
-billing-ai_credit-<ent>-last28days-<today>.csv # per-user, per-day rows for 28 days
-```
+
+`copilot-usage-metrics.sh` calls `generate-installation-token.sh` from alongside
+itself, so grab both into the same directory. See
+[enterprise-setup.md](./enterprise-setup.md) for the full one-time credential
+setup and these test steps in context.
 
 > The two 28-day outputs aren't identical in shape: usage is a single **rolling
 > aggregate report** (with its own `report_start_day`/`report_end_day`), while
 > billing is **per-day detail rows**. Their end dates can differ slightly because
 > of reporting lag.
-
-The secrets file holds `ENTERPRISE`, `APP_ID`, `INSTALLATION_ID`, `PRIVATE_KEY`,
-and `GH_BILLING_TOKEN` — see [config.example](./config.example) for the format.
 
 ---
 

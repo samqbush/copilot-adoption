@@ -113,10 +113,6 @@ jq '.report' usage-last-28-days.json         # the actual metrics — this is th
 > that little metadata block and throws the report away — handy as a quick "did
 > it connect?" check, but not what you want when you're reviewing the data.
 
-> Prefer working from a clone? Clone the repo, put your values in
-> `.secrets/config`, and run `./scripts/run-test.sh --usage-only` instead — see
-> the [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing#verify-locally-test-each-credential).
-
 > If you get `Resource not accessible by integration`, the App is missing the
 > **View Enterprise Copilot Metrics** permission, or the usage-metrics policy
 > isn't enabled yet. Fix it, then re-accept the updated permissions on the
@@ -156,10 +152,6 @@ chmod +x copilot-billing-export.sh
 head ./billing-last-28-days.csv          # header + first rows
 # or open billing-last-28-days.csv in a spreadsheet for the full per-user view
 ```
-
-> Prefer working from a clone? Run `./scripts/run-test.sh --billing-only` (or
-> with no flag to check both credentials at once) — see the
-> [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing#verify-locally-test-each-credential).
 
 > A `404` on the `/reports` endpoints means the token is missing
 > `manage_billing:enterprise`. The other billing endpoints (`/usage/summary`,
