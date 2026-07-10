@@ -162,7 +162,6 @@ adapted into your pipeline.
 | `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. |
 | `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. |
 | `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir. |
-| `generate-installation-token.sh` | Mints the short-lived App token (used internally by the usage script). |
 
 **To deploy**, copy the
 [example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
@@ -178,8 +177,7 @@ data. No clone required:
 ```bash
 export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
-curl -fsSLO "$base/copilot-usage-metrics.sh" "$base/generate-installation-token.sh"
-chmod +x copilot-usage-metrics.sh generate-installation-token.sh
+curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
 
 ./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \

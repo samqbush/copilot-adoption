@@ -22,7 +22,6 @@ There are two ways to use them:
 | `copilot-usage-metrics.sh` | The pre-aggregated daily usage-metrics report (enterprise or org), as JSON | Enterprise GitHub App *(or PAT with `read:enterprise`)* |
 | `copilot-billing-export.sh` | The `ai_credit` billing CSV — every user, day, and model with dollar amounts | Classic PAT with `manage_billing:enterprise` |
 | `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir | Both of the above |
-| `generate-installation-token.sh` | Mints a short-lived GitHub App installation token (used internally by the usage script) | App private key |
 
 The [`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
 workflow wires `collect-daily`'s two scripts into a scheduled GitHub Action.
@@ -77,8 +76,7 @@ to clone anything — download the one script you're testing and run it.
 ```bash
 export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
-curl -fsSLO "$base/copilot-usage-metrics.sh" "$base/generate-installation-token.sh"
-chmod +x copilot-usage-metrics.sh generate-installation-token.sh
+curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
 
 ./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
@@ -97,8 +95,8 @@ curl -fsSLO "$base/copilot-billing-export.sh" && chmod +x copilot-billing-export
 head billing-last-28-days.csv             # or open it in a spreadsheet
 ```
 
-`copilot-usage-metrics.sh` calls `generate-installation-token.sh` from alongside
-itself, so grab both into the same directory. See
+Each script is self-contained (the usage script mints its own App token), so you
+only download the one you're testing. See
 [enterprise-setup.md](./enterprise-setup.md) for the full one-time credential
 setup and these test steps in context.
 
@@ -248,23 +246,6 @@ aws s3 cp ./copilot-data s3://my-bucket/copilot/2026-06-21/ --recursive   # AWS
 az storage blob upload-batch -d copilot/2026-06-21 -s ./copilot-data       # Azure
 gcloud storage cp ./copilot-data/* gs://my-bucket/copilot/2026-06-21/      # GCS
 ```
-
----
-
-## generate-installation-token.sh
-
-Mints a short-lived (1-hour) GitHub App installation token from a private key.
-Called internally by `copilot-usage-metrics.sh` when `--app-id` is provided; can
-also be run standalone.
-
-```bash
-./generate-installation-token.sh \
-  --app-id 12345 --installation-id 67890 \
-  --private-key ~/.config/copilot-metrics/app.pem
-```
-
-**API used:** `POST /app/installations/{installation_id}/access_tokens`. Requires
-`openssl`, `curl`, and `jq`.
 
 ---
 

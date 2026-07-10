@@ -85,16 +85,13 @@ export INSTALLATION_ID=<your-installation-id>
 export PRIVATE_KEY=./app.pem
 ```
 
-Grab the usage-metrics script and its token helper into the same directory
-(`copilot-usage-metrics.sh` calls `generate-installation-token.sh` from alongside
-itself, so both must sit together), then run a last-28-days pull and **save it to
-a file** so you can actually read the report:
+Grab the usage-metrics script (it's self-contained — it mints its own App token),
+then run a last-28-days pull and **save it to a file** so you can actually read
+the report:
 
 ```bash
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
-curl -fsSLO "$base/copilot-usage-metrics.sh"
-curl -fsSLO "$base/generate-installation-token.sh"
-chmod +x copilot-usage-metrics.sh generate-installation-token.sh
+curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
 
 ./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \

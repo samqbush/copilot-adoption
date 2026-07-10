@@ -35,7 +35,6 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 API_VERSION="2026-03-10"
 
 SLUG="${1:?Usage: $0 <enterprise|org> [--org] [--day YYYY-MM-DD] [--28day] [--app-id ID --installation-id ID --private-key PATH]}"
@@ -66,17 +65,45 @@ if [[ -z "$DAY" ]]; then
   DAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%d)
 fi
 
+# Mints a short-lived (1-hour) GitHub App installation token from the private
+# key, inlined here so this script is self-contained — nothing else to download.
+# Builds an RS256-signed JWT (valid ~10 min), then exchanges it for the token.
+# Requires openssl, curl, jq.
+generate_installation_token() {
+  local app_id="$1" installation_id="$2" key_path="$3"
+  if [[ ! -f "$key_path" ]]; then
+    echo "ERROR: Private key not found: $key_path" >&2
+    return 1
+  fi
+
+  local now iat exp header payload signature jwt response token
+  now=$(date +%s); iat=$((now - 60)); exp=$((now + 600))
+
+  # base64url: URL-safe alphabet, no padding.
+  b64url() { openssl base64 -e -A | tr '+/' '-_' | tr -d '='; }
+
+  header=$(printf '{"alg":"RS256","typ":"JWT"}' | b64url)
+  payload=$(printf '{"iat":%d,"exp":%d,"iss":"%s"}' "$iat" "$exp" "$app_id" | b64url)
+  signature=$(printf '%s.%s' "$header" "$payload" \
+    | openssl dgst -sha256 -sign "$key_path" -binary | b64url)
+  jwt="${header}.${payload}.${signature}"
+
+  response=$(curl -sS -X POST \
+    -H "Authorization: Bearer $jwt" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/app/installations/$installation_id/access_tokens")
+  token=$(echo "$response" | jq -r '.token // empty')
+  if [[ -z "$token" ]]; then
+    echo "ERROR: Failed to get installation token. Response: $response" >&2
+    return 1
+  fi
+  printf '%s' "$token"
+}
+
 # Auth setup
 if [[ -n "$APP_ID" && -n "$INSTALLATION_ID" && -n "$PRIVATE_KEY" ]]; then
   echo "Authenticating via GitHub App (App ID: $APP_ID)..." >&2
-  TOKEN=$("$SCRIPT_DIR/generate-installation-token.sh" \
-    --app-id "$APP_ID" \
-    --installation-id "$INSTALLATION_ID" \
-    --private-key "$PRIVATE_KEY")
-  if [[ -z "$TOKEN" ]]; then
-    echo "ERROR: Failed to generate installation token." >&2
-    exit 1
-  fi
+  TOKEN=$(generate_installation_token "$APP_ID" "$INSTALLATION_ID" "$PRIVATE_KEY") || exit 1
   echo "Installation token acquired (expires in 1 hour)." >&2
 elif [[ -n "${GH_TOKEN:-}" ]]; then
   TOKEN="$GH_TOKEN"

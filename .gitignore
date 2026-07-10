@@ -1,3 +1,7 @@
 _site/
 copilot-metrics-billing/.secrets/
 copilot-metrics-billing/copilot-data/
+# Local manual-test artifacts: private keys and pulled data must never be committed
+copilot-metrics-billing/**/*.pem
+copilot-metrics-billing/**/*.csv
+copilot-metrics-billing/**/usage-*.json
