@@ -38,7 +38,7 @@ New to Copilot billing? Read the **Start here** links first for the vocabulary a
 Full definitions live in [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing).
 
 > [!IMPORTANT]
-> The controls act at different layers. User-level budgets (UULB, CCULB, IUB) cap each person's draw from the pool **and** authorize metered overage afterward. cost center, organization, and enterprise budgets only bite once the pool is depleted or a cost center has the flag `ai_credit_pool_enabled=true` set. That single fact drives every decision below: the sum of your user-level budgets is an implicit overage ceiling.
+> The controls act at different layers. User-level budgets (UULB, CCULB, IUB) cap each person's draw from the pool **and** authorize metered overage afterward. The included usage cap and the enterprise budget only bite once the pool is depleted or a cost center has the flag `ai_credit_pool_enabled=true` set. That single fact drives every decision below: the sum of your user-level budgets is an implicit overage ceiling.
 
 ---
 
@@ -81,6 +81,7 @@ echo "$COST_CENTER_ID"
 Then create the per-user cap for everyone in that cost center:
 
 ```bash
+# Continues from Step 2: reuses $ENTERPRISE and $COST_CENTER_ID set above.
 AMOUNT=200   # whole dollars, per user
 
 gh api --method POST \
@@ -189,7 +190,7 @@ How to read it:
 - `ai_credit_pool_state.current_amount` is usage consumed against the cost center's included cap this cycle.
 - `ai_credit_pool_state.target_amount` is the cap size calculated from licenses attributed to that cost center.
 
-In this worked example, the cost center team has 1 Copilot Business user. During the promotional window, that maps to a `$30` included usage cap, so `target_amount: 30`. Here `current_amount` equals `target_amount`, so the example shows the cap fully consumed for the cycle.
+In this worked example, the cost center team has 1 Copilot Business user. During the promotional window, one Business license funds 3,000 included credits, metered at $0.01 each — so `target_amount` is reported in dollars as `30` (3,000 × $0.01 = $30). Here `current_amount` equals `target_amount`, so the example shows the cap fully consumed for the cycle.
 
 If `current_amount` is equal to `target_amount`, the cost center has exhausted its included allocation for the cycle. Whether users are blocked or continue as paid overage depends on your budget stop settings.
 
