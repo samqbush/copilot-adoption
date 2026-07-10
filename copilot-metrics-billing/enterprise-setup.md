@@ -87,8 +87,8 @@ export PRIVATE_KEY=./app.pem
 
 Grab the usage-metrics script and its token helper into the same directory
 (`copilot-usage-metrics.sh` calls `generate-installation-token.sh` from alongside
-itself, so both must sit together), then run a last-28-days pull — a meaningful
-check that the App credential works:
+itself, so both must sit together), then run a last-28-days pull and **save it to
+a file** so you can actually read the report:
 
 ```bash
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
@@ -98,8 +98,20 @@ chmod +x copilot-usage-metrics.sh generate-installation-token.sh
 
 ./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
-  | jq '.report_meta'
+  > usage-last-28-days.json
 ```
+
+Progress goes to stderr, so `usage-last-28-days.json` holds only the clean JSON:
+request metadata plus a `report` array of the daily rows. Look at it:
+
+```bash
+jq '.report_meta' usage-last-28-days.json   # the window it covers
+jq '.report' usage-last-28-days.json         # the actual metrics — this is the report
+```
+
+> Piping straight to `jq '.report_meta'` (instead of saving the file) only prints
+> that little metadata block and throws the report away — handy as a quick "did
+> it connect?" check, but not what you want when you're reviewing the data.
 
 > Prefer working from a clone? Clone the repo, put your values in
 > `.secrets/config`, and run `./scripts/run-test.sh --usage-only` instead — see
@@ -139,8 +151,10 @@ base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-me
 curl -fsSLO "$base/copilot-billing-export.sh"
 chmod +x copilot-billing-export.sh
 
-./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out ./billing.csv
-head -1 ./billing.csv
+./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out ./billing-last-28-days.csv
+
+head ./billing-last-28-days.csv          # header + first rows
+# or open billing-last-28-days.csv in a spreadsheet for the full per-user view
 ```
 
 > Prefer working from a clone? Run `./scripts/run-test.sh --billing-only` (or
