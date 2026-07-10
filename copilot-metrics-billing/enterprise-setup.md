@@ -75,10 +75,11 @@ chmod 600 ./app.pem
 
 ### Step 5: Set the App values and test it
 
-Export the three App values in your shell (no config file to bury — this is just
-a test):
+Export your enterprise slug and the three App values in your shell (no config
+file to bury — this is just a test):
 
 ```bash
+export ENTERPRISE=<your-enterprise>
 export APP_ID=<your-app-id>
 export INSTALLATION_ID=<your-installation-id>
 export PRIVATE_KEY=./app.pem
@@ -95,7 +96,7 @@ curl -fsSLO "$base/copilot-usage-metrics.sh"
 curl -fsSLO "$base/generate-installation-token.sh"
 chmod +x copilot-usage-metrics.sh generate-installation-token.sh
 
-./copilot-usage-metrics.sh <your-enterprise> --last-28-days \
+./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
   | jq '.report_meta'
 ```
@@ -131,13 +132,14 @@ Test it (pulls the last 28 days so you can confirm the PAT works and eyeball the
 data). Grab the billing script into your working directory and run it:
 
 ```bash
+export ENTERPRISE=<your-enterprise>   # if not already exported in Part 1
 export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
 
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
 curl -fsSLO "$base/copilot-billing-export.sh"
 chmod +x copilot-billing-export.sh
 
-./copilot-billing-export.sh <your-enterprise> --last-28-days --out ./billing.csv
+./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out ./billing.csv
 head -1 ./billing.csv
 ```
 
