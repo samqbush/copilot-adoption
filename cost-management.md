@@ -38,7 +38,7 @@ New to Copilot billing? Read the **Start here** links first for the vocabulary a
 Full definitions live in [Budgets for usage-based billing](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing).
 
 > [!IMPORTANT]
-> The controls act at different layers. User-level budgets (UULB, CCULB, IUB) cap each person's draw from the pool **and** authorize metered overage afterward. Included usage caps and the enterprise budget only bite once included credits run low. That single fact drives every decision below: the sum of your user-level budgets is an implicit overage ceiling.
+> The controls act at different layers. User-level budgets (UULB, CCULB, IUB) cap each person's draw from the pool **and** authorize metered overage afterward. cost center, organization, and enterprise budgets only bite once the pool is depleted or a cost center has the flag `ai_credit_pool_enabled=true` set. That single fact drives every decision below: the sum of your user-level budgets is an implicit overage ceiling.
 
 ---
 
@@ -110,9 +110,9 @@ gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_
 > [!NOTE]
 > `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. You can optionally add `"budget_alerting": { "will_alert": true, "alert_recipients": ["a-real-member-login"] }` to the create payload to notify someone as the budget is consumed — each recipient must be an existing enterprise member's login, or the request fails with a `400`.
 
-### Step 3 — Enable the cost center included usage cap
+### Step 3 (optional) — Enable the cost center included usage cap
 
-This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared pool another team paid for. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale). A capped cost center may contain **only user and enterprise team resources** — no organizations or repositories — so restructure it first if needed (steps 1–2).
+This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared AI credit pool. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale). A capped cost center may contain **only user and enterprise team resources** — no organizations or repositories — so restructure it first if needed (steps 1–2).
 
 ```bash
 # Cap a cost center's included usage to what its own licenses fund.
@@ -256,7 +256,10 @@ The developers who consistently hit their budgets are your power users. Surface 
 
 Budgets control how much each user *can* spend; the most effective cost lever is making every credit count. Well-scoped agent sessions, deliberate model selection, and deterministic guardrails (tests, linters, security scans) reduce retries and wasted tokens, lowering credit consumption without limiting productivity.
 
-- **Optimize AI usage** — GitHub's five strategies for agents that finish in fewer attempts: [Optimize AI usage](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/optimize-ai-usage)
+### Official GitHub Docs
+- **Optimize AI usage** — GitHub's core strategies for agents that finish in fewer attempts: [Optimize AI usage](https://docs.github.com/en/enterprise-cloud@latest/copilot/tutorials/optimize-ai-usage)
+
+### Field Created Materials
 - **Interactive token optimization guide** — scenarios, a cost calculator, and copy-paste templates: [GitHub Copilot Token Optimizer](https://ashy-dune-0b4215a0f.7.azurestaticapps.net/index.html)
 
 > [!TIP]
