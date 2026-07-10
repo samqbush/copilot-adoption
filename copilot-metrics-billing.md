@@ -25,8 +25,8 @@ yourself and keep your own copy. The whole job:
    **pre-aggregated report** endpoints so the whole thing is under ten API calls.
 3. **Drop the files into your data lake** before the 28-day window rolls off.
 
-The [example scripts](./copilot-metrics-billing/README.md) do exactly this. The
-rest of this page explains the model so you can adapt it.
+The [example scripts](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
+do exactly this. The rest of this page explains the model so you can adapt it.
 
 > [!NOTE]
 > This applies to GitHub Enterprise Cloud (including EMU). The endpoints are
@@ -152,10 +152,10 @@ aic_quantity, aic_gross_amount
 
 ## The scripts
 
-The [`copilot-metrics-billing/`](./copilot-metrics-billing/README.md) folder ships
-example scripts that implement the above, plus two ways to run them. They're a
-starting point: clean stdout (JSON/CSV), progress to stderr, meant to be adapted
-into your pipeline.
+The [`copilot-metrics-billing/`](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
+folder ships example scripts that implement the above, plus two ways to run them.
+They're a starting point: clean stdout (JSON/CSV), progress to stderr, meant to be
+adapted into your pipeline.
 
 | Script | What it does |
 |--------|--------------|
@@ -189,8 +189,8 @@ usage-enterprise-my-enterprise-28day-2026-07-10.json
 billing-ai_credit-my-enterprise-last28days-2026-07-10.csv
 ```
 
-See the [scripts README](./copilot-metrics-billing/README.md) for full options
-and output schemas.
+See the [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
+for full options and output schemas.
 
 ---
 

@@ -55,13 +55,17 @@ See [Manage enterprise policies for Copilot](https://docs.github.com/en/enterpri
 ### Step 3: Generate a private key
 
 1. On the App settings page, scroll to **Private keys → Generate a private key**.
-2. A `.pem` file downloads. Move it somewhere safe:
+2. A `.pem` file downloads. Move it into the directory you'll test from and lock
+   down its permissions:
 
 ```bash
-mkdir -p ~/.config/copilot-metrics
-mv ~/Downloads/copilot-metrics-collector.*.pem ~/.config/copilot-metrics/app.pem
-chmod 600 ~/.config/copilot-metrics/app.pem
+mv ~/Downloads/copilot-metrics-collector.*.pem ./app.pem
+chmod 600 ./app.pem
 ```
+
+> This keeps everything in one working directory for the test. For the scheduled
+> [GitHub Action](#part-3--wire-it-into-the-github-action-optional) you store the
+> key as a repository secret instead — it never touches disk.
 
 ### Step 4: Install the App on the enterprise
 
@@ -69,24 +73,36 @@ chmod 600 ~/.config/copilot-metrics/app.pem
 2. **Note the Installation ID** from the URL:
    `.../settings/installations/<INSTALLATION_ID>`.
 
-### Step 5: Store the App config
+### Step 5: Set the App values and test it
+
+Export the three App values in your shell (no config file to bury — this is just
+a test):
 
 ```bash
-cat > ~/.config/copilot-metrics/config << 'EOF'
-APP_ID=<your-app-id>
-INSTALLATION_ID=<your-installation-id>
-PRIVATE_KEY=~/.config/copilot-metrics/app.pem
-EOF
+export APP_ID=<your-app-id>
+export INSTALLATION_ID=<your-installation-id>
+export PRIVATE_KEY=./app.pem
 ```
 
-Test it (pulls the last 28 days — a meaningful check the App credential works):
+Grab the usage-metrics script and its token helper into the same directory
+(`copilot-usage-metrics.sh` calls `generate-installation-token.sh` from alongside
+itself, so both must sit together), then run a last-28-days pull — a meaningful
+check that the App credential works:
 
 ```bash
-source ~/.config/copilot-metrics/config
-./scripts/copilot-usage-metrics.sh <your-enterprise> --last-28-days \
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-usage-metrics.sh"
+curl -fsSLO "$base/generate-installation-token.sh"
+chmod +x copilot-usage-metrics.sh generate-installation-token.sh
+
+./copilot-usage-metrics.sh <your-enterprise> --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
   | jq '.report_meta'
 ```
+
+> Prefer working from a clone? Clone the repo, put your values in
+> `.secrets/config`, and run `./scripts/run-test.sh --usage-only` instead — see
+> the [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing#verify-locally-test-each-credential).
 
 > If you get `Resource not accessible by integration`, the App is missing the
 > **View Enterprise Copilot Metrics** permission, or the usage-metrics policy
@@ -111,16 +127,23 @@ manager**. There is no GitHub App or fine-grained PAT equivalent today.
 export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
 ```
 
-Test it (pulls the last 28 days so you can confirm the PAT works and eyeball the data):
+Test it (pulls the last 28 days so you can confirm the PAT works and eyeball the
+data). Grab the billing script into your working directory and run it:
 
 ```bash
-./scripts/copilot-billing-export.sh <your-enterprise> --last-28-days --out /tmp/billing.csv
-head -1 /tmp/billing.csv
+export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
+
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-billing-export.sh"
+chmod +x copilot-billing-export.sh
+
+./copilot-billing-export.sh <your-enterprise> --last-28-days --out ./billing.csv
+head -1 ./billing.csv
 ```
 
-> Prefer one command that checks both credentials at once? Run
-> `./scripts/run-test.sh` (or `--usage-only` / `--billing-only`). See the
-> [scripts README](./README.md#verify-locally-test-each-credential).
+> Prefer working from a clone? Run `./scripts/run-test.sh --billing-only` (or
+> with no flag to check both credentials at once) — see the
+> [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing#verify-locally-test-each-credential).
 
 > A `404` on the `/reports` endpoints means the token is missing
 > `manage_billing:enterprise`. The other billing endpoints (`/usage/summary`,
@@ -132,7 +155,7 @@ head -1 /tmp/billing.csv
 ## Part 3 — Wire it into the GitHub Action (optional)
 
 To run the collection automatically, copy
-[`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
+[`examples/copilot-metrics-collection.yml`](https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing/examples/copilot-metrics-collection.yml)
 and this `scripts/` folder into your own repository, then add the credentials
 above under **Settings → Secrets and variables → Actions**:
 
