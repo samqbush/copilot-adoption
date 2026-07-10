@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: July 9, 2026*
+*Last updated: July 10, 2026*
 
 This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
@@ -44,7 +44,7 @@ Full definitions live in [Budgets for usage-based billing](https://docs.github.c
 
 ## Set spend controls that follow your team structure
 
-Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today; steps 2 and 3 are created via the REST API (runnable calls below) — once a CCULB exists you can edit it in the billing UI.
+Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today; steps 2 and 3 are created via the REST API (runnable calls below) — once a CCULB exists you can edit it in the billing UI. Full UI support for this API-first workflow is expected in July 2026.
 
 ### Step 1 — Attribute enterprise teams to cost centers
 
@@ -140,10 +140,63 @@ gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" 
   --jq '{id, ai_credit_pool_enabled}'
 ```
 
+### Check cap usage state (API)
+
+Today, the reliable way to see how much of a cost center's included usage cap is consumed is this same cost center API response. Use `name` to target the cost center and inspect `ai_credit_pool_state`.
+
+```bash
+ENTERPRISE="fabrikam"
+NAME="Copilot-only"
+
+gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2026-03-10" \
+  "/enterprises/$ENTERPRISE/settings/billing/cost-centers?state=active" \
+  --jq ".costCenters[] | select(.name == \"$NAME\")"
+```
+
+Example response shape:
+
+```json
+{
+  "ai_credit_pool_enabled": true,
+  "ai_credit_pool_state": {
+    "current_amount": 30,
+    "target_amount": 30
+  },
+  "id": "c5db9b7e-52e3-4d10-a669-2bfbfb63d6af",
+  "name": "Copilot-only",
+  "resources": [
+    {
+      "name": "ent:copilot-only",
+      "type": "Team"
+    }
+  ],
+  "state": "active"
+}
+```
+
+How to read it:
+- `ai_credit_pool_enabled: true` means the included usage cap is on for that cost center.
+- `ai_credit_pool_state.current_amount` is usage consumed against the cost center's included cap this cycle.
+- `ai_credit_pool_state.target_amount` is the cap size calculated from licenses attributed to that cost center.
+
+In this worked example, the cost center team has 1 Copilot Business user. During the promotional window, that maps to a `$30` included usage cap, so `target_amount: 30`.
+
+If `current_amount` is equal to `target_amount`, the cost center has exhausted its included allocation for the cycle. Whether users are blocked or continue as paid overage depends on your budget stop settings.
+
+The first two budget views below show the user-level controls (CCULB) that can still block usage. The enterprise budget view is included to show where overage spend appears at the enterprise backstop after the cost center has exhausted its included usage cap.
+
+![Cost center user budget detail view in GitHub enterprise billing]({{ site.baseurl }}/step3-user-budget-detail.png)
+
+![Cost center user budget row in Budgets and alerts]({{ site.baseurl }}/step3-cost-center-budget-row.png)
+
+![Enterprise and universal budget rows in Budgets and alerts]({{ site.baseurl }}/step3-enterprise-budget-backstop.png)
+
 The cap tracks the licenses in the cost center: **3,000 included credits per Copilot Business license** and **7,000 per Copilot Enterprise license** each month (promotional values). Adding or removing licensed members re-sizes it for you — license increases apply immediately, decreases take effect next cycle, and credits already used aren't clawed back. When a capped cost center reaches its limit, you choose whether members stop or continue as paid overage (subject to their user-level budgets and the enterprise backstop).
 
 > [!NOTE]
-> Enabling the cap doesn't retroactively redistribute the shared pool. From the moment it's on, that cost center draws only the credits its own licenses fund; turn it off and its members can draw from the shared enterprise pool again. A UI toggle is coming to the cost center create/edit form — until then this call is the setup path.
+> Enabling the cap doesn't retroactively redistribute the shared pool. From the moment it's on, that cost center draws only the credits its own licenses fund; turn it off and its members can draw from the shared enterprise pool again. Full UI support for these API-first cost center controls is expected in July 2026; until then these API calls are the setup path.
 
 Included usage caps only fully contain spend when *every* licensed user sits in a cost center that has one enabled. Anyone left out can still draw from the shared enterprise pool.
 
@@ -151,7 +204,7 @@ Included usage caps only fully contain spend when *every* licensed user sits in 
 
 The cap is an **aggregate team allowance, not a per-user reset.** It's the licenses in the cost center times their included credits — 10 Business seats fund one shared $300/month pool of included credits, not $30 stamped on each person. Your CCULB decides how unevenly that $300 gets spent underneath. A power user on a $100 CCULB keeps their full $100 of included credits as long as the *team* total stays under $300, because they're spending lighter teammates' unused share — still the team's own funded credits, not another cost center's. You only compress toward the per-license figure when the whole team maxes out at once, which is a team you wouldn't cap this way in the first place.
 
-So the cap isn't a productivity lever. It's a chargeback boundary for enterprises where several teams share one pool, and it earns its keep only when you care that a heavy team is quietly drawing down included credits that a lighter team's licenses funded. The behavior you pick at the limit is what decides whether it fights your CCULB:
+So the cap isn't a productivity lever. It's a chargeback boundary for enterprises where several teams share one pool, and it earns its keep when you care about separating each team's funded included usage from the shared enterprise pool. The behavior you pick at the limit is what decides whether it fights your CCULB:
 
 | Behavior at the cap | Use it for | Effect on power users |
 |---------------------|-----------|-----------------------|
