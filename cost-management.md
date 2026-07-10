@@ -81,7 +81,7 @@ echo "$COST_CENTER_ID"
 Then create the per-user cap for everyone in that cost center:
 
 ```bash
-AMOUNT=100   # whole dollars, per user
+AMOUNT=200   # whole dollars, per user
 
 gh api --method POST \
   -H "X-GitHub-Api-Version: 2026-03-10" \
@@ -106,6 +106,14 @@ gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_
 ```
 
 **Changing an existing CCULB** (for example, raising the cap) no longer needs the API: once created, the budget shows up in **Billing and licensing → Budgets and alerts**, and you can edit the amount, stop behavior, and alert recipients there like any other budget. If you're managing many cost centers and want to script updates, the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint takes a `PATCH` by budget ID with just the fields you want to change.
+
+In **Budgets and alerts**, the CCULB shows up as a single row that applies to every member of the cost center:
+
+![Cost center user-level budget row in Budgets and alerts]({{ site.baseurl }}/step2-cculb-row.png)
+
+Open it to see per-user usage against the cap:
+
+![Per-user usage detail for a cost center user-level budget]({{ site.baseurl }}/step2-cculb-user-detail.png)
 
 > [!NOTE]
 > `budget_amount` is whole dollars. `prevent_further_usage: true` is the hard stop; set it `false` to alert-only. You can optionally add `"budget_alerting": { "will_alert": true, "alert_recipients": ["a-real-member-login"] }` to the create payload to notify someone as the budget is consumed — each recipient must be an existing enterprise member's login, or the request fails with a `400`.
@@ -140,7 +148,7 @@ gh api "/enterprises/$ENTERPRISE/settings/billing/cost-centers/$COST_CENTER_ID" 
   --jq '{id, ai_credit_pool_enabled}'
 ```
 
-### Check cap usage state (API)
+#### Check cap usage state (API)
 
 Today, the reliable way to see how much of a cost center's included usage cap is consumed is this same cost center API response. Use `name` to target the cost center and inspect `ai_credit_pool_state`.
 
@@ -181,17 +189,9 @@ How to read it:
 - `ai_credit_pool_state.current_amount` is usage consumed against the cost center's included cap this cycle.
 - `ai_credit_pool_state.target_amount` is the cap size calculated from licenses attributed to that cost center.
 
-In this worked example, the cost center team has 1 Copilot Business user. During the promotional window, that maps to a `$30` included usage cap, so `target_amount: 30`.
+In this worked example, the cost center team has 1 Copilot Business user. During the promotional window, that maps to a `$30` included usage cap, so `target_amount: 30`. Here `current_amount` equals `target_amount`, so the example shows the cap fully consumed for the cycle.
 
 If `current_amount` is equal to `target_amount`, the cost center has exhausted its included allocation for the cycle. Whether users are blocked or continue as paid overage depends on your budget stop settings.
-
-The first two budget views below show the user-level controls (CCULB) that can still block usage. The enterprise budget view is included to show where overage spend appears at the enterprise backstop after the cost center has exhausted its included usage cap.
-
-![Cost center user budget detail view in GitHub enterprise billing]({{ site.baseurl }}/step3-user-budget-detail.png)
-
-![Cost center user budget row in Budgets and alerts]({{ site.baseurl }}/step3-cost-center-budget-row.png)
-
-![Enterprise and universal budget rows in Budgets and alerts]({{ site.baseurl }}/step3-enterprise-budget-backstop.png)
 
 The cap tracks the licenses in the cost center: **3,000 included credits per Copilot Business license** and **7,000 per Copilot Enterprise license** each month (promotional values). Adding or removing licensed members re-sizes it for you — license increases apply immediately, decreases take effect next cycle, and credits already used aren't clawed back. When a capped cost center reaches its limit, you choose whether members stop or continue as paid overage (subject to their user-level budgets and the enterprise backstop).
 
