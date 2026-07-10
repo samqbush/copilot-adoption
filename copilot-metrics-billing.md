@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: June 22, 2026*
+*Last updated: July 10, 2026*
 
 ---
 
@@ -153,30 +153,40 @@ aic_quantity, aic_gross_amount
 ## The scripts
 
 The [`copilot-metrics-billing/`](./copilot-metrics-billing/README.md) folder ships
-example scripts that implement the above. They're a starting point: clean stdout
-(JSON/CSV), progress to stderr, meant to be adapted into your pipeline.
+example scripts that implement the above, plus two ways to run them. They're a
+starting point: clean stdout (JSON/CSV), progress to stderr, meant to be adapted
+into your pipeline.
 
 | Script | What it does |
 |--------|--------------|
-| `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) daily usage report → JSON. App or PAT auth. |
+| `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. |
 | `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. |
 | `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir. |
+| `run-test.sh` | Tests each credential on its own and pulls the last 28 days for a manual look. |
 | `generate-installation-token.sh` | Mints the short-lived App token (used internally by the usage script). |
 
-```bash
-source ~/.config/copilot-metrics/config   # APP_ID, INSTALLATION_ID, PRIVATE_KEY
-export GH_BILLING_TOKEN=ghp_xxx            # classic PAT, manage_billing:enterprise
+**To deploy**, copy the
+[example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
+and the `scripts/` folder into your own repo, then set your enterprise slug, App
+identifiers, private key, and billing PAT as repo variables and secrets. It
+collects the prior day on a schedule and uploads the files as a workflow
+artifact.
 
-./copilot-metrics-billing/scripts/collect-daily.sh my-enterprise \
-  --out-dir ./copilot-data \
-  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY"
+**To verify your credentials first**, run `run-test.sh` locally. It checks the
+GitHub App and the billing PAT independently and pulls the last 28 days so you
+can eyeball last month's data:
+
+```bash
+cp copilot-metrics-billing/config.example copilot-metrics-billing/.secrets/config  # fill in values
+./copilot-metrics-billing/scripts/run-test.sh                # both credentials
+./copilot-metrics-billing/scripts/run-test.sh --billing-only  # just the PAT
 ```
 
 Output:
 
 ```
-copilot-data/usage-enterprise-my-enterprise-2026-06-21.json
-copilot-data/billing-ai_credit-my-enterprise-2026-06-21.csv
+usage-enterprise-my-enterprise-28day-2026-07-10.json
+billing-ai_credit-my-enterprise-last28days-2026-07-10.csv
 ```
 
 See the [scripts README](./copilot-metrics-billing/README.md) for full options
@@ -186,10 +196,12 @@ and output schemas.
 
 ## Running it daily and landing it in a data lake
 
-Schedule `collect-daily.sh` once a day. A GitHub Actions cron, a Jenkins job, a
-GitLab schedule, or a plain `cron` entry all work. It writes timestamped files to
-an output directory; from there, sync that directory to object storage with
-whatever you already use:
+The [example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
+runs `collect-daily.sh` on a cron and uploads the day's files as a workflow
+artifact — the quickest way to see it working. Prefer another scheduler? A
+Jenkins job, a GitLab schedule, or a plain `cron` entry run the same script
+just as well. It writes timestamped files to an output directory; from there,
+sync that directory to object storage with whatever you already use:
 
 ```bash
 # pick the one that matches your stack

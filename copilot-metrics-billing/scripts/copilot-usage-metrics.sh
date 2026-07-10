@@ -15,6 +15,7 @@
 #                            of an enterprise (enterprise-1-day, the default).
 #   --day YYYY-MM-DD         Day to pull (default: yesterday, UTC).
 #   --28day                  Pull the 28-day rolling report instead of a single day.
+#                            (Alias: --last-28-days.)
 #                            NOT needed for the daily archive job: once you're
 #                            storing the single-day files you can rebuild any
 #                            window yourself. Use it only for an ad-hoc rolling
@@ -52,7 +53,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --org) SCOPE="org"; shift ;;
     --day) DAY="$2"; shift 2 ;;
-    --28day) ROLLING="1"; shift ;;
+    --28day|--last-28-days) ROLLING="1"; shift ;;
     --app-id) APP_ID="$2"; shift 2 ;;
     --installation-id) INSTALLATION_ID="$2"; shift 2 ;;
     --private-key) PRIVATE_KEY="$2"; shift 2 ;;

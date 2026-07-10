@@ -37,7 +37,7 @@ See [Manage enterprise policies for Copilot](https://docs.github.com/en/enterpri
 
    | Field | Value |
    |-------|-------|
-   | **GitHub App name** | `Copilot Metrics Collector` |
+   | **GitHub App name** | `<enterprise-slug> Copilot Metrics Collector` |
    | **Homepage URL** | any URL you control |
 
 3. Under **Webhook**: **uncheck** "Active" (no webhook events needed).
@@ -79,11 +79,11 @@ PRIVATE_KEY=~/.config/copilot-metrics/app.pem
 EOF
 ```
 
-Test it:
+Test it (pulls the last 28 days — a meaningful check the App credential works):
 
 ```bash
 source ~/.config/copilot-metrics/config
-./scripts/copilot-usage-metrics.sh <your-enterprise> \
+./scripts/copilot-usage-metrics.sh <your-enterprise> --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
   | jq '.report_meta'
 ```
@@ -111,17 +111,43 @@ manager**. There is no GitHub App or fine-grained PAT equivalent today.
 export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
 ```
 
-Test it:
+Test it (pulls the last 28 days so you can confirm the PAT works and eyeball the data):
 
 ```bash
-./scripts/copilot-billing-export.sh <your-enterprise> --out /tmp/billing.csv
+./scripts/copilot-billing-export.sh <your-enterprise> --last-28-days --out /tmp/billing.csv
 head -1 /tmp/billing.csv
 ```
+
+> Prefer one command that checks both credentials at once? Run
+> `./scripts/run-test.sh` (or `--usage-only` / `--billing-only`). See the
+> [scripts README](./README.md#verify-locally-test-each-credential).
 
 > A `404` on the `/reports` endpoints means the token is missing
 > `manage_billing:enterprise`. The other billing endpoints (`/usage/summary`,
 > `/ai_credit/usage`) work with just the enterprise role, but the bulk CSV export
 > needs this scope.
+
+---
+
+## Part 3 — Wire it into the GitHub Action (optional)
+
+To run the collection automatically, copy
+[`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
+and this `scripts/` folder into your own repository, then add the credentials
+above under **Settings → Secrets and variables → Actions**:
+
+| Kind | Name | Maps to |
+|------|------|---------|
+| Variable | `ENTERPRISE` | your enterprise slug |
+| Variable | `COPILOT_APP_ID` | the App ID from Part 1 |
+| Variable | `COPILOT_INSTALLATION_ID` | the installation ID from Part 1 |
+| Secret | `COPILOT_APP_PRIVATE_KEY` | the contents of `app.pem` from Part 1 |
+| Secret | `GH_BILLING_TOKEN` | the classic PAT from Part 2 |
+
+App ID and installation ID are identifiers, not credentials, so they go in
+**variables**; the private key and PAT go in **secrets**. Because
+`GH_BILLING_TOKEN` grants enterprise-wide billing access, host the workflow in a
+dedicated private repo with a protected default branch and minimal write access.
 
 ---
 

@@ -1,0 +1,124 @@
+# Copilot metrics & billing — daily collection (EXAMPLE)
+#
+# Copy this file into YOUR OWN repository at
+# .github/workflows/copilot-metrics-collection.yml, together with the
+# copilot-metrics-billing/scripts/ folder from this guide (see SCRIPTS_DIR
+# below). It pulls the prior day's Copilot usage metrics (GitHub App) and
+# billing data (classic PAT) and uploads them as a workflow artifact — zero
+# extra infrastructure to see it working.
+#
+# One-time configuration in the repo that hosts this workflow
+# (Settings -> Secrets and variables -> Actions):
+#
+#   Variables  (identifiers, not credentials)
+#     ENTERPRISE               your enterprise slug (github.com/enterprises/<slug>)
+#     COPILOT_APP_ID           GitHub App ID
+#     COPILOT_INSTALLATION_ID  App installation ID
+#
+#   Secrets    (sensitive — masked in logs)
+#     COPILOT_APP_PRIVATE_KEY  the App's .pem contents (paste the whole file)
+#     GH_BILLING_TOKEN         classic PAT with manage_billing:enterprise
+#
+# See ../enterprise-setup.md for how to create the App and the billing PAT.
+#
+# Security note: GH_BILLING_TOKEN grants enterprise-wide billing access. Host
+# this workflow in a dedicated private repository with a protected default
+# branch and minimal write access, so no one can add a step that exfiltrates it.
+
+name: Copilot metrics & billing collection
+
+on:
+  schedule:
+    # Daily at ~05:17 UTC — after the prior UTC day is fully processed.
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'Day to collect (YYYY-MM-DD, UTC). Leave blank for yesterday.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  # Where you copied the collector scripts inside this repo. Adjust if you
+  # placed the scripts/ folder somewhere other than copilot-metrics-billing/.
+  SCRIPTS_DIR: copilot-metrics-billing/scripts
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # jq and openssl are preinstalled on ubuntu-latest runners.
+      - name: Check out this repo (for the collector scripts)
+        uses: actions/checkout@v4
+
+      - name: Resolve collection day
+        id: day
+        run: |
+          set -euo pipefail
+          DAY='${{ inputs.day }}'
+          if [[ -z "$DAY" ]]; then
+            DAY=$(date -u -d '1 day ago' +%F)
+          elif [[ ! "$DAY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "::error::Invalid day '$DAY' (expected YYYY-MM-DD)."; exit 1
+          fi
+          echo "day=$DAY" >> "$GITHUB_OUTPUT"
+          echo "Collecting Copilot data for $DAY"
+
+      - name: Collect usage metrics (GitHub App)
+        env:
+          COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p copilot-data
+          KEY_FILE="$RUNNER_TEMP/copilot-app.pem"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          DAY='${{ steps.day.outputs.day }}'
+          # Write to a temp file first so a failure never leaves a partial JSON
+          # in the artifact directory.
+          "$SCRIPTS_DIR/copilot-usage-metrics.sh" '${{ vars.ENTERPRISE }}' \
+            --day "$DAY" \
+            --app-id '${{ vars.COPILOT_APP_ID }}' \
+            --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
+            --private-key "$KEY_FILE" \
+            > "$RUNNER_TEMP/usage.json"
+          mv "$RUNNER_TEMP/usage.json" \
+            "copilot-data/usage-enterprise-${{ vars.ENTERPRISE }}-$DAY.json"
+
+      - name: Collect billing (classic PAT)
+        # Run even if the usage step failed (independent credential), as long as
+        # the day resolved — but don't run on cancellation.
+        if: ${{ !cancelled() && steps.day.outcome == 'success' }}
+        env:
+          GH_BILLING_TOKEN: ${{ secrets.GH_BILLING_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p copilot-data
+          DAY='${{ steps.day.outputs.day }}'
+          "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
+            --start "$DAY" --end "$DAY" \
+            --out "copilot-data/billing-ai_credit-${{ vars.ENTERPRISE }}-$DAY.csv"
+
+      - name: Upload collected data as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-data-${{ steps.day.outputs.day }}
+          path: copilot-data/
+          if-no-files-found: error
+          # Artifacts are a zero-setup starting point, NOT a durable archive —
+          # they expire. Download them or sync to your data lake for the long
+          # term (GitHub only retains usage metrics for ~28 days).
+          retention-days: 90
+
+      # --- Grafana integration — coming soon --------------------------------
+      # A future revision of this example will push the collected metrics to a
+      # Grafana-backed datasource here so you get dashboards out of the box.
+      # For now the data lands in the workflow artifact above.
+      # - name: Publish to Grafana (coming soon)
+      #   run: echo "Grafana integration coming soon"

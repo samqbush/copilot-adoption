@@ -1,8 +1,17 @@
 # Copilot Metrics & Billing — Scripts
 
 Self-contained example scripts for pulling **usage metrics** (engagement) and
-**billing metrics** (cost) out of Copilot on a daily schedule and dropping the
-results into your own data lake.
+**billing metrics** (cost) out of Copilot and dropping the results into your own
+data lake.
+
+There are two ways to use them:
+
+- **Deploy** — the [example GitHub Action](#deploy-the-github-action) collects
+  the prior day automatically on a schedule and uploads the files as artifacts.
+  This is the easy, unattended path.
+- **Verify locally** — [`run-test.sh`](#verify-locally-test-each-credential)
+  tests each credential independently and pulls the **last 28 days** so you can
+  eyeball last month's data by hand.
 
 > **Two different things — don't confuse them:**
 > - **Usage metrics** = engagement/adoption data (active users, completions, chat). No dollar amounts.
@@ -13,33 +22,85 @@ results into your own data lake.
 | `copilot-usage-metrics.sh` | The pre-aggregated daily usage-metrics report (enterprise or org), as JSON | Enterprise GitHub App *(or PAT with `read:enterprise`)* |
 | `copilot-billing-export.sh` | The `ai_credit` billing CSV — every user, day, and model with dollar amounts | Classic PAT with `manage_billing:enterprise` |
 | `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir | Both of the above |
+| `run-test.sh` | Tests each credential independently and pulls the last 28 days into `.secrets/output` | Both of the above |
 | `generate-installation-token.sh` | Mints a short-lived GitHub App installation token (used internally by the usage script) | App private key |
+
+The [`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
+workflow wires `collect-daily`'s two scripts into a scheduled GitHub Action.
 
 See [enterprise-setup.md](./enterprise-setup.md) for the one-time setup of the
 Enterprise GitHub App and the billing PAT.
 
 ---
 
-## Quick local testing
+## Deploy: the GitHub Action
 
-To re-test the whole flow with a single command, put your credentials in an
-uncommitted secrets file and run the wrapper:
+For unattended daily collection, copy
+[`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
+into your own repository at `.github/workflows/`, along with this `scripts/`
+folder (the workflow's `SCRIPTS_DIR` points at
+`copilot-metrics-billing/scripts` by default — adjust it if you put the scripts
+elsewhere).
+
+Then set these in that repo under **Settings → Secrets and variables → Actions**:
+
+| Kind | Name | Value |
+|------|------|-------|
+| Variable | `ENTERPRISE` | your enterprise slug |
+| Variable | `COPILOT_APP_ID` | GitHub App ID |
+| Variable | `COPILOT_INSTALLATION_ID` | App installation ID |
+| Secret | `COPILOT_APP_PRIVATE_KEY` | the App's `.pem` contents |
+| Secret | `GH_BILLING_TOKEN` | classic PAT with `manage_billing:enterprise` |
+
+The workflow runs daily (and on demand via **Run workflow**), collects the prior
+day's usage metrics and billing, and uploads them as a **workflow artifact** —
+no extra infrastructure to see it working. Usage and billing run as separate
+steps, so one credential failing still lets the other collect and upload.
+
+> **Security:** `GH_BILLING_TOKEN` grants enterprise-wide billing access. Host
+> the workflow in a dedicated private repo with a protected default branch and
+> minimal write access, so no one can add a step that exfiltrates it.
+
+> Artifacts expire — they're a zero-setup starting point, not a durable archive.
+> Download them, or sync them to your data lake, for the long-term record.
+> Grafana dashboards are coming soon (placeholder step in the workflow).
+
+---
+
+## Verify locally: test each credential
+
+Before (or instead of) deploying, confirm each credential works on its own and
+pull the **last 28 days** so you can eyeball last month's data. Put your
+credentials in an uncommitted secrets file and run the checker:
 
 ```bash
 cp config.example .secrets/config        # then fill in your real values
 mv ~/Downloads/your-app.*.pem .secrets/app.pem && chmod 600 .secrets/app.pem
-./scripts/run-test.sh                     # collects yesterday into .secrets/output
+./scripts/run-test.sh                     # tests BOTH credentials
 ```
 
 `.secrets/` is gitignored, so the config file and `.pem` never get committed.
-`run-test.sh` loads the file, checks your credentials and tools, then runs
-`collect-daily.sh` for both usage metrics and billing. Pass any
-`collect-daily.sh` flag straight through:
+`run-test.sh` loads the file and tests each domain independently:
 
 ```bash
-./scripts/run-test.sh --day 2026-06-21    # a specific day
-./scripts/run-test.sh --skip-billing      # usage metrics only
+./scripts/run-test.sh --usage-only        # just the GitHub App (usage metrics)
+./scripts/run-test.sh --billing-only       # just the classic PAT (billing)
 ```
+
+Each domain validates only the tools and credentials it needs, so
+`--billing-only` doesn't require the App and `--usage-only` doesn't require the
+billing PAT. On success you get a clear `✓ GitHub App OK` / `✓ Billing PAT OK`
+with the coverage and row count, and the pulled files land in `.secrets/output`:
+
+```
+usage-enterprise-<ent>-28day-<today>.json      # 28-day rolling report (one aggregate)
+billing-ai_credit-<ent>-last28days-<today>.csv # per-user, per-day rows for 28 days
+```
+
+> The two 28-day outputs aren't identical in shape: usage is a single **rolling
+> aggregate report** (with its own `report_start_day`/`report_end_day`), while
+> billing is **per-day detail rows**. Their end dates can differ slightly because
+> of reporting lag.
 
 The secrets file holds `ENTERPRISE`, `APP_ID`, `INSTALLATION_ID`, `PRIVATE_KEY`,
 and `GH_BILLING_TOKEN` — see [config.example](./config.example) for the format.
@@ -137,7 +198,10 @@ Reference page: [REST API endpoints for usage reports](https://docs.github.com/e
 export GH_BILLING_TOKEN=ghp_xxx   # classic PAT, manage_billing:enterprise
 ./copilot-billing-export.sh my-enterprise > billing.csv
 
-# A date range, written straight to a file
+# The last 28 complete days (handy for a manual "last month" pull)
+./copilot-billing-export.sh my-enterprise --last-28-days --out last-month.csv
+
+# A specific date range, written straight to a file
 ./copilot-billing-export.sh my-enterprise \
   --start 2026-06-01 --end 2026-06-21 --out june-billing.csv
 ```
