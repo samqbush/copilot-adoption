@@ -1,5 +1,6 @@
 #!/bin/bash
 # copilot-usage-metrics.sh
+# Guide: https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
 # Daily job: pulls the pre-aggregated Copilot USAGE metrics report (engagement
 # data — active users, completions, chat, etc.) for an enterprise or org and
 # writes it as JSON to stdout. Usage metrics contain NO billing amounts.

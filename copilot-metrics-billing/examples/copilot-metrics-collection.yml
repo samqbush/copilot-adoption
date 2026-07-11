@@ -19,7 +19,8 @@
 #     COPILOT_APP_PRIVATE_KEY  the App's .pem contents (paste the whole file)
 #     GH_BILLING_TOKEN         classic PAT with manage_billing:enterprise
 #
-# See ../enterprise-setup.md for how to create the App and the billing PAT.
+# See https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
+# for how to create the App and the billing PAT.
 #
 # Security note: GH_BILLING_TOKEN grants enterprise-wide billing access. Host
 # this workflow in a dedicated private repository with a protected default

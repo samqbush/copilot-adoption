@@ -25,8 +25,9 @@ yourself and keep your own copy. The whole job:
    **pre-aggregated report** endpoints so the whole thing is under ten API calls.
 3. **Drop the files into your data lake** before the 28-day window rolls off.
 
-The [example scripts](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
-do exactly this. The rest of this page explains the model so you can adapt it.
+The [example scripts](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/scripts)
+do exactly this. The rest of this page explains the model and walks the setup so
+you can adapt it.
 
 > [!NOTE]
 > This applies to GitHub Enterprise Cloud (including EMU). The endpoints are
@@ -66,8 +67,104 @@ long-lived PAT.
 | Fine-grained PAT | ⚠️ documented, not yet in the UI | ❌ not supported |
 | Classic PAT scope | `read:enterprise` or `manage_billing:copilot` | `manage_billing:enterprise` |
 
-See [enterprise-setup.md](./copilot-metrics-billing/enterprise-setup.md) for the
-one-time setup of both.
+The [setup below](#set-up-the-two-credentials) creates both.
+
+---
+
+## Set up the two credentials
+{:#set-up-the-two-credentials}
+
+Two one-time setups, one per data domain. You need **enterprise owner** access
+(to create the App and the billing PAT and to enable the usage-metrics policy),
+plus `openssl`, `curl`, and `jq` locally.
+
+### Enterprise GitHub App (usage metrics)
+
+1. **Enable the policy.** The metrics endpoints only return data when **Copilot
+   usage metrics** is **Enabled everywhere** (**Settings → Policies → Copilot**).
+   See [Manage enterprise policies for Copilot](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/administer-copilot/manage-for-enterprise/manage-enterprise-policies).
+
+2. **Register the App** at
+   `https://github.com/enterprises/<your-enterprise>/settings/apps/new`
+   ([registering a GitHub App](https://docs.github.com/en/enterprise-cloud@latest/apps/creating-github-apps/registering-a-github-app/registering-a-github-app)).
+   The choices that matter for this example:
+   - **Enterprise permissions → View Enterprise Copilot Metrics: Read-only.**
+     Add **Organization permissions → Organization Copilot metrics: Read-only**
+     too if you'll pull org-level reports (the `--org` flag).
+   - **Webhook → Active: unchecked** — no events needed.
+   - **Only on this account.**
+
+   Note the **App ID** shown after you create it.
+
+3. **Generate a private key** (App settings → Private keys), then lock it down:
+
+   ```bash
+   mv ~/Downloads/*.pem ./app.pem && chmod 600 ./app.pem
+   ```
+
+4. **Install the App** on your enterprise and note the **installation ID** from
+   the URL: `.../settings/installations/<INSTALLATION_ID>`.
+
+The scripts mint the installation token themselves from the App ID, installation
+ID, and key.
+
+### Billing classic PAT (billing metrics)
+
+Create a **classic** PAT with the `manage_billing:enterprise` scope, owned by an
+enterprise owner or billing manager, at
+[github.com/settings/tokens](https://github.com/settings/tokens)
+([creating a classic PAT](https://docs.github.com/en/enterprise-cloud@latest/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)).
+There is no GitHub App or fine-grained PAT equivalent today. Keep it separate
+from the App key.
+
+---
+
+## Verify each credential
+{:#verify-each-credential}
+
+Before automating, confirm each credential works on its own by pulling the
+**last 28 days** to a file you can read. Download only the script you're testing —
+no clone required.
+
+**Usage metrics (GitHub App):**
+
+```bash
+export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
+
+./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
+  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
+  > usage-last-28-days.json
+jq '.report' usage-last-28-days.json      # the metrics rows
+```
+
+> [!NOTE]
+> `Resource not accessible by integration` means the App is missing the **View
+> Enterprise Copilot Metrics** permission, or the usage-metrics policy isn't
+> enabled yet. Fix it, then re-accept the updated permissions on the installation.
+
+**Billing (classic PAT):**
+
+```bash
+export ENTERPRISE=<your-enterprise> GH_BILLING_TOKEN=ghp_xxx
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-billing-export.sh" && chmod +x copilot-billing-export.sh
+
+./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out billing-last-28-days.csv
+head billing-last-28-days.csv             # or open it in a spreadsheet
+```
+
+> [!NOTE]
+> A `404` on the `/reports` endpoints means the token is missing
+> `manage_billing:enterprise`. The other billing endpoints (`/usage/summary`,
+> `/ai_credit/usage`) work with just the enterprise role, but the bulk CSV export
+> needs this scope.
+
+The two 28-day outputs aren't the same shape: usage is a single **rolling
+aggregate report** (with its own `report_start_day`/`report_end_day`), while
+billing is **per-day detail rows**. Their end dates can differ slightly because of
+reporting lag.
 
 ---
 
@@ -151,57 +248,83 @@ aic_quantity, aic_gross_amount
 ---
 
 ## The scripts
+{:#the-scripts}
 
-The [`copilot-metrics-billing/`](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
-folder ships example scripts that implement the above, plus two ways to run them.
-They're a starting point: clean stdout (JSON/CSV), progress to stderr, meant to be
-adapted into your pipeline.
+The [`scripts/`](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/scripts)
+folder ships example scripts that implement the above. They're a starting point:
+clean stdout (JSON/CSV), progress to stderr, meant to be adapted into your
+pipeline. Once your credentials are set up, [verify them](#verify-each-credential)
+and then [automate the daily pull](#automate).
 
-| Script | What it does |
-|--------|--------------|
-| `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. |
-| `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. |
+| Script | What it does | Key flags |
+|--------|--------------|-----------|
+| `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. | `--day YYYY-MM-DD`, `--org`, `--28day` (alias `--last-28-days`), `--app-id`, `--installation-id`, `--private-key` |
+| `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. | `--start`/`--end`, `--last-28-days`, `--report-type` (default `ai_credit`), `--out`, `--poll-timeout` |
 
-**To deploy**, copy the
-[example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
-and the `scripts/` folder into your own repo, then set your enterprise slug, App
-identifiers, private key, and billing PAT as repo variables and secrets. It
-collects the prior day on a schedule and uploads the files as a workflow
-artifact.
+For the daily job you want the single day (`--day`, defaulting to yesterday); the
+28-day flags are for an ad-hoc snapshot or an initial backfill. They need `bash`,
+`curl`, `jq`, and (for App auth) `openssl`, and set the `2026-03-10` billing API
+version header for you.
 
-**To verify your credentials first**, download the one script you're testing and
-run it with `--last-28-days`, saving the output so you can eyeball last month's
-data. No clone required:
+---
+
+## Automate with the example Action
+{:#automate}
+
+For unattended daily collection, copy the
+[example workflow](https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing/examples/copilot-metrics-collection.yml)
+and the `scripts/` folder into your own repository (the workflow's `SCRIPTS_DIR`
+defaults to `scripts`). Then set your credentials under **Settings → Secrets and
+variables → Actions**:
+
+| Kind | Name | Value |
+|------|------|-------|
+| Variable | `ENTERPRISE` | your enterprise slug |
+| Variable | `COPILOT_APP_ID` | the App ID |
+| Variable | `COPILOT_INSTALLATION_ID` | the installation ID |
+| Secret | `COPILOT_APP_PRIVATE_KEY` | the App's `.pem` contents |
+| Secret | `GH_BILLING_TOKEN` | the classic PAT (`manage_billing:enterprise`) |
+
+App ID and installation ID are identifiers, not credentials, so they go in
+**variables**; the private key and PAT go in **secrets**. Set all five from the
+terminal with `gh` (it encrypts the secrets locally before upload):
 
 ```bash
-export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
-base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
-curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
-
-./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
-  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
-  > usage-last-28-days.json
-jq '.report' usage-last-28-days.json
+gh variable set ENTERPRISE              --body "$ENTERPRISE"
+gh variable set COPILOT_APP_ID          --body "$APP_ID"
+gh variable set COPILOT_INSTALLATION_ID --body "$INSTALLATION_ID"
+gh secret   set COPILOT_APP_PRIVATE_KEY < ./app.pem
+gh secret   set GH_BILLING_TOKEN        --body "$GH_BILLING_TOKEN"
 ```
 
-The [enterprise setup guide](./copilot-metrics-billing/enterprise-setup.md) walks
-through both credential tests (App and billing PAT) in context.
+`gh` targets the repo in the current directory; add `--repo <owner>/<repo>` to
+point elsewhere. If you can't use `gh`, the
+[Actions secrets REST API](https://docs.github.com/en/enterprise-cloud@latest/rest/actions/secrets?apiVersion=2026-03-10#create-or-update-a-repository-secret)
+does the same — you seal each value against the repo's public key yourself.
 
-See the [scripts README](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing)
-for full options and output schemas.
+Commit the workflow and scripts (the credentials live in repo settings, not the
+tree):
+
+```bash
+git add .github/workflows/copilot-metrics-collection.yml scripts/copilot-*.sh
+git commit -m "Add Copilot metrics & billing collection workflow"
+git push
+```
+
+The workflow runs daily (and on demand via **Run workflow**), collects the prior
+day, and uploads the files as a **workflow artifact**. Usage and billing run as
+separate steps, so one credential failing still lets the other collect.
 
 ---
 
 ## Running it daily and landing it in a data lake
 
-The [example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
-runs the two scripts on a cron and uploads the day's files as a workflow
-artifact — the quickest way to see it working. Prefer another scheduler? A
-Jenkins job, a GitLab schedule, or a plain `cron` entry run the same two scripts
-just as well.
+Prefer another scheduler? A Jenkins job, a GitLab schedule, or a plain `cron`
+entry run the same two scripts just as well.
 
-To keep a long-term history, land the files in your data lake. Point the scripts
-at an output directory (`copilot-usage-metrics.sh … > dir/usage-<day>.json` and
+Artifacts expire, so to keep a long-term history land the files in your data
+lake. Point the scripts at an output directory
+(`copilot-usage-metrics.sh … > dir/usage-<day>.json` and
 `copilot-billing-export.sh … --out dir/billing-<day>.csv`), then sync that
 directory to object storage with whatever you already use:
 
@@ -221,6 +344,29 @@ append-only history you can rebuild dashboards from at any time.
 > Keep the raw files. GitHub only retains usage metrics for ~28 days (billing for
 > 24 months), so your archived daily pulls become the long-term record. For usage
 > metrics, they're the *only* record once you're past the 28-day window.
+
+---
+
+## Rate limits and security
+{:#security}
+
+| Auth method | Rate limit |
+|-------------|-----------|
+| Classic PAT | 5,000 req/hr |
+| GitHub App (installation token) | 15,000 req/hr |
+
+A full daily collection is under ten calls, so either budget is plenty — the App
+is just the better choice for usage metrics because of its short-lived tokens.
+
+- The App private key and the billing PAT **never** go into the repository —
+  only into variables and secrets.
+- Installation tokens and billing download URLs expire in **~1 hour**.
+- Both tokens are **read-only** with respect to your code; they can't modify
+  repositories or PRs.
+- If a credential is compromised, revoke it and reissue.
+- `GH_BILLING_TOKEN` grants enterprise-wide billing access. Host the workflow in
+  a dedicated private repo with a protected default branch and minimal write
+  access, so no one can add a step that exfiltrates it.
 
 ---
 
