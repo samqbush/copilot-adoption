@@ -1,5 +1,6 @@
 #!/bin/bash
 # copilot-billing-export.sh
+# Guide: https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
 # Daily job: exports Copilot BILLING data (AI Credit consumption — per user, per
 # day, per model, with dollar amounts) for an enterprise via the bulk CSV export.
 #
