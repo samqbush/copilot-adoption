@@ -5,3 +5,4 @@ copilot-metrics-billing/copilot-data/
 copilot-metrics-billing/**/*.pem
 copilot-metrics-billing/**/*.csv
 copilot-metrics-billing/**/usage-*.json
+.DS_Store

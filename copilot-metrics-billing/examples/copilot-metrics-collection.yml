@@ -1,11 +1,11 @@
 # Copilot metrics & billing — daily collection (EXAMPLE)
 #
 # Copy this file into YOUR OWN repository at
-# .github/workflows/copilot-metrics-collection.yml, together with the
-# copilot-metrics-billing/scripts/ folder from this guide (see SCRIPTS_DIR
-# below). It pulls the prior day's Copilot usage metrics (GitHub App) and
-# billing data (classic PAT) and uploads them as a workflow artifact — zero
-# extra infrastructure to see it working.
+# .github/workflows/copilot-metrics-collection.yml, together with the two
+# collector scripts at scripts/ (see SCRIPTS_DIR below). It pulls the prior
+# day's Copilot usage metrics (GitHub App) and billing data (classic PAT) and
+# uploads them as a workflow artifact — zero extra infrastructure to see it
+# working.
 #
 # One-time configuration in the repo that hosts this workflow
 # (Settings -> Secrets and variables -> Actions):
@@ -42,9 +42,10 @@ permissions:
   contents: read
 
 env:
-  # Where you copied the collector scripts inside this repo. Adjust if you
-  # placed the scripts/ folder somewhere other than copilot-metrics-billing/.
-  SCRIPTS_DIR: copilot-metrics-billing/scripts
+  # Where you copied the collector scripts inside this repo. This assumes a
+  # dedicated repo with the scripts at scripts/ — adjust if you placed them
+  # elsewhere.
+  SCRIPTS_DIR: scripts
 
 jobs:
   collect:

@@ -159,10 +159,30 @@ head ./billing-last-28-days.csv          # header + first rows
 
 ## Part 3 — Wire it into the GitHub Action (optional)
 
-To run the collection automatically, copy
-[`examples/copilot-metrics-collection.yml`](https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing/examples/copilot-metrics-collection.yml)
-and this `scripts/` folder into your own repository, then add the credentials
-above under **Settings → Secrets and variables → Actions**:
+To run the collection automatically, grab the
+[example workflow](https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing/examples/copilot-metrics-collection.yml)
+and the two collector scripts into your own repository. From the root of that
+repo:
+
+```bash
+raw=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing
+mkdir -p .github/workflows scripts
+
+# the scheduled workflow
+curl -fsSL "$raw/examples/copilot-metrics-collection.yml" \
+  -o .github/workflows/copilot-metrics-collection.yml
+
+# the collector scripts — this path matches SCRIPTS_DIR in the workflow
+curl -fsSL "$raw/scripts/copilot-usage-metrics.sh"  -o scripts/copilot-usage-metrics.sh
+curl -fsSL "$raw/scripts/copilot-billing-export.sh" -o scripts/copilot-billing-export.sh
+chmod +x scripts/*.sh
+```
+
+> The workflow defaults to `SCRIPTS_DIR: scripts`. If you put the scripts
+> somewhere else, edit that value in the workflow to match.
+
+Then add the credentials above under **Settings → Secrets and variables →
+Actions**:
 
 | Kind | Name | Maps to |
 |------|------|---------|
