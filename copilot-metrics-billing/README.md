@@ -21,10 +21,9 @@ There are two ways to use them:
 |--------|-------------------|------|
 | `copilot-usage-metrics.sh` | The pre-aggregated daily usage-metrics report (enterprise or org), as JSON | Enterprise GitHub App *(or PAT with `read:enterprise`)* |
 | `copilot-billing-export.sh` | The `ai_credit` billing CSV — every user, day, and model with dollar amounts | Classic PAT with `manage_billing:enterprise` |
-| `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir | Both of the above |
 
 The [`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
-workflow wires `collect-daily`'s two scripts into a scheduled GitHub Action.
+workflow runs these two scripts on a schedule in a GitHub Action.
 
 See [enterprise-setup.md](./enterprise-setup.md) for the one-time setup of the
 Enterprise GitHub App and the billing PAT.
@@ -214,38 +213,6 @@ export GH_BILLING_TOKEN=ghp_xxx   # classic PAT, manage_billing:enterprise
 Only one report runs at a time per enterprise — a `409` means another export is
 still in progress. Download URLs expire in ~1 hour, so fetch immediately (the
 script does).
-
----
-
-## collect-daily.sh
-
-Runs both scripts for the prior day and writes timestamped files to an output
-directory — the hand-off point to your data lake.
-
-```bash
-source ~/.config/copilot-metrics/config
-export GH_BILLING_TOKEN=ghp_xxx
-
-./collect-daily.sh my-enterprise \
-  --out-dir ./copilot-data \
-  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY"
-```
-
-Produces:
-
-```
-copilot-data/usage-enterprise-my-enterprise-2026-06-21.json
-copilot-data/billing-ai_credit-my-enterprise-2026-06-21.csv
-```
-
-Sync that directory to object storage with whatever you already use (the script
-prints these as commented examples):
-
-```bash
-aws s3 cp ./copilot-data s3://my-bucket/copilot/2026-06-21/ --recursive   # AWS
-az storage blob upload-batch -d copilot/2026-06-21 -s ./copilot-data       # Azure
-gcloud storage cp ./copilot-data/* gs://my-bucket/copilot/2026-06-21/      # GCS
-```
 
 ---
 

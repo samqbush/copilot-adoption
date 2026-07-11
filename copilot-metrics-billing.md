@@ -161,7 +161,6 @@ adapted into your pipeline.
 |--------|--------------|
 | `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. |
 | `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. |
-| `collect-daily.sh` | Runs both for the prior day and writes timestamped files to an output dir. |
 
 **To deploy**, copy the
 [example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
@@ -196,11 +195,15 @@ for full options and output schemas.
 ## Running it daily and landing it in a data lake
 
 The [example GitHub Action](./copilot-metrics-billing/examples/copilot-metrics-collection.yml)
-runs `collect-daily.sh` on a cron and uploads the day's files as a workflow
+runs the two scripts on a cron and uploads the day's files as a workflow
 artifact — the quickest way to see it working. Prefer another scheduler? A
-Jenkins job, a GitLab schedule, or a plain `cron` entry run the same script
-just as well. It writes timestamped files to an output directory; from there,
-sync that directory to object storage with whatever you already use:
+Jenkins job, a GitLab schedule, or a plain `cron` entry run the same two scripts
+just as well.
+
+To keep a long-term history, land the files in your data lake. Point the scripts
+at an output directory (`copilot-usage-metrics.sh … > dir/usage-<day>.json` and
+`copilot-billing-export.sh … --out dir/billing-<day>.csv`), then sync that
+directory to object storage with whatever you already use:
 
 ```bash
 # pick the one that matches your stack
