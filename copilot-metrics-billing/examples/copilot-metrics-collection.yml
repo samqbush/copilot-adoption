@@ -82,7 +82,7 @@ jobs:
           DAY='${{ steps.day.outputs.day }}'
           # Write to a temp file first so a failure never leaves a partial JSON
           # in the artifact directory.
-          "$SCRIPTS_DIR/copilot-usage-metrics.sh" '${{ vars.ENTERPRISE }}' \
+          bash "$SCRIPTS_DIR/copilot-usage-metrics.sh" '${{ vars.ENTERPRISE }}' \
             --day "$DAY" \
             --app-id '${{ vars.COPILOT_APP_ID }}' \
             --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
@@ -101,7 +101,7 @@ jobs:
           set -euo pipefail
           mkdir -p copilot-data
           DAY='${{ steps.day.outputs.day }}'
-          "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
+          bash "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
             --start "$DAY" --end "$DAY" \
             --out "copilot-data/billing-ai_credit-${{ vars.ENTERPRISE }}-$DAY.csv"
 

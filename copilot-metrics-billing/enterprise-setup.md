@@ -91,9 +91,9 @@ the report:
 
 ```bash
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
-curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
+curl -fsSLO "$base/copilot-usage-metrics.sh"
 
-./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
+bash copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
   > usage-last-28-days.json
 ```
@@ -142,9 +142,8 @@ export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
 
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
 curl -fsSLO "$base/copilot-billing-export.sh"
-chmod +x copilot-billing-export.sh
 
-./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out ./billing-last-28-days.csv
+bash copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out ./billing-last-28-days.csv
 
 head ./billing-last-28-days.csv          # header + first rows
 # or open billing-last-28-days.csv in a spreadsheet for the full per-user view
@@ -172,10 +171,10 @@ mkdir -p .github/workflows scripts
 curl -fsSL "$raw/examples/copilot-metrics-collection.yml" \
   -o .github/workflows/copilot-metrics-collection.yml
 
-# the collector scripts — this path matches SCRIPTS_DIR in the workflow
+# the collector scripts — this path matches SCRIPTS_DIR in the workflow.
+# The workflow runs them with `bash`, so no executable bit is needed.
 curl -fsSL "$raw/scripts/copilot-usage-metrics.sh"  -o scripts/copilot-usage-metrics.sh
 curl -fsSL "$raw/scripts/copilot-billing-export.sh" -o scripts/copilot-billing-export.sh
-chmod +x scripts/*.sh
 ```
 
 > The workflow defaults to `SCRIPTS_DIR: scripts`. If you put the scripts
@@ -196,6 +195,95 @@ App ID and installation ID are identifiers, not credentials, so they go in
 **variables**; the private key and PAT go in **secrets**. Because
 `GH_BILLING_TOKEN` grants enterprise-wide billing access, host the workflow in a
 dedicated private repo with a protected default branch and minimal write access.
+
+### Set the variables and secrets from the CLI
+
+Instead of clicking through the Settings UI, set all five from the terminal.
+Both approaches assume the values from Parts 1–2 are still exported
+(`ENTERPRISE`, `APP_ID`, `INSTALLATION_ID`, `GH_BILLING_TOKEN`) and that you're
+inside the target repo, with the App private key on disk at `./app.pem`.
+
+**With `gh` (recommended):** it encrypts the secrets for you.
+
+```bash
+gh variable set ENTERPRISE              --body "$ENTERPRISE"
+gh variable set COPILOT_APP_ID          --body "$APP_ID"
+gh variable set COPILOT_INSTALLATION_ID --body "$INSTALLATION_ID"
+gh secret   set COPILOT_APP_PRIVATE_KEY < ./app.pem
+gh secret   set GH_BILLING_TOKEN        --body "$GH_BILLING_TOKEN"
+```
+
+`gh` targets the repo in the current directory; add `--repo <owner>/<repo>` to
+point somewhere else. The private-key line reads `./app.pem` straight off disk,
+so point it at wherever your key actually lives.
+
+If the key isn't saved to disk, paste it into `gh` with a quoted heredoc:
+
+```bash
+gh secret set COPILOT_APP_PRIVATE_KEY <<'EOF'
+-----BEGIN RSA PRIVATE KEY-----
+...paste the full key here...
+-----END RSA PRIVATE KEY-----
+EOF
+```
+
+The quoted `'EOF'` stops the shell from touching the contents and preserves the
+newlines. The value is encrypted locally before it leaves your machine.
+
+**With `curl`:** variables are plain text, so they upload directly.
+
+```bash
+export GH_REPO_TOKEN=ghp_xxxx           # token with Actions write on the repo
+owner_repo=<owner>/<repo>
+api=https://api.github.com/repos/$owner_repo/actions/variables
+
+for kv in "ENTERPRISE=$ENTERPRISE" \
+          "COPILOT_APP_ID=$APP_ID" \
+          "COPILOT_INSTALLATION_ID=$INSTALLATION_ID"; do
+  curl -fsSL -X POST "$api" \
+    -H "Authorization: Bearer $GH_REPO_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    -d "$(jq -n --arg n "${kv%%=*}" --arg v "${kv#*=}" '{name:$n, value:$v}')"
+done
+```
+
+Secrets are the catch: GitHub requires each value be encrypted against the
+repo's public key (a libsodium sealed box) before upload, which is exactly what
+`gh secret set` does under the hood. Over pure `curl` you fetch the key and seal
+each value yourself (needs `python3` with `pynacl`, i.e. `pip install pynacl`):
+
+```bash
+pk=$(curl -fsSL "https://api.github.com/repos/$owner_repo/actions/secrets/public-key" \
+  -H "Authorization: Bearer $GH_REPO_TOKEN" -H "Accept: application/vnd.github+json")
+key_id=$(jq -r .key_id <<<"$pk"); pub=$(jq -r .key <<<"$pk")
+
+seal() {   # usage: seal <secret-name> <plaintext>
+  enc=$(python3 - "$pub" "$2" <<'PY'
+import base64, sys
+from nacl import public, encoding
+box = public.SealedBox(public.PublicKey(sys.argv[1].encode(), encoder=encoding.Base64Encoder))
+print(base64.b64encode(box.encrypt(sys.argv[2].encode())).decode())
+PY
+)
+  curl -fsSL -X PUT "https://api.github.com/repos/$owner_repo/actions/secrets/$1" \
+    -H "Authorization: Bearer $GH_REPO_TOKEN" -H "Accept: application/vnd.github+json" \
+    -d "$(jq -n --arg v "$enc" --arg k "$key_id" '{encrypted_value:$v, key_id:$k}')"
+}
+
+seal COPILOT_APP_PRIVATE_KEY "$(cat ./app.pem)"
+seal GH_BILLING_TOKEN        "$GH_BILLING_TOKEN"
+```
+
+### Commit and push the workflow
+
+The credentials live in repo settings, not the tree, so all you commit is the
+workflow and the two scripts you pulled down above:
+
+```bash
+git add .github/workflows/copilot-metrics-collection.yml scripts/copilot-*.sh
+git commit -m "Add Copilot metrics & billing collection workflow"
+git push
+```
 
 ---
 
