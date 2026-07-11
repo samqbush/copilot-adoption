@@ -71,8 +71,7 @@ The [setup below](#set-up-the-two-credentials) creates both.
 
 ---
 
-## Set up the two credentials
-{:#set-up-the-two-credentials}
+## Set up the two credentials {#set-up-the-two-credentials}
 
 Two one-time setups, one per data domain. You need **enterprise owner** access
 (to create the App and the billing PAT and to enable the usage-metrics policy),
@@ -119,8 +118,7 @@ from the App key.
 
 ---
 
-## Verify each credential
-{:#verify-each-credential}
+## Verify each credential {#verify-each-credential}
 
 Before automating, confirm each credential works on its own by pulling the
 **last 28 days** to a file you can read. Download only the script you're testing —
@@ -247,8 +245,7 @@ aic_quantity, aic_gross_amount
 
 ---
 
-## The scripts
-{:#the-scripts}
+## The scripts {#the-scripts}
 
 The [`scripts/`](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/scripts)
 folder ships example scripts that implement the above. They're a starting point:
@@ -268,8 +265,7 @@ version header for you.
 
 ---
 
-## Automate with the example Action
-{:#automate}
+## Automate with the example Action {#automate}
 
 For unattended daily collection, copy the
 [example workflow](https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing/examples/copilot-metrics-collection.yml)
@@ -294,11 +290,13 @@ gh variable set ENTERPRISE              --body "$ENTERPRISE"
 gh variable set COPILOT_APP_ID          --body "$APP_ID"
 gh variable set COPILOT_INSTALLATION_ID --body "$INSTALLATION_ID"
 gh secret   set COPILOT_APP_PRIVATE_KEY < ./app.pem
-gh secret   set GH_BILLING_TOKEN        --body "$GH_BILLING_TOKEN"
+gh secret   set GH_BILLING_TOKEN <<< "$GH_BILLING_TOKEN"
 ```
 
 `gh` targets the repo in the current directory; add `--repo <owner>/<repo>` to
-point elsewhere. If you can't use `gh`, the
+point elsewhere. Both secrets are read from stdin rather than an argument, so the
+token and key never land in your shell history or the process list. If you can't
+use `gh`, the
 [Actions secrets REST API](https://docs.github.com/en/enterprise-cloud@latest/rest/actions/secrets?apiVersion=2026-03-10#create-or-update-a-repository-secret)
 does the same — you seal each value against the repo's public key yourself.
 
@@ -347,8 +345,7 @@ append-only history you can rebuild dashboards from at any time.
 
 ---
 
-## Rate limits and security
-{:#security}
+## Rate limits and security {#security}
 
 | Auth method | Rate limit |
 |-------------|-----------|
