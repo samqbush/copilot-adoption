@@ -37,7 +37,7 @@ See [Manage enterprise policies for Copilot](https://docs.github.com/en/enterpri
 
    | Field | Value |
    |-------|-------|
-   | **GitHub App name** | `Copilot Metrics Collector` |
+   | **GitHub App name** | `<enterprise-slug> Copilot Metrics Collector` |
    | **Homepage URL** | any URL you control |
 
 3. Under **Webhook**: **uncheck** "Active" (no webhook events needed).
@@ -55,13 +55,17 @@ See [Manage enterprise policies for Copilot](https://docs.github.com/en/enterpri
 ### Step 3: Generate a private key
 
 1. On the App settings page, scroll to **Private keys → Generate a private key**.
-2. A `.pem` file downloads. Move it somewhere safe:
+2. A `.pem` file downloads. Move it into the directory you'll test from and lock
+   down its permissions:
 
 ```bash
-mkdir -p ~/.config/copilot-metrics
-mv ~/Downloads/copilot-metrics-collector.*.pem ~/.config/copilot-metrics/app.pem
-chmod 600 ~/.config/copilot-metrics/app.pem
+mv ~/Downloads/copilot-metrics-collector.*.pem ./app.pem
+chmod 600 ./app.pem
 ```
+
+> This keeps everything in one working directory for the test. For the scheduled
+> [GitHub Action](#part-3--wire-it-into-the-github-action-optional) you store the
+> key as a repository secret instead — it never touches disk.
 
 ### Step 4: Install the App on the enterprise
 
@@ -69,24 +73,42 @@ chmod 600 ~/.config/copilot-metrics/app.pem
 2. **Note the Installation ID** from the URL:
    `.../settings/installations/<INSTALLATION_ID>`.
 
-### Step 5: Store the App config
+### Step 5: Set the App values and test it
+
+Export your enterprise slug and the three App values in your shell (no config
+file to bury — this is just a test):
 
 ```bash
-cat > ~/.config/copilot-metrics/config << 'EOF'
-APP_ID=<your-app-id>
-INSTALLATION_ID=<your-installation-id>
-PRIVATE_KEY=~/.config/copilot-metrics/app.pem
-EOF
+export ENTERPRISE=<your-enterprise>
+export APP_ID=<your-app-id>
+export INSTALLATION_ID=<your-installation-id>
+export PRIVATE_KEY=./app.pem
 ```
 
-Test it:
+Grab the usage-metrics script (it's self-contained — it mints its own App token),
+then run a last-28-days pull and **save it to a file** so you can actually read
+the report:
 
 ```bash
-source ~/.config/copilot-metrics/config
-./scripts/copilot-usage-metrics.sh <your-enterprise> \
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
+
+./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
   --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
-  | jq '.report_meta'
+  > usage-last-28-days.json
 ```
+
+Progress goes to stderr, so `usage-last-28-days.json` holds only the clean JSON:
+request metadata plus a `report` array of the daily rows. Look at it:
+
+```bash
+jq '.report_meta' usage-last-28-days.json   # the window it covers
+jq '.report' usage-last-28-days.json         # the actual metrics — this is the report
+```
+
+> Piping straight to `jq '.report_meta'` (instead of saving the file) only prints
+> that little metadata block and throws the report away — handy as a quick "did
+> it connect?" check, but not what you want when you're reviewing the data.
 
 > If you get `Resource not accessible by integration`, the App is missing the
 > **View Enterprise Copilot Metrics** permission, or the usage-metrics policy
@@ -111,17 +133,69 @@ manager**. There is no GitHub App or fine-grained PAT equivalent today.
 export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
 ```
 
-Test it:
+Test it (pulls the last 28 days so you can confirm the PAT works and eyeball the
+data). Grab the billing script into your working directory and run it:
 
 ```bash
-./scripts/copilot-billing-export.sh <your-enterprise> --out /tmp/billing.csv
-head -1 /tmp/billing.csv
+export ENTERPRISE=<your-enterprise>   # if not already exported in Part 1
+export GH_BILLING_TOKEN=ghp_xxxxxxxxxxxxxxxx
+
+base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
+curl -fsSLO "$base/copilot-billing-export.sh"
+chmod +x copilot-billing-export.sh
+
+./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out ./billing-last-28-days.csv
+
+head ./billing-last-28-days.csv          # header + first rows
+# or open billing-last-28-days.csv in a spreadsheet for the full per-user view
 ```
 
 > A `404` on the `/reports` endpoints means the token is missing
 > `manage_billing:enterprise`. The other billing endpoints (`/usage/summary`,
 > `/ai_credit/usage`) work with just the enterprise role, but the bulk CSV export
 > needs this scope.
+
+---
+
+## Part 3 — Wire it into the GitHub Action (optional)
+
+To run the collection automatically, grab the
+[example workflow](https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing/examples/copilot-metrics-collection.yml)
+and the two collector scripts into your own repository. From the root of that
+repo:
+
+```bash
+raw=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing
+mkdir -p .github/workflows scripts
+
+# the scheduled workflow
+curl -fsSL "$raw/examples/copilot-metrics-collection.yml" \
+  -o .github/workflows/copilot-metrics-collection.yml
+
+# the collector scripts — this path matches SCRIPTS_DIR in the workflow
+curl -fsSL "$raw/scripts/copilot-usage-metrics.sh"  -o scripts/copilot-usage-metrics.sh
+curl -fsSL "$raw/scripts/copilot-billing-export.sh" -o scripts/copilot-billing-export.sh
+chmod +x scripts/*.sh
+```
+
+> The workflow defaults to `SCRIPTS_DIR: scripts`. If you put the scripts
+> somewhere else, edit that value in the workflow to match.
+
+Then add the credentials above under **Settings → Secrets and variables →
+Actions**:
+
+| Kind | Name | Maps to |
+|------|------|---------|
+| Variable | `ENTERPRISE` | your enterprise slug |
+| Variable | `COPILOT_APP_ID` | the App ID from Part 1 |
+| Variable | `COPILOT_INSTALLATION_ID` | the installation ID from Part 1 |
+| Secret | `COPILOT_APP_PRIVATE_KEY` | the contents of `app.pem` from Part 1 |
+| Secret | `GH_BILLING_TOKEN` | the classic PAT from Part 2 |
+
+App ID and installation ID are identifiers, not credentials, so they go in
+**variables**; the private key and PAT go in **secrets**. Because
+`GH_BILLING_TOKEN` grants enterprise-wide billing access, host the workflow in a
+dedicated private repo with a protected default branch and minimal write access.
 
 ---
 

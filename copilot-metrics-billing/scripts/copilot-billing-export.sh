@@ -18,6 +18,10 @@
 # Options:
 #   --start YYYY-MM-DD   Start date (default: yesterday, UTC).
 #   --end YYYY-MM-DD     End date   (default: yesterday, UTC).
+#   --last-28-days       Shortcut for the last 28 complete days (start = today-28,
+#                        end = yesterday, UTC). Handy for a manual "view last
+#                        month" pull / credential check. Mutually exclusive with
+#                        --start/--end.
 #   --report-type TYPE   ai_credit (default) | premium_request | detailed | summarized
 #   --out PATH           Write the CSV to PATH instead of stdout.
 #   --poll-timeout SECS  Max seconds to wait for the report (default: 300).
@@ -33,11 +37,12 @@ set -euo pipefail
 
 API_VERSION="2026-03-10"
 
-ENTERPRISE="${1:?Usage: $0 <enterprise> [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--report-type ai_credit] [--out PATH] [--poll-timeout SECS]}"
+ENTERPRISE="${1:?Usage: $0 <enterprise> [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--last-28-days] [--report-type ai_credit] [--out PATH] [--poll-timeout SECS]}"
 shift
 
 START=""
 END=""
+LAST_28=""
 REPORT_TYPE="ai_credit"
 OUT=""
 POLL_TIMEOUT=300
@@ -46,6 +51,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --start) START="$2"; shift 2 ;;
     --end) END="$2"; shift 2 ;;
+    --last-28-days) LAST_28="1"; shift ;;
     --report-type) REPORT_TYPE="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
     --poll-timeout) POLL_TIMEOUT="$2"; shift 2 ;;
@@ -53,9 +59,28 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-YESTERDAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%d)
-START="${START:-$YESTERDAY}"
-END="${END:-$YESTERDAY}"
+if [[ -n "$LAST_28" && ( -n "$START" || -n "$END" ) ]]; then
+  echo "ERROR: --last-28-days cannot be combined with --start/--end." >&2
+  exit 1
+fi
+
+if [[ -n "$LAST_28" ]]; then
+  START=$(date -u -v-28d +%Y-%m-%d 2>/dev/null || date -u -d "28 days ago" +%Y-%m-%d)
+  END=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%d)
+else
+  YESTERDAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%d)
+  START="${START:-$YESTERDAY}"
+  END="${END:-$YESTERDAY}"
+fi
+
+# Validate date format and ordering.
+for d in "$START" "$END"; do
+  [[ "$d" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "ERROR: invalid date '$d' (expected YYYY-MM-DD)." >&2; exit 1; }
+done
+if [[ "$START" > "$END" ]]; then
+  echo "ERROR: start date ($START) is after end date ($END)." >&2
+  exit 1
+fi
 
 # Auth: prefer a dedicated billing token so it never gets mixed up with the
 # GitHub App / metrics token.
