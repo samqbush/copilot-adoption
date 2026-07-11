@@ -35,9 +35,9 @@ Enterprise GitHub App and the billing PAT.
 For unattended daily collection, copy
 [`examples/copilot-metrics-collection.yml`](./examples/copilot-metrics-collection.yml)
 into your own repository at `.github/workflows/`, along with this `scripts/`
-folder (the workflow's `SCRIPTS_DIR` points at
-`copilot-metrics-billing/scripts` by default — adjust it if you put the scripts
-elsewhere).
+folder (the workflow's `SCRIPTS_DIR` defaults to `scripts`, assuming a
+dedicated repo with the collector scripts at `scripts/` — adjust it if you put
+the scripts elsewhere).
 
 Then set these in that repo under **Settings → Secrets and variables → Actions**:
 

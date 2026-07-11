@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: July 10, 2026*
+*Last updated: July 11, 2026*
 
 ---
 
