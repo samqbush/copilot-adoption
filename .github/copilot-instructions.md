@@ -7,6 +7,12 @@ Custom plugins are used and supported by GitHub pages.  This website uses the be
 
 Admonition syntax should follow styling for jekyll-gfm-admonitions
 
+For kramdown heading IDs, use the inline form `## Heading {#id}` — not a standalone `{:#id}` attribute line on the following line.
+
+### Building & verifying
+
+Run `bundle exec jekyll build` to confirm a page renders correctly (heading anchors, TOC, and admonitions) before finishing an edit. Use `bundle exec jekyll serve` to preview locally.
+
 ### Content Purpose
 
 These pages are opinionated implementation guides — worked examples readers can copy and adapt, not documentation. Position content across three tiers:
@@ -17,6 +23,7 @@ These pages are opinionated implementation guides — worked examples readers ca
 
 Rules of the road:
 - Do not restate what the docs or WAF already cover. Link out to them and move on.
+- Verify every product, API, or feature-availability claim against `docs.github.com/en/enterprise-cloud@latest` (or a live test) before publishing it — do not state capabilities from memory. When a feature is new, note its availability date.
 - Defer to WAF for framework and design thinking — don't re-derive governance principles or invent competing pillars.
 - Pick one concrete stack and show it working end to end (specific tooling, real config, actual commands). WAF stays vendor-neutral on purpose; these guides deliberately don't.
 - Frame each guide as one reference implementation, not the only way — adapt-to-your-stack, not gospel.
@@ -31,6 +38,7 @@ When editing a page, reread the page if we are changing logic as this may impact
 ### Output
 - Be concise and to the point. Avoid unnecessary words or phrases that do not add value to the content. Focus on delivering clear and direct information to the reader.
 - Avoid repetition. Do not repeat the same information multiple times in different ways. Instead, present the information once in a clear and concise manner.
+- Give one recommended way to do a task, not a menu of alternatives. If the UI already does it, don't enumerate CLI variants. Prefer cutting content over adding it — too many options and too much reading overwhelm a new Copilot admin.
 - Use simple and straightforward language that is easy to understand. Avoid complex words or jargon that may confuse the reader.
 - Be specific. Provide specific details and examples to support your points.
 - When editing or writing content pages, run the humanizer skill on the new text before finalizing to remove AI writing patterns.
