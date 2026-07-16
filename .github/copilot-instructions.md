@@ -9,9 +9,32 @@ Admonition syntax should follow styling for jekyll-gfm-admonitions
 
 For kramdown heading IDs, use the inline form `## Heading {#id}` — not a standalone `{:#id}` attribute line on the following line.
 
+### Internal links between pages
+
+The site uses `permalink: pretty`, so every page is served as a trailing-slash
+directory (e.g. `/copilot-metrics-billing/`). The `github-pages` gem enables the
+`jekyll-relative-links` plugin, which rewrites relative Markdown links **that end
+in `.md`** into correct permalinks (absolute, baseurl-aware).
+
+Always link to another page by its source file with the `.md` extension, e.g.
+`[Grafana guide](copilot-metrics-grafana.md)` or
+`[Credentials](copilot-metrics-billing.md#set-up-the-two-credentials)`. The plugin
+turns these into `/copilot-adoption/copilot-metrics-grafana/` etc.
+
+Do **not** use extension-less relative links like `[x](./cost-management)` or
+`[x](../cost-management)`. The plugin ignores them, so they stay literal and
+break depending on the current page's trailing slash — a link that works from
+the home page 404s from a subpage. Anchors are preserved, so `page.md#anchor`
+works.
+
 ### Building & verifying
 
 Run `bundle exec jekyll build` to confirm a page renders correctly (heading anchors, TOC, and admonitions) before finishing an edit. Use `bundle exec jekyll serve` to preview locally.
+
+When you add or change links between pages, verify them against a running
+`bundle exec jekyll serve`: fetch the rendered page and confirm each internal
+`href` returns `200` (following redirects). Extension-less page links that resolve
+to a 404 are the most common breakage.
 
 ### Content Purpose
 
