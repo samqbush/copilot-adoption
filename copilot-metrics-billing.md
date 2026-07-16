@@ -256,7 +256,7 @@ and then [automate the daily pull](#automate).
 > [!NOTE]
 > These scripts are built for **quickly testing the APIs and your credentials**,
 > and for a simple daily pull into files. If you want dashboards instead of raw
-> files, the [Grafana add-on](./copilot-metrics-grafana) reuses the same two
+> files, the [Grafana add-on](../copilot-metrics-grafana) reuses the same two
 > collectors and pushes daily summaries into Postgres for Grafana to read.
 
 | Script | What it does | Key flags |
@@ -390,10 +390,10 @@ is just the better choice for usage metrics because of its short-lived tokens.
 
 ## Related
 
-- [Copilot Metrics & Billing Dashboards in Grafana](./copilot-metrics-grafana) —
+- [Copilot Metrics & Billing Dashboards in Grafana](../copilot-metrics-grafana) —
   optional add-on that pushes these daily summaries into Postgres and reads them
   from Grafana, with an importable dashboard.
-- [Managing Copilot usage-based billing](./cost-management) — budgets, AI Credits,
+- [Managing Copilot usage-based billing](../cost-management) — budgets, AI Credits,
   and keeping spend predictable.
-- [Measuring AI in Pull Requests](./ai-commit-attribution) — AI leverage from
+- [Measuring AI in Pull Requests](../ai-commit-attribution) — AI leverage from
   commit trailers and the Copilot usage metrics API.

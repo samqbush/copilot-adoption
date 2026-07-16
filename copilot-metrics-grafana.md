@@ -13,7 +13,7 @@ toc: true
 ---
 
 This is an **optional add-on** to
-[Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing).
+[Pulling Copilot Metrics & Billing Into Your Data Lake](../copilot-metrics-billing).
 That guide gets the raw usage JSON and billing CSV out of GitHub and into files.
 This one turns those files into a live dashboard: the daily Action **pushes**
 per-day summaries into a free Postgres database, and **Grafana reads** from
@@ -56,7 +56,7 @@ only the already-collected files and the database connection string.
 
 You need the **two credentials from the base guide** — the Enterprise GitHub App
 (usage metrics) and the billing classic PAT. If you haven't created them, do
-that first: [Set up the two credentials](./copilot-metrics-billing#set-up-the-two-credentials).
+that first: [Set up the two credentials](../copilot-metrics-billing#set-up-the-two-credentials).
 This page adds one thing on top: a Postgres database.
 
 ---
@@ -306,7 +306,7 @@ credentials.
 
 ## Related
 
-- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing)
+- [Pulling Copilot Metrics & Billing Into Your Data Lake](../copilot-metrics-billing)
   — the base guide this builds on (credentials, endpoints, the daily pull).
-- [Managing Copilot usage-based billing](./cost-management) — budgets, AI Credits,
+- [Managing Copilot usage-based billing](../cost-management) — budgets, AI Credits,
   and keeping spend predictable.
