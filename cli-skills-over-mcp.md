@@ -31,4 +31,4 @@ The catch: a required plugin delivers the skill, but it does **not** install the
   - no partial execution before every check passes
 - **Packaging and distribution** — bundling the skill in a plugin and requiring it enterprise-wide via `enabledPlugins`.
 
-The worked example will adapt the pre-flight check used by the `playwright-cli` skill.
+The worked example will adapt the pre-flight check pattern used by a real CLI-backed skill — one that wraps an existing command-line tool and verifies it is installed before running.
