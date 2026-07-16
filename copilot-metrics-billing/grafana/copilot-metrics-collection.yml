@@ -1,0 +1,235 @@
+# Copilot metrics & billing — daily collection + Grafana/Postgres (EXAMPLE)
+#
+# Copy this file into YOUR OWN repository at
+# .github/workflows/copilot-metrics-collection.yml, together with the three
+# scripts at scripts/ (the two collectors + load_metrics.py — see SCRIPTS_DIR
+# below). It pulls the prior day's Copilot usage metrics (GitHub App) and
+# billing data (classic PAT), uploads them as a workflow artifact (backup), and
+# then loads durable per-day summaries into Postgres for Grafana to read.
+#
+# Resulting layout in your repo:
+#   .github/workflows/copilot-metrics-collection.yml   (this file)
+#   scripts/copilot-usage-metrics.sh                   (from grafana/scripts/)
+#   scripts/copilot-billing-export.sh                  (from grafana/scripts/)
+#   scripts/load_metrics.py                            (from grafana/scripts/)
+#
+# One-time configuration in the repo that hosts this workflow
+# (Settings -> Secrets and variables -> Actions):
+#
+#   Variables  (identifiers, not credentials)
+#     ENTERPRISE               your enterprise slug (github.com/enterprises/<slug>)
+#     COPILOT_APP_ID           GitHub App ID
+#     COPILOT_INSTALLATION_ID  App installation ID
+#
+#   Secrets    (sensitive — masked in logs)
+#     COPILOT_APP_PRIVATE_KEY  the App's .pem contents (paste the whole file)
+#     GH_BILLING_TOKEN         classic PAT with manage_billing:enterprise
+#     DATABASE_URL             Postgres (e.g. Neon) connection string
+#
+# See https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-grafana.md
+# for the full walkthrough (App + billing PAT + Neon + Grafana).
+#
+# Security note: GH_BILLING_TOKEN grants enterprise-wide billing access. Host
+# this workflow in a dedicated private repository with a protected default
+# branch and minimal write access, so no one can add a step that exfiltrates it.
+
+name: Copilot metrics & billing collection
+
+on:
+  schedule:
+    # Daily at ~05:17 UTC — after the prior UTC day is fully processed.
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'Single day to collect (YYYY-MM-DD, UTC). Leave blank for yesterday. Ignored if backfill_days is set.'
+        required: false
+        default: ''
+      backfill_days:
+        description: 'Backfill the last N days (1-28) as individual daily rows. Leave blank for a single day.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+# Serialize runs so overlapping loads never fight over the same day's rows.
+# cancel-in-progress: false makes a queued run WAIT rather than drop.
+concurrency:
+  group: copilot-metrics-load
+  cancel-in-progress: false
+
+env:
+  # Where you copied the collector scripts inside this repo. This assumes a
+  # dedicated repo with the scripts at scripts/ — adjust if you placed them
+  # elsewhere.
+  SCRIPTS_DIR: scripts
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    # A 28-day backfill runs the usage script once per day plus a single ranged
+    # billing export (up to --poll-timeout 900). Give it room beyond the billing
+    # poll so a backfill doesn't hit the job timeout.
+    timeout-minutes: 30
+    # This job holds the sensitive App key + billing PAT, so it stays read-only
+    # and never pushes to the repo.
+    permissions:
+      contents: read
+    outputs:
+      days: ${{ steps.day.outputs.days }}
+    steps:
+      # jq and openssl are preinstalled on ubuntu-latest runners.
+      - name: Check out this repo (for the collector scripts)
+        uses: actions/checkout@v4
+
+      - name: Resolve collection day(s)
+        id: day
+        run: |
+          set -euo pipefail
+          BF='${{ inputs.backfill_days }}'
+          DAY_IN='${{ inputs.day }}'
+          if [[ -n "$BF" ]]; then
+            # Backfill mode: the last N complete UTC days (yesterday backwards).
+            if [[ ! "$BF" =~ ^[0-9]+$ ]] || (( BF < 1 )); then
+              echo "::error::backfill_days must be a positive integer (1-28)."; exit 1
+            fi
+            if (( BF > 28 )); then
+              echo "::warning::GitHub retains only ~28 days of Copilot metrics; capping to 28."
+              BF=28
+            fi
+            DAYS=""
+            for ((i=1; i<=BF; i++)); do
+              DAYS="$DAYS $(date -u -d "$i day ago" +%F)"
+            done
+          elif [[ -n "$DAY_IN" ]]; then
+            if [[ ! "$DAY_IN" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "::error::Invalid day '$DAY_IN' (expected YYYY-MM-DD)."; exit 1
+            fi
+            DAYS="$DAY_IN"
+          else
+            # Default (incl. nightly cron): just yesterday.
+            DAYS="$(date -u -d '1 day ago' +%F)"
+          fi
+          # Normalize: dedupe + sort ascending, single space separated.
+          DAYS=$(echo "$DAYS" | tr ' ' '\n' | sed '/^$/d' | sort -u | tr '\n' ' ' | sed 's/ $//')
+          echo "days=$DAYS" >> "$GITHUB_OUTPUT"
+          echo "Collecting Copilot data for: $DAYS"
+
+      - name: Collect usage metrics (GitHub App)
+        env:
+          COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
+        run: |
+          set -uo pipefail
+          mkdir -p copilot-data
+          KEY_FILE="$RUNNER_TEMP/copilot-app.pem"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          rc=0
+          for DAY in ${{ steps.day.outputs.days }}; do
+            # Write to a temp file first so a failed day never leaves a partial
+            # JSON in the artifact directory; one bad day doesn't abort the rest.
+            if bash "$SCRIPTS_DIR/copilot-usage-metrics.sh" '${{ vars.ENTERPRISE }}' \
+                 --day "$DAY" \
+                 --app-id '${{ vars.COPILOT_APP_ID }}' \
+                 --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
+                 --private-key "$KEY_FILE" \
+                 > "$RUNNER_TEMP/usage-$DAY.json"; then
+              mv "$RUNNER_TEMP/usage-$DAY.json" \
+                "copilot-data/usage-enterprise-${{ vars.ENTERPRISE }}-$DAY.json"
+              echo "usage: collected $DAY"
+            else
+              echo "::warning::usage collection failed for $DAY; skipping that day."
+              rc=1
+            fi
+          done
+          exit $rc
+
+      - name: Collect billing (classic PAT)
+        # Run even if the usage step failed (independent credential), as long as
+        # the day(s) resolved — but don't run on cancellation.
+        if: ${{ !cancelled() && steps.day.outcome == 'success' }}
+        env:
+          GH_BILLING_TOKEN: ${{ secrets.GH_BILLING_TOKEN }}
+        run: |
+          set -uo pipefail
+          mkdir -p copilot-data
+          # ONE ranged export for the whole window (create/poll/download once).
+          # The billing CSV carries a per-row date column, so the loader groups
+          # it back into one summary row per day — no need to export per day.
+          DAYS='${{ steps.day.outputs.days }}'
+          START=$(echo "$DAYS" | awk '{print $1}')
+          END=$(echo "$DAYS" | awk '{print $NF}')
+          OUT="copilot-data/billing-ai_credit-${{ vars.ENTERPRISE }}-${START}_to_${END}.csv"
+          if bash "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
+               --start "$START" --end "$END" --out "$OUT" \
+               --poll-timeout 900; then
+            echo "billing: collected $START -> $END"
+          else
+            echo "::warning::billing export failed for $START -> $END."
+            exit 1
+          fi
+
+      - name: Upload collected data as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-data-${{ github.run_id }}
+          path: copilot-data/
+          if-no-files-found: error
+          # Artifacts are a zero-setup starting point, NOT a durable archive —
+          # they expire. Download them or sync to your data lake for the long
+          # term (GitHub only retains usage metrics for ~28 days).
+          retention-days: 90
+
+      # --- Grafana integration -----------------------------------------------
+      # The raw artifact above is a backup only (it expires). The durable,
+      # Grafana-readable store is the Postgres (Neon) database written by the
+      # `load-to-postgres` job below.
+
+  load-to-postgres:
+    needs: collect
+    # Run even if one collector failed, as long as something was produced —
+    # but not on cancellation.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # SECURITY: no repo write access and NO GitHub App key / billing PAT here.
+    # This job only sees the already-collected data (usage aggregates + the
+    # billing CSV, which the loader stores as both aggregates and identifiable
+    # per-user detail) plus the Postgres connection string — never the raw
+    # GitHub creds. The per-user data is written to Postgres; see the guide's
+    # Privacy section (copilot-metrics-grafana.md) for how to restrict who can
+    # read it.
+    permissions:
+      contents: read
+    steps:
+      - name: Check out this repo (for the loader script)
+        uses: actions/checkout@v4
+
+      - name: Download collected data
+        uses: actions/download-artifact@v4
+        with:
+          name: copilot-data-${{ github.run_id }}
+          path: copilot-data
+
+      - name: Install Postgres driver
+        # Pin the driver so a future psycopg release can't silently break the load.
+        run: python3 -m pip install "psycopg[binary]==3.2.*"
+
+      - name: Load summaries into Postgres
+        env:
+          # Neon (or any Postgres) connection string, e.g.
+          # postgresql://user:pass@ep-xxx.neon.tech/dbname?sslmode=require
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ENTERPRISE: ${{ vars.ENTERPRISE }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${DATABASE_URL:-}" ]]; then
+            echo "::error::DATABASE_URL secret is not set."; exit 1
+          fi
+          python3 scripts/load_metrics.py \
+            --data-dir copilot-data \
+            --run-id "$GITHUB_RUN_ID" \
+            --repository "$GITHUB_REPOSITORY"

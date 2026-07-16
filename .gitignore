@@ -6,3 +6,6 @@ copilot-metrics-billing/**/*.pem
 copilot-metrics-billing/**/*.csv
 copilot-metrics-billing/**/usage-*.json
 .DS_Store
+
+__pycache__/
+*.pyc

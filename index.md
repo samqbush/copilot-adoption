@@ -32,8 +32,8 @@ The highest-impact adoption strategies focus on raising the floor across your or
 
 Each of these is a proven flight plan — one concrete, runnable implementation on a real stack, not the only way to do it. Lift the flight plan and adapt the waypoints to your own tooling.
 
-- [Managing Copilot Usage-Based Billing](./cost-management) — budget sizing math, promo-window credit arbitrage, and a troubleshooting checklist for when developers get blocked.
-- [Pulling Copilot Metrics & Billing Into Your Data Lake](./copilot-metrics-billing) — the credentials, endpoints, and daily pull to keep your own history before GitHub's 28-day window rolls off.
-- [Measuring AI in Pull Requests](./ai-commit-attribution) — measure AI leverage across merged PRs with trailer scanning and the Copilot usage metrics API.
-- [Copilot OpenTelemetry via Intune](./copilot-otel-intune) — centrally deploy OTel monitoring across Windows and macOS with Microsoft Intune.
+- [Managing Copilot Usage-Based Billing](cost-management.md) — budget sizing math, promo-window credit arbitrage, and a troubleshooting checklist for when developers get blocked.
+- [Pulling Copilot Metrics & Billing Into Your Data Lake](copilot-metrics-billing.md) — the credentials, endpoints, and daily pull to keep your own history before GitHub's 28-day window rolls off.
+- [Measuring AI in Pull Requests](ai-commit-attribution.md) — measure AI leverage across merged PRs with trailer scanning and the Copilot usage metrics API.
+- [Copilot OpenTelemetry via Intune](copilot-otel-intune.md) — centrally deploy OTel monitoring across Windows and macOS with Microsoft Intune.
 

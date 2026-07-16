@@ -8,7 +8,7 @@ toc: true
 # Measuring AI in Pull Requests (Not Lines of Code)
 {:.no_toc}
 
-*Last updated: July 2, 2026*
+*Last updated: July 16, 2026*
 
 ---
 
@@ -166,7 +166,7 @@ Make a commit after using inline completions or NES and confirm the trailer appe
 
 ### Deploying it fleet-wide via MDM
 
-`git.addAICoAuthor` is a regular VS Code setting, not an enterprise policy. It is not on the VS Code [policy allowlist](https://code.visualstudio.com/docs/enterprise/policies), so it will not appear in ADMX/Group Policy or the Intune Settings Catalog, and you cannot lock it. You can still push it as a default through an MDM script, the same approach the [Copilot OpenTelemetry via Intune](./copilot-otel-intune) guide uses. Developers can override it, but most will not bother, which is fine for an adoption-measurement use case.
+`git.addAICoAuthor` is a regular VS Code setting, not an enterprise policy. It is not on the VS Code [policy allowlist](https://code.visualstudio.com/docs/enterprise/policies), so it will not appear in ADMX/Group Policy or the Intune Settings Catalog, and you cannot lock it. You can still push it as a default through an MDM script, the same approach the [Copilot OpenTelemetry via Intune](copilot-otel-intune.md) guide uses. Developers can override it, but most will not bother, which is fine for an adoption-measurement use case.
 
 **macOS** — Intune → Devices → Scripts → shell script, run as root:
 

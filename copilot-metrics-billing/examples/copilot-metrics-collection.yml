@@ -118,9 +118,10 @@ jobs:
           # term (GitHub only retains usage metrics for ~28 days).
           retention-days: 90
 
-      # --- Grafana integration — coming soon --------------------------------
-      # A future revision of this example will push the collected metrics to a
-      # Grafana-backed datasource here so you get dashboards out of the box.
-      # For now the data lands in the workflow artifact above.
-      # - name: Publish to Grafana (coming soon)
-      #   run: echo "Grafana integration coming soon"
+      # --- Want dashboards instead of a raw artifact? ----------------------
+      # This example stops at the artifact above (backup only — it expires).
+      # For live Grafana dashboards, use the add-on that pushes daily summaries
+      # into Postgres for Grafana to read:
+      #   https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-grafana.md
+      # It ships a self-contained workflow + loader + dashboard under
+      #   copilot-metrics-billing/grafana/
