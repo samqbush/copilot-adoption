@@ -53,6 +53,17 @@ Rules of the road:
 - The differentiator to keep clear: WAF is tool-agnostic design thinking; these guides are tool-specific worked examples you can lift and adapt.
 - Write for the reader (a Copilot admin), not about the authors. Never narrate the authoring process or position the guide as "us vs GitHub." Keep editorial reasoning — "our framing," "this page adds," "the gap we fill," "GitHub says X but we say Y" — out of the published text. If a distinction matters to the reader (e.g. a term GitHub uses differently), state it neutrally as a heads-up, not as a we-vs-them argument.
 
+### GitHub Actions workflows
+
+Prefer `if: ${{ !cancelled() }}` over `if: ${{ always() }}` for a job or step
+that must run even after an upstream `needs` job fails. Per GitHub's docs, a
+default `success()` status check is applied only when the `if` contains no status
+check function, so `!cancelled()` already removes that implicit gate and runs on
+upstream failure. It does **not** skip when a dependency fails. `always()` is
+discouraged because it also runs on cancellation (and can hang a canceled
+workflow); `!cancelled()` is GitHub's recommended alternative. See
+https://docs.github.com/en/enterprise-cloud@latest/actions/reference/workflows-and-actions/expressions#status-check-functions.
+
 ### Page Edit Conventions
 
 When editing a content page, update its "Last updated" date (e.g. `*Last updated: <Month D, YYYY>*` near the top) to the current date to reflect the change.

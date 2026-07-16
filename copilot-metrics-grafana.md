@@ -80,7 +80,8 @@ builds history indefinitely — nothing to host.
 > (currently ~0.5 GB). The daily aggregate rows are tiny, but `copilot_billing_raw`
 > keeps a full copy of every billing CSV row and grows with your user count.
 > Watch your database size in the Neon console; if it climbs, set a retention
-> policy on the detail tables (see [Privacy](#privacy)) or skip the raw table.
+> policy on the detail tables `copilot_billing_raw` and `copilot_billing_user`
+> (see [Privacy](#privacy)).
 
 ---
 

@@ -552,32 +552,38 @@ def _report_rows(report) -> "list":
 
 
 def extract_active_users(report) -> "int | None":
-    """Sum the top-level active-user count across report rows (usually one)."""
-    vals = [n for n in (_first_present_number(r, ACTIVE_USER_KEYS)
-                        for r in _report_rows(report)) if n is not None]
-    return sum(vals) if vals else None
+    """Top-level active-user count. This is a unique-user count, so it is NOT
+    additive across report rows — take the first present value (matching the
+    first-row convention in extract_usage_scalars / the module docstring)."""
+    for n in (_first_present_number(r, ACTIVE_USER_KEYS)
+              for r in _report_rows(report)):
+        if n is not None:
+            return n
+    return None
 
 
 def extract_engaged_users(report) -> "int | None":
-    """Engaged-user total. Prefers a top-level total; otherwise SUMS the
+    """Engaged-user total. Unique-user counts are NOT additive across report
+    rows, so this reads a single row (the first one; report normally has exactly
+    one). Within that row it prefers a top-level total; otherwise it SUMS the
     per-adoption-phase total_engaged_users values (the current report's shape)."""
-    total = 0
-    found = False
     for r in _report_rows(report):
         top = _first_present_number(r, ENGAGED_USER_KEYS)
         if top is not None:
-            total += top
-            found = True
-            continue
+            return top
         phases = r.get(ENGAGED_PHASE_CONTAINER)
         if isinstance(phases, list):
+            total = 0
+            found = False
             for p in phases:
                 if isinstance(p, dict):
                     v = p.get(ENGAGED_PHASE_KEY)
                     if isinstance(v, (int, float)) and not isinstance(v, bool):
                         total += int(v)
                         found = True
-    return total if found else None
+            if found:
+                return total
+    return None
 
 
 def _num(v):
@@ -766,7 +772,7 @@ def summarize_usage(path: str, run_id: str, repo: str) -> "dict | None":
         "report_end_day": meta.get("report_end_day"),
         "total_active_users": active,
         "total_engaged_users": engaged,
-        "report_rows": len(report) if isinstance(report, list) else None,
+        "report_rows": len(rows),
         "generated_at": now_iso(),
         "source_run_id": run_id or None,
         "source_repository": repo or None,
@@ -830,8 +836,10 @@ def resolve_column(kind, fieldnames, patterns, path, exclude=()) -> "str | None"
     pattern_set = {p.lower() for p in patterns}
     exact = chosen is not None and chosen.lower() in pattern_set
     if not exact and len(unique) > 1:
+        hint = (f"set {env_name} to disambiguate" if env_name
+                else "no override env var exists for this column")
         log(f"WARNING: multiple candidate {kind} columns in {path}: {unique}. "
-            f"Using best-effort match; set {env_name} to disambiguate.")
+            f"Using best-effort match ({hint}).")
     return chosen
 
 
@@ -1260,6 +1268,15 @@ def main() -> int:
     if not usage and not billing["enterprise"] and not billing["raw"]:
         log("No usage-*.json or billing-*.csv inputs found; nothing to load.")
         return 0
+
+    if args.database_url and (billing["enterprise"] or billing["user"]
+                              or billing["model"] or billing["raw"]) \
+            and not args.enterprise.strip():
+        log("ERROR: billing data is present and a database was requested, but "
+            "--enterprise/ENTERPRISE is empty. The billing tables define "
+            "'enterprise text NOT NULL', so the insert would fail with an opaque "
+            "Postgres error. Set --enterprise (or the ENTERPRISE env var).")
+        return 1
 
     if not args.database_url:
         log("DRY RUN (no --database-url/DATABASE_URL).")
