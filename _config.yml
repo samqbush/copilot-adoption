@@ -11,6 +11,7 @@ plugins:
   - jekyll-seo-tag
   - jekyll-gfm-admonitions
   - jekyll-toc
+  - jekyll-redirect-from
 
 # GitHub Pages settings
 markdown: kramdown

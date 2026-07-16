@@ -166,53 +166,9 @@ Make a commit after using inline completions or NES and confirm the trailer appe
 
 ### Deploying it fleet-wide via MDM
 
-`git.addAICoAuthor` is a regular VS Code setting, not an enterprise policy. It is not on the VS Code [policy allowlist](https://code.visualstudio.com/docs/enterprise/policies), so it will not appear in ADMX/Group Policy or the Intune Settings Catalog, and you cannot lock it. You can still push it as a default through an MDM script, the same approach the [Copilot OpenTelemetry via Intune](copilot-otel-intune.md) guide uses. Developers can override it, but most will not bother, which is fine for an adoption-measurement use case.
+`git.addAICoAuthor` is a regular VS Code setting, not an enterprise policy. It is not on the VS Code [policy allowlist](https://code.visualstudio.com/docs/enterprise/policies) and has no enterprise-managed-settings key, so you cannot lock it — you can only push it as a default developers could override. Most never bother, which is fine for adoption measurement.
 
-**macOS** — Intune → Devices → Scripts → shell script, run as root:
-
-```bash
-#!/bin/bash
-# deploy-vscode-ai-coauthor.sh
-# Merges git.addAICoAuthor into each user's VS Code settings.
-# This is a DEFAULT — users can still override it.
-
-for HOME_DIR in /Users/*; do
-  USER_NAME=$(basename "$HOME_DIR")
-  [ "$USER_NAME" = "Shared" ] && continue
-  SETTINGS_DIR="$HOME_DIR/Library/Application Support/Code/User"
-  SETTINGS="$SETTINGS_DIR/settings.json"
-  [ -d "$HOME_DIR/Library/Application Support/Code" ] || continue
-  mkdir -p "$SETTINGS_DIR"
-
-  if command -v jq >/dev/null 2>&1 && [ -f "$SETTINGS" ]; then
-    tmp=$(mktemp)
-    jq '."git.addAICoAuthor" = "all"' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
-  else
-    cat > "$SETTINGS" <<'EOF'
-{
-  "git.addAICoAuthor": "all"
-}
-EOF
-  fi
-  chown "$USER_NAME" "$SETTINGS"
-done
-```
-
-**Windows** — Intune → Devices → Scripts and remediations → Platform scripts, run in user context:
-
-```powershell
-# Set-AICoAuthor.ps1
-$settingsPath = "$env:APPDATA\Code\User\settings.json"
-if (Test-Path $settingsPath) {
-    $json = Get-Content $settingsPath -Raw | ConvertFrom-Json
-    $json | Add-Member -NotePropertyName 'git.addAICoAuthor' -NotePropertyValue 'all' -Force
-    $json | ConvertTo-Json -Depth 10 | Set-Content $settingsPath
-} else {
-    $dir = Split-Path $settingsPath
-    if (!(Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force }
-    '{ "git.addAICoAuthor": "all" }' | Set-Content $settingsPath
-}
-```
+The macOS and Windows Intune scripts that push this setting (and control drift) live in [Deploying Copilot Settings via MDM](mdm-agent-defaults.md#pushing-an-overridable-default-across-a-fleet). Deploy `git.addAICoAuthor` with value `all` following that technique.
 
 > [!IMPORTANT]
 > Cursor's Agent tags commits with a `Made with Cursor` trailer by default, but it is not in `Co-authored-by` format, so the default scan pattern misses it unless you extend the pattern to also match `made with cursor`. Windsurf does not add any AI attribution trailer and exposes no externally detectable signal, so its commits will not show up in your AI leverage number unless the developer adds a trailer by hand.
