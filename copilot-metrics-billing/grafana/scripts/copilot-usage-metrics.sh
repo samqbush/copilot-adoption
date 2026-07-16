@@ -1,6 +1,6 @@
 #!/bin/bash
 # copilot-usage-metrics.sh
-# Guide: https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
+# Guide: https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-grafana.md
 # SYNCHRONIZED COPY: scripts/ and grafana/scripts/ hold identical copies of this
 # file except the Guide line above. Update both together.
 # Daily job: pulls the pre-aggregated Copilot USAGE metrics report (engagement

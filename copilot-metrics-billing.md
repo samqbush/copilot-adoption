@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: July 11, 2026*
+*Last updated: July 16, 2026*
 
 ---
 
@@ -253,6 +253,12 @@ clean stdout (JSON/CSV), progress to stderr, meant to be adapted into your
 pipeline. Once your credentials are set up, [verify them](#verify-each-credential)
 and then [automate the daily pull](#automate).
 
+> [!NOTE]
+> These scripts are built for **quickly testing the APIs and your credentials**,
+> and for a simple daily pull into files. If you want dashboards instead of raw
+> files, the [Grafana add-on](./copilot-metrics-grafana) reuses the same two
+> collectors and pushes daily summaries into Postgres for Grafana to read.
+
 | Script | What it does | Key flags |
 |--------|--------------|-----------|
 | `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. | `--day YYYY-MM-DD`, `--org`, `--28day` (alias `--last-28-days`), `--app-id`, `--installation-id`, `--private-key` |
@@ -384,6 +390,9 @@ is just the better choice for usage metrics because of its short-lived tokens.
 
 ## Related
 
+- [Copilot Metrics & Billing Dashboards in Grafana](./copilot-metrics-grafana) —
+  optional add-on that pushes these daily summaries into Postgres and reads them
+  from Grafana, with an importable dashboard.
 - [Managing Copilot usage-based billing](./cost-management) — budgets, AI Credits,
   and keeping spend predictable.
 - [Measuring AI in Pull Requests](./ai-commit-attribution) — AI leverage from
