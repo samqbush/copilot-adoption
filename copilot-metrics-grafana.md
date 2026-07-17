@@ -59,6 +59,14 @@ You need the **two credentials from the base guide** — the Enterprise GitHub A
 that first: [Set up the two credentials](copilot-metrics-billing.md#set-up-the-two-credentials).
 This page adds one thing on top: a Postgres database.
 
+> [!NOTE]
+> **Want emails instead of usernames?** The dashboards can label per-user panels
+> with members' **email addresses** instead of GitHub usernames. To enable that,
+> add the **Enterprise SCIM: read** permission to the *same* Enterprise GitHub App
+> you already created, and install the App at enterprise scope. This is optional:
+> if the permission is missing, the pipeline still runs and the dashboards fall
+> back to usernames. See [Show emails instead of usernames](#emails).
+
 ---
 
 ## Why Postgres (and why Neon) {#why-postgres}
@@ -139,15 +147,20 @@ gh secret   set DATABASE_URL     <<< "$DATABASE_URL"
 
 ## 3. Deploy the workflow and seed history {#deploy}
 
-Copy the workflow and the three scripts into your repo so they land at these
+Copy the workflow and the four scripts into your repo so they land at these
 paths (the workflow's `SCRIPTS_DIR` defaults to `scripts`):
 
 ```
 .github/workflows/copilot-metrics-collection.yml   ← grafana/copilot-metrics-collection.yml
 scripts/copilot-usage-metrics.sh                   ← grafana/scripts/copilot-usage-metrics.sh
 scripts/copilot-billing-export.sh                  ← grafana/scripts/copilot-billing-export.sh
+scripts/copilot-scim-users.sh                      ← grafana/scripts/copilot-scim-users.sh
 scripts/load_metrics.py                            ← grafana/scripts/load_metrics.py
 ```
+
+`copilot-scim-users.sh` is what reads members' emails; include it even if you
+haven't granted SCIM access yet, since its workflow step is optional and skips
+when the permission is absent.
 
 Grab them from the
 [`grafana/`](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/grafana)
@@ -159,6 +172,7 @@ mkdir -p .github/workflows scripts
 curl -fsSL "$base/copilot-metrics-collection.yml"     -o .github/workflows/copilot-metrics-collection.yml
 curl -fsSL "$base/scripts/copilot-usage-metrics.sh"   -o scripts/copilot-usage-metrics.sh
 curl -fsSL "$base/scripts/copilot-billing-export.sh"  -o scripts/copilot-billing-export.sh
+curl -fsSL "$base/scripts/copilot-scim-users.sh"      -o scripts/copilot-scim-users.sh
 curl -fsSL "$base/scripts/load_metrics.py"            -o scripts/load_metrics.py
 git add .github/workflows/copilot-metrics-collection.yml scripts/
 git commit -m "Add Copilot metrics + Grafana/Postgres collection workflow"
@@ -207,10 +221,10 @@ data source → PostgreSQL**:
    datasource from step 4.
 
 The dashboard groups panels into rows — adoption KPIs, spend, power users (these
-show usernames), activity, lines of code, pull requests, CLI, code-review
-adoption, usage breakdowns, and a **Spend detail** row. Its `Top N`, `Model`,
-`Cost center`, and `User` variables filter the power-user and per-model panels.
-The time picker defaults to the last 90 days.
+show emails when available, otherwise usernames), activity, lines of code, pull
+requests, CLI, code-review adoption, usage breakdowns, and a **Spend detail**
+row. Its `Top N`, `Model`, `Cost center`, and `User` variables filter the
+power-user and per-model panels. The time picker defaults to the last 90 days.
 
 > [!TIP]
 > **Billed (net) spend is often `$0`.** Enterprise quota and discounts usually
@@ -218,6 +232,38 @@ The time picker defaults to the last 90 days.
 > not a bug. To see *consumption*, read the **Spend detail** row (gross vs.
 > discount vs. net), or set `BILLING_COST_COLUMN=gross_amount` in the workflow to
 > make the canonical spend column track metered value.
+
+---
+
+## Show emails instead of usernames {#emails}
+
+The power-user panels key on the GitHub username from the billing data. To label
+them with members' **email addresses** instead, the collector reads the SCIM API
+and stores a username→email map that the dashboards join on.
+
+1. **Grant the App SCIM read.** Add **Enterprise permissions → Enterprise SCIM:
+   Read-only** to the same Enterprise GitHub App you created in the base guide,
+   then re-accept the permission on the enterprise installation. The App must be
+   installed at **enterprise** scope.
+2. **Re-run the workflow.** The next run collects the SCIM snapshot and loads it
+   into `copilot_enterprise_users`. Dashboards then display
+   `COALESCE(email, username)` — email where mapped, username otherwise.
+
+This is optional and **non-fatal**: if the permission is missing (or SCIM read
+fails), that step just logs a warning and the rest of the pipeline still runs
+with dashboards falling back to usernames.
+
+> [!NOTE]
+> **EMU handle mismatch.** On Enterprise Managed Users, the billing username is
+> an EMU handle like `<idp-name>_<shortcode>` while the SCIM `userName` is the
+> IdP identity (often the email). The loader reconstructs the handle using an
+> enterprise shortcode that **defaults to your enterprise slug**. If your
+> shortcode differs, set an `ENTERPRISE_SHORTCODE` repo **variable** to override
+> it. Users the loader can't match still render as their username.
+>
+> Matching is best-effort: it also falls back to email/username local-parts, so
+> two members whose local-parts collide could in theory share a label. The loader
+> logs a warning and keeps the first match when that happens.
 
 ---
 
@@ -232,23 +278,27 @@ loader's docstring):
 | `copilot_billing` | enterprise spend per day (net/gross/discount) | no |
 | `copilot_billing_model` | spend per model per day | no |
 | `copilot_billing_user` | spend per user/model/day | **yes (usernames)** |
+| `copilot_enterprise_users` | SCIM username→email map (for email labels) | **yes (emails)** |
 | `copilot_billing_raw` | one row per billing CSV row, full row as JSONB | **yes (highest fidelity)** |
 
-Aggregate tables are safe for broad dashboards. The last two are identifiable —
-treat them as sensitive.
+Aggregate tables are safe for broad dashboards. The last three
+(`copilot_billing_user`, `copilot_enterprise_users`, `copilot_billing_raw`) are
+identifiable — treat them as sensitive.
 
 ---
 
 ## Privacy {#privacy}
 
 This pipeline **deliberately stores identifiable per-user billing detail** so an
-admin can spot power users and their spend. That's a conscious choice — handle it
-accordingly.
+admin can spot power users and their spend. Enabling emails (via SCIM) adds
+members' **email addresses** in `copilot_enterprise_users`. That's a conscious
+choice — handle it accordingly.
 
 The bundled dashboard's power-user panels and the `User` / `Cost center`
-variables **read `copilot_billing_user`**, so a Grafana role that can't see that
-table will make those panels error rather than hide. Decide who should see
-usernames, then grant to match. A least-privilege read-only role that powers the
+variables **read `copilot_billing_user`** (and, for email labels,
+`copilot_enterprise_users`), so a Grafana role that can't see those tables will
+make those panels error rather than hide. Decide who should see usernames and
+emails, then grant to match. A least-privilege read-only role that powers the
 full dashboard but can never touch the raw table:
 
 ```sql
@@ -262,7 +312,8 @@ GRANT SELECT ON
   copilot_usage, copilot_usage_ide, copilot_usage_feature,
   copilot_usage_model_feature, copilot_usage_language_model,
   copilot_usage_language_feature, copilot_usage_adoption_phase,
-  copilot_billing, copilot_billing_model, copilot_billing_user
+  copilot_billing, copilot_billing_model, copilot_billing_user,
+  copilot_enterprise_users
 TO grafana_ro;
 
 -- Never expose the raw per-user JSONB, and don't auto-grant future tables:
@@ -273,15 +324,23 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM grafana_ro;
 Then use `grafana_ro` in the Grafana datasource (step 4) instead of the owner
 credentials.
 
-- **Don't want usernames in Grafana at all?** Omit `copilot_billing_user` from
-  the `GRANT` above and delete the "Power users" dashboard row — the aggregate
-  panels keep working.
+- **Don't want usernames or emails in Grafana at all?** Omit
+  `copilot_billing_user` and `copilot_enterprise_users` from the `GRANT` above,
+  delete the "Power users" dashboard row, and remove the `User` and `Cost center`
+  template variables (they query the per-user table and would otherwise error on
+  load) — the aggregate panels keep working.
 - **Restrict the dashboard.** Use Grafana folder/team permissions so only the
   right people can open the power-user panels.
+- **Emails are PII.** `copilot_enterprise_users` also carries each member's SCIM
+  display name and external ID. Limit who can read it, and set a retention policy
+  if you don't need to keep the mapping.
 - **Never point Grafana at `copilot_billing_raw`.** It stores *every* CSV column
   as JSONB, so any field GitHub adds later (e.g. an email) silently widens
   exposure. Review it periodically and set a retention policy if you don't need
   unlimited per-user history.
+- **Artifacts carry the same data.** The 90-day workflow artifact now also
+  includes the SCIM email snapshot alongside the raw per-user billing CSV —
+  restrict who can download it.
 
 ---
 

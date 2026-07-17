@@ -26,6 +26,12 @@
 #     GH_BILLING_TOKEN         classic PAT with manage_billing:enterprise
 #     DATABASE_URL             Postgres (e.g. Neon) connection string
 #
+# To display EMAILS instead of usernames in the dashboards, also grant the
+# Copilot App the "Enterprise SCIM: read" permission (and install it at
+# enterprise scope). The collector then reads members' emails from the SCIM API
+# with the same App key. This is OPTIONAL and NON-FATAL: if the permission is
+# missing the SCIM step just warns and the dashboards fall back to usernames.
+#
 # See https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-grafana.md
 # for the full walkthrough (App + billing PAT + Neon + Grafana).
 #
@@ -171,6 +177,35 @@ jobs:
             exit 1
           fi
 
+      - name: Collect SCIM users (GitHub App)
+        # Reads members' primary emails via the SCIM API using the SAME Copilot
+        # App key (needs the "Enterprise SCIM: read" permission). This produces
+        # the username -> email mapping the dashboards use to show emails instead
+        # of usernames. It's a single snapshot (not per-day) and NON-FATAL: a
+        # failure (e.g. the App lacks SCIM read) just warns and the pipeline still
+        # loads usage/billing, with dashboards falling back to usernames.
+        if: ${{ !cancelled() && steps.day.outcome == 'success' }}
+        env:
+          COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
+        run: |
+          set -uo pipefail
+          mkdir -p copilot-data
+          KEY_FILE="$RUNNER_TEMP/copilot-app.pem"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          OUT="copilot-data/scim-users-enterprise-${{ vars.ENTERPRISE }}.json"
+          if bash "$SCRIPTS_DIR/copilot-scim-users.sh" '${{ vars.ENTERPRISE }}' \
+               --app-id '${{ vars.COPILOT_APP_ID }}' \
+               --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
+               --private-key "$KEY_FILE" \
+               --out "$OUT"; then
+            echo "scim: collected user email mapping"
+          else
+            echo "::warning::SCIM user collection failed; dashboards will fall back to usernames. (Check the App has 'Enterprise SCIM: read' and is installed at enterprise scope.)"
+            rm -f "$OUT"
+          fi
+
       - name: Upload collected data as an artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -198,10 +233,10 @@ jobs:
     # SECURITY: no repo write access and NO GitHub App key / billing PAT here.
     # This job only sees the already-collected data (usage aggregates + the
     # billing CSV, which the loader stores as both aggregates and identifiable
-    # per-user detail) plus the Postgres connection string — never the raw
-    # GitHub creds. The per-user data is written to Postgres; see the guide's
-    # Privacy section (copilot-metrics-grafana.md) for how to restrict who can
-    # read it.
+    # per-user detail, plus the SCIM username->email snapshot) plus the Postgres
+    # connection string — never the raw GitHub creds. The per-user data and
+    # emails are written to Postgres; see the guide's Privacy section
+    # (copilot-metrics-grafana.md) for how to restrict who can read them.
     permissions:
       contents: read
     steps:
@@ -224,6 +259,12 @@ jobs:
           # postgresql://user:pass@ep-xxx.neon.tech/dbname?sslmode=require
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           ENTERPRISE: ${{ vars.ENTERPRISE }}
+          # EMU billing handles look like `<idp-name>_<shortcode>` while SCIM
+          # userName is the IdP identity/email — this shortcode lets the loader
+          # reconstruct the handle so the username->email join lines up. The
+          # shortcode is almost always the enterprise slug; override with an
+          # ENTERPRISE_SHORTCODE repo variable only if yours differs.
+          ENTERPRISE_SHORTCODE: ${{ vars.ENTERPRISE_SHORTCODE || vars.ENTERPRISE }}
         run: |
           set -euo pipefail
           if [[ -z "${DATABASE_URL:-}" ]]; then
