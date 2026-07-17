@@ -1380,14 +1380,14 @@ def load_to_postgres(database_url, usage, usage_breakdowns, billing, scim_users)
                 cur.execute(INSERT_USER, rec)
             for rec in billing["model"]:
                 cur.execute(INSERT_MODEL, rec)
-            # Identity enrichment: full snapshot upsert. Scoped to the enterprise
-            # present in the snapshot so we don't touch other enterprises' rows.
-            scim_enterprise = None
-            for rec in scim_users:
-                scim_enterprise = rec["enterprise"]
-                break
+            # Identity enrichment: full snapshot upsert. Scoped to the
+            # enterprises present in the snapshots so we don't touch other
+            # enterprises' rows. Multiple scim-users-*.json snapshots may span
+            # different enterprises, so purge stale mappings for each one.
             if scim_users:
-                cur.execute(DELETE_ENTERPRISE_USERS, {"enterprise": scim_enterprise})
+                scim_enterprises = {rec["enterprise"] for rec in scim_users}
+                for scim_enterprise in scim_enterprises:
+                    cur.execute(DELETE_ENTERPRISE_USERS, {"enterprise": scim_enterprise})
                 for rec in scim_users:
                     cur.execute(UPSERT_ENTERPRISE_USERS, rec)
         conn.commit()
