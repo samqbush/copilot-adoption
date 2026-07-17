@@ -21,7 +21,7 @@
       }
     ]
   },
-  "description": "Copilot adoption, activity, PRs, CLI usage & AI-credit spend, incl. per-user power-user analysis. Reads the copilot_usage (+ per-IDE/feature/language/model/adoption-phase breakdown) and copilot_billing / copilot_billing_user / copilot_billing_model tables written to Postgres (Neon) by the collection workflow. Pick your Postgres datasource after import. NOTE: billed (net) spend is often $0 when quota covers metered (gross) usage — see the Spend detail row. Per-user panels expose usernames — restrict who can view this dashboard.",
+  "description": "Copilot adoption, activity, PRs, CLI usage & AI-credit spend, incl. per-user power-user analysis. Reads the copilot_usage (+ per-IDE/feature/language/model/adoption-phase breakdown) and copilot_billing / copilot_billing_user / copilot_billing_model tables (joined with copilot_enterprise_users for emails) written to Postgres (Neon) by the collection workflow. Pick your Postgres datasource after import. NOTE: billed (net) spend is often $0 when quota covers metered (gross) usage — see the Spend detail row. Per-user panels expose emails (falling back to usernames) — restrict who can view this dashboard.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -494,7 +494,7 @@
     },
     {
       "datasource": { "type": "grafana-postgresql-datasource", "uid": "${pg}" },
-      "description": "Top spenders in the selected time range. Honors the Model, Cost center, User and Top N filters. Contains usernames.",
+      "description": "Top spenders in the selected time range. Honors the Model, Cost center, User and Top N filters. Shows emails (falls back to username when no email is mapped).",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -529,13 +529,13 @@
           "refId": "A",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT username_key AS \"User\", MAX(COALESCE(cost_center_name, '(none)')) AS \"Cost center\", COUNT(DISTINCT model_key) AS \"Models\", SUM(row_count) AS \"Billed rows\", SUM(total_cost_usd) AS \"Spend (USD)\" FROM copilot_billing_user WHERE $__timeFilter(day) AND model_key LIKE '$model' AND COALESCE(cost_center_name, '(none)') LIKE '$cost_center' AND username_key LIKE '$user' GROUP BY username_key ORDER BY SUM(total_cost_usd) DESC NULLS LAST LIMIT $top_n;"
+          "rawSql": "SELECT COALESCE(eu.email, bu.username_key) AS \"User\", MAX(COALESCE(bu.cost_center_name, '(none)')) AS \"Cost center\", COUNT(DISTINCT bu.model_key) AS \"Models\", SUM(bu.row_count) AS \"Billed rows\", SUM(bu.total_cost_usd) AS \"Spend (USD)\" FROM copilot_billing_user bu LEFT JOIN copilot_enterprise_users eu ON eu.username_key = bu.username_key AND eu.enterprise = bu.enterprise WHERE $__timeFilter(bu.day) AND bu.model_key LIKE '$model' AND COALESCE(bu.cost_center_name, '(none)') LIKE '$cost_center' AND COALESCE(eu.email, bu.username_key) LIKE '$user' GROUP BY COALESCE(eu.email, bu.username_key) ORDER BY SUM(bu.total_cost_usd) DESC NULLS LAST LIMIT $top_n;"
         }
       ]
     },
     {
       "datasource": { "type": "grafana-postgresql-datasource", "uid": "${pg}" },
-      "description": "Daily spend for the top N users (by spend over the range). Honors the Model, Cost center and User filters. Contains usernames.",
+      "description": "Daily spend for the top N users (by spend over the range). Honors the Model, Cost center and User filters. Shows emails (falls back to username when no email is mapped).",
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -569,7 +569,7 @@
           "refId": "A",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT day AS \"time\", username_key AS metric, SUM(total_cost_usd) AS value FROM copilot_billing_user WHERE $__timeFilter(day) AND model_key LIKE '$model' AND COALESCE(cost_center_name, '(none)') LIKE '$cost_center' AND username_key LIKE '$user' AND username_key IN ( SELECT username_key FROM copilot_billing_user WHERE $__timeFilter(day) AND model_key LIKE '$model' AND COALESCE(cost_center_name, '(none)') LIKE '$cost_center' AND username_key LIKE '$user' GROUP BY username_key ORDER BY SUM(total_cost_usd) DESC NULLS LAST LIMIT $top_n ) GROUP BY day, username_key ORDER BY day;"
+          "rawSql": "SELECT bu.day AS \"time\", COALESCE(eu.email, bu.username_key) AS metric, SUM(bu.total_cost_usd) AS value FROM copilot_billing_user bu LEFT JOIN copilot_enterprise_users eu ON eu.username_key = bu.username_key AND eu.enterprise = bu.enterprise WHERE $__timeFilter(bu.day) AND bu.model_key LIKE '$model' AND COALESCE(bu.cost_center_name, '(none)') LIKE '$cost_center' AND COALESCE(eu.email, bu.username_key) LIKE '$user' AND COALESCE(eu.email, bu.username_key) IN ( SELECT COALESCE(eu2.email, bu2.username_key) FROM copilot_billing_user bu2 LEFT JOIN copilot_enterprise_users eu2 ON eu2.username_key = bu2.username_key AND eu2.enterprise = bu2.enterprise WHERE $__timeFilter(bu2.day) AND bu2.model_key LIKE '$model' AND COALESCE(bu2.cost_center_name, '(none)') LIKE '$cost_center' AND COALESCE(eu2.email, bu2.username_key) LIKE '$user' GROUP BY COALESCE(eu2.email, bu2.username_key) ORDER BY SUM(bu2.total_cost_usd) DESC NULLS LAST LIMIT $top_n ) GROUP BY bu.day, COALESCE(eu.email, bu.username_key) ORDER BY bu.day;"
         }
       ]
     },
@@ -1771,14 +1771,14 @@
         "allValue": "%",
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "grafana-postgresql-datasource", "uid": "${pg}" },
-        "definition": "SELECT DISTINCT username_key FROM copilot_billing_user ORDER BY 1;",
+        "definition": "SELECT DISTINCT COALESCE(eu.email, bu.username_key) FROM copilot_billing_user bu LEFT JOIN copilot_enterprise_users eu ON eu.username_key = bu.username_key AND eu.enterprise = bu.enterprise ORDER BY 1;",
         "hide": 0,
         "includeAll": true,
         "label": "User",
         "multi": false,
         "name": "user",
         "options": [],
-        "query": "SELECT DISTINCT username_key FROM copilot_billing_user ORDER BY 1;",
+        "query": "SELECT DISTINCT COALESCE(eu.email, bu.username_key) FROM copilot_billing_user bu LEFT JOIN copilot_enterprise_users eu ON eu.username_key = bu.username_key AND eu.enterprise = bu.enterprise ORDER BY 1;",
         "refresh": 2,
         "regex": "",
         "sort": 1,

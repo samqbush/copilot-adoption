@@ -200,6 +200,26 @@ CREATE TABLE IF NOT EXISTS copilot_billing_model (
     source_repository   text,
     PRIMARY KEY (enterprise, day, model_key)
 );
+-- Identity enrichment (IDENTIFIABLE — emails are PII). Maps a billing username
+-- (username_key, matching copilot_billing_user.username_key) to the member's
+-- primary email from the SCIM API, so dashboards can display emails instead of
+-- usernames via a LEFT JOIN with a COALESCE(email, username_key) fallback. This
+-- is a full snapshot refreshed each run (no per-day history); the join keeps
+-- every historical billing day labeled with the current email. Treat as
+-- sensitive: expose only through restricted views / a least-privilege role.
+CREATE TABLE IF NOT EXISTS copilot_enterprise_users (
+    enterprise          text        NOT NULL,
+    username_key        text        NOT NULL,
+    email               text,
+    scim_user_name      text,
+    external_id         text,
+    display_name        text,
+    active              boolean,
+    generated_at        timestamptz,
+    source_run_id       text,
+    source_repository   text,
+    PRIMARY KEY (enterprise, username_key)
+);
 -- Idempotent migrations for columns added to pre-existing tables. Postgres
 -- supports ADD COLUMN IF NOT EXISTS, so these are safe to run on every load.
 ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS gross_cost_usd numeric;
@@ -270,6 +290,34 @@ INSERT INTO copilot_billing_model (
     %(enterprise)s, %(day)s, %(model_key)s, %(total_cost_usd)s, %(user_count)s,
     %(row_count)s, %(generated_at)s, %(source_run_id)s, %(source_repository)s
 );
+"""
+
+# Identity enrichment: full-snapshot upsert keyed on (enterprise, username_key).
+# The whole enterprise's mapping is deleted then re-inserted each run so users
+# who leave SCIM stop labeling billing rows; scoped to the snapshot's enterprise
+# so other enterprises' rows are untouched.
+DELETE_ENTERPRISE_USERS = (
+    "DELETE FROM copilot_enterprise_users WHERE enterprise = %(enterprise)s;"
+)
+
+UPSERT_ENTERPRISE_USERS = """
+INSERT INTO copilot_enterprise_users (
+    enterprise, username_key, email, scim_user_name, external_id,
+    display_name, active, generated_at, source_run_id, source_repository
+) VALUES (
+    %(enterprise)s, %(username_key)s, %(email)s, %(scim_user_name)s,
+    %(external_id)s, %(display_name)s, %(active)s, %(generated_at)s,
+    %(source_run_id)s, %(source_repository)s
+)
+ON CONFLICT (enterprise, username_key) DO UPDATE SET
+    email = EXCLUDED.email,
+    scim_user_name = EXCLUDED.scim_user_name,
+    external_id = EXCLUDED.external_id,
+    display_name = EXCLUDED.display_name,
+    active = EXCLUDED.active,
+    generated_at = EXCLUDED.generated_at,
+    source_run_id = EXCLUDED.source_run_id,
+    source_repository = EXCLUDED.source_repository;
 """
 
 # --- Enriched usage metrics --------------------------------------------------
@@ -1112,6 +1160,99 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
     }
 
 
+def _scim_username_candidates(username, email, shortcode):
+    """Ordered, de-duplicated join-key candidates for a SCIM user.
+
+    The billing CSV keys per-user rows by the GitHub *handle*
+    (copilot_billing_user.username_key), while SCIM `userName` is often the IdP
+    identity / email (especially for EMU, where the handle is typically
+    `<idp-shortname>_<enterprise-shortcode>`). We therefore emit several
+    best-effort candidates so a LEFT JOIN can line up regardless of which form the
+    billing export uses. Higher-priority (more specific) candidates come first.
+    Set ENTERPRISE_SHORTCODE (or SCIM_SHORTCODE) to reconstruct the EMU
+    `_<shortcode>` handle from the IdP short name / email local-part."""
+    cands = []
+
+    def add(v):
+        if v:
+            v = v.strip()
+            if v and v not in cands:
+                cands.append(v)
+
+    uname = (username or "").strip()
+    local = ""
+    if "@" in uname:
+        local = uname.split("@", 1)[0]
+    email_local = ""
+    if email and "@" in email:
+        email_local = email.split("@", 1)[0]
+
+    # Most specific first: reconstructed EMU handle, then raw userName, then
+    # the local-parts (which match non-suffixed handles / some export shapes).
+    if shortcode:
+        add(f"{local or uname}_{shortcode}")
+        if email_local:
+            add(f"{email_local}_{shortcode}")
+    add(uname)
+    add(local)
+    add(email_local)
+    return cands
+
+
+def summarize_scim(path: str, run_id: str, repo: str, enterprise: str) -> list:
+    """Parse a SCIM users snapshot JSON into copilot_enterprise_users rows.
+
+    Emits one row per distinct `username_key` candidate (see
+    _scim_username_candidates) so the dashboards' LEFT JOIN can match the billing
+    username. On a candidate collision between two different SCIM users, the
+    first (higher-priority / earlier) wins and a warning is logged."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError) as exc:
+        log(f"WARNING: cannot read/parse SCIM file {path}: {exc}")
+        return []
+
+    users = data.get("users") or []
+    file_enterprise = (data.get("enterprise") or "").strip()
+    ent = enterprise or file_enterprise or None
+    shortcode = (os.environ.get("ENTERPRISE_SHORTCODE")
+                 or os.environ.get("SCIM_SHORTCODE") or "").strip()
+    generated = now_iso()
+
+    by_key: "dict[str, dict]" = {}
+    with_email = 0
+    for u in users:
+        username = (u.get("username") or "").strip()
+        email = (u.get("email") or "").strip() or None
+        if email:
+            with_email += 1
+        base = {
+            "enterprise": ent,
+            "email": email,
+            "scim_user_name": (u.get("scim_user_name") or username) or None,
+            "external_id": (u.get("external_id") or None),
+            "display_name": (u.get("display_name") or None),
+            "active": u.get("active"),
+            "generated_at": generated,
+            "source_run_id": run_id or None,
+            "source_repository": repo or None,
+        }
+        for key in _scim_username_candidates(username, email, shortcode):
+            existing = by_key.get(key)
+            if existing is None:
+                by_key[key] = {**base, "username_key": key}
+            elif existing.get("email") != email:
+                log(f"WARNING: SCIM username_key {key!r} maps to multiple "
+                    f"users/emails; keeping first ({existing.get('email')!r}, "
+                    f"dropping {email!r}).")
+
+    log(f"scim {os.path.basename(path)}: {len(users)} user(s), "
+        f"{with_email} with email; {len(by_key)} username_key mapping row(s)"
+        + (f" (shortcode={shortcode!r})" if shortcode else ""))
+    return list(by_key.values())
+
+
 def collect_rows(data_dir, run_id, repo, enterprise):
     usage = []
     # Per breakdown table: accumulated rows + the set of (scope,slug,day) keys
@@ -1149,7 +1290,10 @@ def collect_rows(data_dir, run_id, repo, enterprise):
             log(f"billing {rec['day']}: total_cost_usd={rec['total_cost_usd']} "
                 f"gross={rec['gross_cost_usd']} discount={rec['discount_cost_usd']} "
                 f"users={rec['user_count']} rows={rec['billing_rows']}")
-    return usage, usage_breakdowns, billing
+    scim_users = []
+    for path in sorted(glob.glob(os.path.join(data_dir, "scim-users-*.json"))):
+        scim_users.extend(summarize_scim(path, run_id, repo, enterprise))
+    return usage, usage_breakdowns, billing, scim_users
 
 
 def _decimal_or_zero(value):
@@ -1177,7 +1321,7 @@ def reconcile_billing(billing) -> None:
                 f"raw={raw_sum}). Check column detection/grouping.")
 
 
-def load_to_postgres(database_url, usage, usage_breakdowns, billing):
+def load_to_postgres(database_url, usage, usage_breakdowns, billing, scim_users):
     try:
         import psycopg
         from psycopg.types.json import Jsonb
@@ -1236,6 +1380,16 @@ def load_to_postgres(database_url, usage, usage_breakdowns, billing):
                 cur.execute(INSERT_USER, rec)
             for rec in billing["model"]:
                 cur.execute(INSERT_MODEL, rec)
+            # Identity enrichment: full snapshot upsert. Scoped to the enterprise
+            # present in the snapshot so we don't touch other enterprises' rows.
+            scim_enterprise = None
+            for rec in scim_users:
+                scim_enterprise = rec["enterprise"]
+                break
+            if scim_users:
+                cur.execute(DELETE_ENTERPRISE_USERS, {"enterprise": scim_enterprise})
+                for rec in scim_users:
+                    cur.execute(UPSERT_ENTERPRISE_USERS, rec)
         conn.commit()
     log(f"Upserted {len(usage)} usage row(s) and "
         f"{len(billing['enterprise'])} enterprise billing row(s). "
@@ -1243,7 +1397,8 @@ def load_to_postgres(database_url, usage, usage_breakdowns, billing):
         f"({breakdown_inserted} rows). "
         f"Replaced detail for {len(replace_days)} day(s): "
         f"{len(billing['raw'])} raw, {len(billing['user'])} per-user, "
-        f"{len(billing['model'])} per-model row(s).")
+        f"{len(billing['model'])} per-model row(s). "
+        f"Refreshed {len(scim_users)} enterprise-user email mapping row(s).")
     return 0
 
 
@@ -1262,11 +1417,13 @@ def main() -> int:
                          "usernames and full CSV rows to the job log.")
     args = ap.parse_args()
 
-    usage, usage_breakdowns, billing = collect_rows(
+    usage, usage_breakdowns, billing, scim_users = collect_rows(
         args.data_dir, args.run_id, args.repository, args.enterprise)
 
-    if not usage and not billing["enterprise"] and not billing["raw"]:
-        log("No usage-*.json or billing-*.csv inputs found; nothing to load.")
+    if not usage and not billing["enterprise"] and not billing["raw"] \
+            and not scim_users:
+        log("No usage-*.json, billing-*.csv, or scim-users-*.json inputs found; "
+            "nothing to load.")
         return 0
 
     if args.database_url and (billing["enterprise"] or billing["user"]
@@ -1285,6 +1442,7 @@ def main() -> int:
         # raw rows contain usernames / full CSV cells and are withheld unless
         # --show-raw is passed for local inspection. Usage breakdowns are
         # aggregate (no identities), so their counts are always safe to show.
+        # SCIM email-mapping rows are PII (emails), so they're withheld too.
         summary = {
             "usage": usage,
             "billing_enterprise": billing["enterprise"],
@@ -1294,21 +1452,25 @@ def main() -> int:
             "counts": {
                 "billing_user_rows": len(billing["user"]),
                 "billing_raw_rows": len(billing["raw"]),
+                "enterprise_user_rows": len(scim_users),
                 "days": sorted(billing["days"]),
             },
         }
         if args.show_raw:
             summary["billing_user"] = billing["user"]
             summary["billing_raw"] = billing["raw"]
+            summary["enterprise_users"] = scim_users
             summary["usage_breakdowns"] = {
                 t: b["rows"] for t, b in usage_breakdowns.items()}
         else:
-            log("Per-user and raw rows withheld from output (contain usernames / "
-                "full CSV cells). Pass --show-raw locally to include them.")
+            log("Per-user, raw, and email-mapping rows withheld from output "
+                "(contain usernames / emails / full CSV cells). Pass --show-raw "
+                "locally to include them.")
         print(json.dumps(summary, indent=2))
         return 0
 
-    return load_to_postgres(args.database_url, usage, usage_breakdowns, billing)
+    return load_to_postgres(args.database_url, usage, usage_breakdowns, billing,
+                            scim_users)
 
 
 if __name__ == "__main__":
