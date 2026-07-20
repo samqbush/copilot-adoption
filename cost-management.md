@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: July 10, 2026*
+*Last updated: July 20, 2026*
 
 This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
@@ -25,6 +25,7 @@ New to Copilot billing? Read the **Start here** links first for the vocabulary a
   - [Assign enterprise teams to cost centers](https://github.blog/changelog/2026-06-25-assign-enterprise-teams-to-cost-centers)
   - [Per-user AI credit budgets for cost centers](https://github.blog/changelog/2026-06-30-per-user-ai-credit-budgets-available-for-cost-centers)
   - [Included usage caps for cost centers](https://github.blog/changelog/2026-07-02-cost-centers-now-support-included-usage-caps)
+  - [AI credit pools for cost centers in the billing UI](https://github.blog/changelog/2026-07-20-ai-credit-pools-for-cost-centers-in-the-billing-ui/)
 - **Governance framework** — the FinOps thinking behind layered budgets and cost center design: [Managing AI credits and operating model](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) (WAF)
 
 
@@ -44,7 +45,7 @@ Full definitions live in [Budgets for usage-based billing](https://docs.github.c
 
 ## Set spend controls that follow your team structure
 
-Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order. Step 1 is in the billing UI today; steps 2 and 3 are created via the REST API (runnable calls below) — once a CCULB exists you can edit it in the billing UI. Full UI support for this API-first workflow is expected in July 2026.
+Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order — all four are now in the billing UI. The `gh api` calls under steps 2 and 3 are there for scripting the same controls across many cost centers at once.
 
 ### Step 1 — Attribute enterprise teams to cost centers
 
@@ -59,7 +60,11 @@ In **Billing and licensing → Cost centers**, create or edit a cost center and 
 
 One per-user cap applies to every member of the cost center and follows membership as it changes. This is the control that replaces managing budgets one user at a time. It overrides the universal budget for those members, and you can still grant an individual override to a specific person.
 
-This is API-only to create. Create it against the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center` and the cost center's **ID** in `budget_entity_name`. The values you'll change per run are pulled into variables at the top.
+Set it in the billing UI. Go to **Billing and licensing → Budgets and alerts**, click **New budget**, and pick the **Bundled AI credits budget** type. Under **Budget scope**, choose **Users**, then **Cost center**, and select the cost center — the cap then applies per user to every member. Set the dollar amount, turn on **Stop usage when budget limit is reached** for a hard cap, and add threshold alerts and recipients as needed.
+
+#### Script it across many cost centers
+
+To apply the same cap to many cost centers at once, create it against the [Create a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#create-a-budget) endpoint with `budget_scope: multi_user_cost_center` and the cost center's **ID** in `budget_entity_name`. The values you'll change per run are pulled into variables at the top.
 
 First, look up the cost center ID from its name:
 
@@ -106,7 +111,7 @@ gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?scope=multi_user_cost_
   --jq '.budgets[] | {budget_entity_name, budget_amount, prevent_further_usage}'
 ```
 
-**Changing an existing CCULB** (for example, raising the cap) no longer needs the API: once created, the budget shows up in **Billing and licensing → Budgets and alerts**, and you can edit the amount, stop behavior, and alert recipients there like any other budget. If you're managing many cost centers and want to script updates, the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint takes a `PATCH` by budget ID with just the fields you want to change.
+**Changing an existing CCULB** (for example, raising the cap) works the same way: open it in **Billing and licensing → Budgets and alerts** and edit the amount, stop behavior, and alert recipients like any other budget. To script updates across many cost centers, the [Update a budget](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#update-a-budget) endpoint takes a `PATCH` by budget ID with just the fields you want to change.
 
 In **Budgets and alerts**, the CCULB shows up as a single row that applies to every member of the cost center:
 
@@ -121,7 +126,13 @@ Open it to see per-user usage against the cap:
 
 ### Step 3 (optional) — Enable the cost center included usage cap
 
-This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared AI credit pool. The cap is calculated automatically from the licenses attributed to the cost center — there's no number to set. Enable it per cost center against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale). A capped cost center may contain **only user and enterprise team resources** — no organizations or repositories — so restructure it first if needed (steps 1–2).
+This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared AI credit pool. GitHub calculates the cap automatically from the licenses attributed to the cost center — there's no number to set. A capped cost center may contain **only user and enterprise team resources** — no organizations or repositories — so restructure it first if needed (steps 1–2).
+
+Turn it on in the billing UI. In **Billing and licensing → Cost centers**, create or edit the cost center and toggle the **AI credit pool** on. Then choose what happens when the pool is spent: **block** further included usage, or **continue as additional spend** (metered overage) if your enterprise allows it. The two choices are covered in [When to turn this on](#when-to-turn-this-on) below.
+
+#### Script it across many cost centers
+
+To enable the cap on many cost centers at once, PATCH each one against the [cost center API](https://docs.github.com/en/enterprise-cloud@latest/billing/tutorials/control-costs-at-scale) with `ai_credit_pool_enabled=true`.
 
 ```bash
 # Cap a cost center's included usage to what its own licenses fund.
@@ -197,7 +208,7 @@ If `current_amount` is equal to `target_amount`, the cost center has exhausted i
 The cap tracks the licenses in the cost center: **3,000 included credits per Copilot Business license** and **7,000 per Copilot Enterprise license** each month (promotional values). Adding or removing licensed members re-sizes it for you — license increases apply immediately, decreases take effect next cycle, and credits already used aren't clawed back. When a capped cost center reaches its limit, you choose whether members stop or continue as paid overage (subject to their user-level budgets and the enterprise backstop).
 
 > [!NOTE]
-> Enabling the cap doesn't retroactively redistribute the shared pool. From the moment it's on, that cost center draws only the credits its own licenses fund; turn it off and its members can draw from the shared enterprise pool again. Full UI support for these API-first cost center controls is expected in July 2026; until then these API calls are the setup path.
+> Enabling the cap doesn't retroactively redistribute the shared pool. From the moment it's on, that cost center draws only the credits its own licenses fund; turn it off and its members can draw from the shared enterprise pool again.
 
 Included usage caps only fully contain spend when *every* licensed user sits in a cost center that has one enabled. Anyone left out can still draw from the shared enterprise pool.
 
