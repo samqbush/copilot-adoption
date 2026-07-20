@@ -60,7 +60,7 @@ In **Billing and licensing → Cost centers**, create or edit a cost center and 
 
 One per-user cap applies to every member of the cost center and follows membership as it changes. This is the control that replaces managing budgets one user at a time. It overrides the universal budget for those members, and you can still grant an individual override to a specific person.
 
-Set it in the billing UI. Go to **Billing and licensing → Budgets and alerts**, click **New budget**, and pick the **Bundled AI credits budget** type. Under **Budget scope**, choose **Users**, then **Cost center**, and select the cost center — the cap then applies per user to every member. Set the dollar amount, turn on **Stop usage when budget limit is reached** for a hard cap, and add threshold alerts and recipients as needed.
+Set it in the billing UI. Go to **Billing and licensing → Budgets and alerts**, click **New budget**, and pick the **AI credits budget** type (it covers all SKUs that consume AI credits). Under **Budget scope**, choose **Users**, then **Cost center**, and select the cost center — the cap then applies per user to every member. Set the dollar amount, turn on **Stop usage when budget limit is reached** for a hard cap, and add threshold alerts and recipients as needed.
 
 #### Script it across many cost centers
 
