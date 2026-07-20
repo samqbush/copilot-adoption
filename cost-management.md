@@ -128,7 +128,7 @@ Open it to see per-user usage against the cap:
 
 This holds a cost center to the included credits its own licenses fund, so one team can't drain the shared AI credit pool. GitHub calculates the cap automatically from the licenses attributed to the cost center — there's no number to set. A capped cost center may contain **only user and enterprise team resources** — no organizations or repositories — so restructure it first if needed (steps 1–2).
 
-Turn it on in the billing UI. In **Billing and licensing → Cost centers**, create or edit the cost center and toggle the **AI credit pool** on. Then choose what happens when the pool is spent: **block** further included usage, or **continue as additional spend** (metered overage) if your enterprise allows it. The two choices are covered in [When to turn this on](#when-to-turn-this-on) below.
+Turn it on in the billing UI. In **Billing and licensing → Cost centers**, create or edit the cost center and, under **Settings**, select the **AI credit included usage cap** checkbox. Then choose what happens when the pool is spent: **block** further included usage, or **continue as additional spend** (metered overage) if your enterprise allows it. The two choices are covered in [When to turn this on](#when-to-turn-this-on) below.
 
 #### Script it across many cost centers
 
