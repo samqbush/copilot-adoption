@@ -36,5 +36,5 @@ Each of these is a proven flight plan — one concrete, runnable implementation 
 - [Pulling Copilot Metrics & Billing Into Your Data Lake](copilot-metrics-billing.md) — the credentials, endpoints, and daily pull to keep your own history before GitHub's 28-day window rolls off.
 - [Measuring AI in Pull Requests](ai-commit-attribution.md) — measure AI leverage across merged PRs with trailer scanning and the Copilot usage metrics API.
 - [Deploying Copilot Settings via MDM](mdm-agent-defaults.md) — enforce settings with enterprise-managed settings (including OpenTelemetry export), and push overridable defaults across VS Code and the CLI with Intune.
-- [Using CLI-Backed Skills Instead of MCP Servers](cli-skills-over-mcp.md) *(coming soon)* — package a skill plus a CLI as a required plugin, with a pre-flight install check instead of running an MCP server.
+- [Using CLI-Backed Skills Instead of MCP Servers](cli-skills-over-mcp.md) — package a skill plus a CLI as a required plugin across the CLI, VS Code, and the Copilot app, with a pre-flight install check instead of running an MCP server.
 
