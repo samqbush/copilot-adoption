@@ -383,11 +383,14 @@ copilot plugin list
 
 Then start a session and run `/skills list` to confirm both skills loaded. Components are cached at install, so rerun `copilot plugin install ./my-tools` to pick up edits.
 
-Verify the failure path, not just the happy one. Rename the binary out of `PATH` and prompt the skill. You want the actionable install message, not a stack trace:
+Verify the failure path, not just the happy one. Drop the tool's directory from `PATH` for one session and prompt the skill. You want the actionable install message, not a stack trace:
 
 ```bash
-sudo mv "$(command -v gh)" /tmp/gh.bak   # restore when done
+GH_DIR=$(dirname "$(command -v gh)")
+PATH=$(printf '%s' "$PATH" | tr ':' '\n' | grep -vx "$GH_DIR" | paste -sd: -) copilot
 ```
+
+Nothing is moved or reinstalled, and the original `PATH` comes back when the session ends.
 
 To distribute it, add a `marketplace.json` at `.github/plugin/marketplace.json` in the repository holding the plugins:
 
