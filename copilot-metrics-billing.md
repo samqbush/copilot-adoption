@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: July 16, 2026*
+*Last updated: August 17, 2026*
 
 ---
 
@@ -234,8 +234,14 @@ amounts:
 date, username, product, sku, model, quantity, unit_type,
 applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
 total_monthly_quota, organization, repository, cost_center_name,
-aic_quantity, aic_gross_amount
+aic_quantity, aic_gross_amount, input, output, cache_read, cache_write
 ```
+
+The last four are the token counts behind each model's credit consumption. They
+explain *why* a model costs what it does. One agent-heavy day in our test
+enterprise showed 10.6M `cache_read` tokens against 37K `output` tokens for a
+single user, so credits alone hide where the volume actually goes. See the
+[billing reports reference](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/billing-reports#ai-usage-report).
 
 > [!TIP]
 > For a fast "total Copilot spend this month" number without the export, call
