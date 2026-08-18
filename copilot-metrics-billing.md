@@ -238,9 +238,9 @@ aic_quantity, aic_gross_amount, input, output, cache_read, cache_write
 ```
 
 The last four are the token counts behind each model's credit consumption. They
-explain *why* a model costs what it does. One agent-heavy day in our test
-enterprise showed 10.6M `cache_read` tokens against 37K `output` tokens for a
-single user, so credits alone hide where the volume actually goes. See the
+show where the volume goes: on an agent-heavy day a single user can log 10.6M
+`cache_read` tokens against 37K `output` tokens, which the credit total alone
+won't tell you. Field definitions are in the
 [billing reports reference](https://docs.github.com/en/enterprise-cloud@latest/billing/reference/billing-reports#ai-usage-report).
 
 > [!TIP]

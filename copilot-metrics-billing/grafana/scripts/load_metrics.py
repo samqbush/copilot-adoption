@@ -34,6 +34,11 @@ Design notes
     - copilot_billing_user   — per (day, user, model) aggregate (IDENTIFIABLE)
     - copilot_billing_raw    — one row per CSV row + full raw row as JSONB
                                (IDENTIFIABLE, highest fidelity)
+  The AI usage report's token columns (input, output, cache_read, cache_write)
+  are summed into all three aggregate tables as input_tokens / output_tokens /
+  cache_read_tokens / cache_write_tokens, so a dashboard can show the token
+  volume behind each model's AI credits without reading the raw table. They stay
+  NULL when the export predates those columns.
   This is a deliberate reversal of the original "aggregate only" stance. Treat
   copilot_billing_user / copilot_billing_raw as sensitive: serve dashboards from
   aggregates or restricted views, use a least-privilege Grafana DB role, and set
@@ -97,6 +102,16 @@ MODEL_COLUMN_PATTERNS = ("model", "model_name", "sku", "product")
 DATE_COLUMN_PATTERNS = ("date", "day", "usage_date", "billing_date", "timestamp")
 COST_CENTER_COLUMN_PATTERNS = ("cost_center_name", "cost_center", "costcenter")
 QUOTA_COLUMN_PATTERNS = ("quota",)
+# Token detail from the AI usage report: the per-model token counts behind each
+# row's AI credits consumption. Summed alongside cost so a dashboard can show
+# where the volume actually goes (cache reads usually dwarf output tokens).
+# (db_column, csv_patterns, override_kind)
+TOKEN_COLUMN_DEFS = (
+    ("input_tokens", ("input", "input_tokens"), "input_tokens"),
+    ("output_tokens", ("output", "output_tokens"), "output_tokens"),
+    ("cache_read_tokens", ("cache_read", "cache_read_tokens"), "cache_read_tokens"),
+    ("cache_write_tokens", ("cache_write", "cache_write_tokens"), "cache_write_tokens"),
+)
 # Columns that superficially look cost-like (they contain "cost"/"total") but
 # must NEVER be chosen as the spend column. Excluded from cost matching.
 COST_EXCLUDE_PATTERNS = ("cost_center", "costcenter", "quota")
@@ -117,6 +132,10 @@ COLUMN_OVERRIDE_ENV = {
     "model": "BILLING_MODEL_COLUMN",
     "date": "BILLING_DATE_COLUMN",
     "cost_center": "BILLING_COST_CENTER_COLUMN",
+    "input_tokens": "BILLING_INPUT_TOKENS_COLUMN",
+    "output_tokens": "BILLING_OUTPUT_TOKENS_COLUMN",
+    "cache_read_tokens": "BILLING_CACHE_READ_TOKENS_COLUMN",
+    "cache_write_tokens": "BILLING_CACHE_WRITE_TOKENS_COLUMN",
 }
 
 CREATE_SQL = """
@@ -146,6 +165,10 @@ CREATE TABLE IF NOT EXISTS copilot_billing (
     cost_rows_counted   integer,
     user_count          integer,
     model_count         integer,
+    input_tokens        bigint,
+    output_tokens       bigint,
+    cache_read_tokens   bigint,
+    cache_write_tokens  bigint,
     generated_at        timestamptz,
     source_run_id       text,
     source_repository   text,
@@ -182,6 +205,10 @@ CREATE TABLE IF NOT EXISTS copilot_billing_user (
     total_cost_usd      numeric,
     cost_rows_counted   integer,
     row_count           integer,
+    input_tokens        bigint,
+    output_tokens       bigint,
+    cache_read_tokens   bigint,
+    cache_write_tokens  bigint,
     generated_at        timestamptz,
     source_run_id       text,
     source_repository   text,
@@ -195,6 +222,10 @@ CREATE TABLE IF NOT EXISTS copilot_billing_model (
     total_cost_usd      numeric,
     user_count          integer,
     row_count           integer,
+    input_tokens        bigint,
+    output_tokens       bigint,
+    cache_read_tokens   bigint,
+    cache_write_tokens  bigint,
     generated_at        timestamptz,
     source_run_id       text,
     source_repository   text,
@@ -224,6 +255,18 @@ CREATE TABLE IF NOT EXISTS copilot_enterprise_users (
 -- supports ADD COLUMN IF NOT EXISTS, so these are safe to run on every load.
 ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS gross_cost_usd numeric;
 ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS discount_cost_usd numeric;
+ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS input_tokens bigint;
+ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS output_tokens bigint;
+ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS cache_read_tokens bigint;
+ALTER TABLE copilot_billing ADD COLUMN IF NOT EXISTS cache_write_tokens bigint;
+ALTER TABLE copilot_billing_user ADD COLUMN IF NOT EXISTS input_tokens bigint;
+ALTER TABLE copilot_billing_user ADD COLUMN IF NOT EXISTS output_tokens bigint;
+ALTER TABLE copilot_billing_user ADD COLUMN IF NOT EXISTS cache_read_tokens bigint;
+ALTER TABLE copilot_billing_user ADD COLUMN IF NOT EXISTS cache_write_tokens bigint;
+ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS input_tokens bigint;
+ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS output_tokens bigint;
+ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS cache_read_tokens bigint;
+ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS cache_write_tokens bigint;
 """
 
 # UPSERT_USAGE is generated from USAGE_METRIC_DEFS further down (build_usage_sql)
@@ -234,11 +277,14 @@ INSERT INTO copilot_billing (
     day, enterprise, report_type, total_cost_usd, gross_cost_usd,
     discount_cost_usd, billing_rows,
     cost_rows_counted, user_count, model_count,
+    input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
     generated_at, source_run_id, source_repository
 ) VALUES (
     %(day)s, %(enterprise)s, %(report_type)s, %(total_cost_usd)s,
     %(gross_cost_usd)s, %(discount_cost_usd)s,
     %(billing_rows)s, %(cost_rows_counted)s, %(user_count)s, %(model_count)s,
+    %(input_tokens)s, %(output_tokens)s, %(cache_read_tokens)s,
+    %(cache_write_tokens)s,
     %(generated_at)s, %(source_run_id)s, %(source_repository)s
 )
 ON CONFLICT (enterprise, day, report_type) DO UPDATE SET
@@ -249,6 +295,10 @@ ON CONFLICT (enterprise, day, report_type) DO UPDATE SET
     cost_rows_counted = EXCLUDED.cost_rows_counted,
     user_count = EXCLUDED.user_count,
     model_count = EXCLUDED.model_count,
+    input_tokens = EXCLUDED.input_tokens,
+    output_tokens = EXCLUDED.output_tokens,
+    cache_read_tokens = EXCLUDED.cache_read_tokens,
+    cache_write_tokens = EXCLUDED.cache_write_tokens,
     generated_at = EXCLUDED.generated_at,
     source_run_id = EXCLUDED.source_run_id,
     source_repository = EXCLUDED.source_repository;
@@ -274,21 +324,30 @@ INSERT INTO copilot_billing_raw (
 INSERT_USER = """
 INSERT INTO copilot_billing_user (
     enterprise, day, username_key, model_key, cost_center_name, total_cost_usd,
-    cost_rows_counted, row_count, generated_at, source_run_id, source_repository
+    cost_rows_counted, row_count,
+    input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+    generated_at, source_run_id, source_repository
 ) VALUES (
     %(enterprise)s, %(day)s, %(username_key)s, %(model_key)s,
     %(cost_center_name)s, %(total_cost_usd)s, %(cost_rows_counted)s,
-    %(row_count)s, %(generated_at)s, %(source_run_id)s, %(source_repository)s
+    %(row_count)s,
+    %(input_tokens)s, %(output_tokens)s, %(cache_read_tokens)s,
+    %(cache_write_tokens)s,
+    %(generated_at)s, %(source_run_id)s, %(source_repository)s
 );
 """
 
 INSERT_MODEL = """
 INSERT INTO copilot_billing_model (
     enterprise, day, model_key, total_cost_usd, user_count, row_count,
+    input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
     generated_at, source_run_id, source_repository
 ) VALUES (
     %(enterprise)s, %(day)s, %(model_key)s, %(total_cost_usd)s, %(user_count)s,
-    %(row_count)s, %(generated_at)s, %(source_run_id)s, %(source_repository)s
+    %(row_count)s,
+    %(input_tokens)s, %(output_tokens)s, %(cache_read_tokens)s,
+    %(cache_write_tokens)s,
+    %(generated_at)s, %(source_run_id)s, %(source_repository)s
 );
 """
 
@@ -937,6 +996,43 @@ def _parse_cost(raw_value):
         return "INVALID"
 
 
+def _parse_tokens(raw_value):
+    """Parse a token-count cell into an int, or None if blank/non-numeric.
+
+    Token columns are whole counts, but exports have been seen with thousands
+    separators and decimal-looking zeros (e.g. `10600000.0`), so parse through
+    Decimal and truncate rather than calling int() on the raw string."""
+    cleaned = (raw_value or "").strip().replace(",", "")
+    if not cleaned:
+        return None
+    try:
+        return int(Decimal(cleaned))
+    except (InvalidOperation, ValueError):
+        return "INVALID"
+
+
+def _new_token_sums():
+    """Zeroed per-group token sums, one entry per token column."""
+    return {col: 0 for col, _, _ in TOKEN_COLUMN_DEFS}
+
+
+def _add_tokens(group, tokens):
+    """Add one row's parsed token counts into a group's running sums."""
+    for col, value in tokens.items():
+        if value is not None:
+            group["tokens"][col] += value
+
+
+def _token_fields(group, token_cols):
+    """Emit token sums for a record, or None where the column wasn't in the CSV.
+
+    A resolved column that only held blanks still reports 0 (real "no tokens"),
+    while an unmapped column stays NULL so an older export can't look like zero
+    usage."""
+    return {col: (group["tokens"][col] if token_cols.get(col) else None)
+            for col, _, _ in TOKEN_COLUMN_DEFS}
+
+
 def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dict:
     """Summarize a billing CSV into four record sets keyed by day.
 
@@ -980,12 +1076,17 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
     model_col = resolve_column("model", fieldnames, MODEL_COLUMN_PATTERNS, path)
     date_col = resolve_column("date", fieldnames, DATE_COLUMN_PATTERNS, path)
     cc_col = resolve_column("cost_center", fieldnames, COST_CENTER_COLUMN_PATTERNS, path)
+    token_cols = {
+        col: resolve_column(kind, fieldnames, patterns, path)
+        for col, patterns, kind in TOKEN_COLUMN_DEFS
+    }
     fallback_day = parse_day_from_billing_filename(path)
 
     log(f"billing {os.path.basename(path)}: column mapping "
         f"cost={cost_col!r} gross={gross_col!r} discount={discount_col!r} "
         f"user={user_col!r} model={model_col!r} "
-        f"date={date_col!r} cost_center={cc_col!r}")
+        f"date={date_col!r} cost_center={cc_col!r} "
+        + " ".join(f"{col}={token_cols[col]!r}" for col, _, _ in TOKEN_COLUMN_DEFS))
 
     if cost_col is None:
         log(f"WARNING: no cost column matched in {path} (headers: {fieldnames}). "
@@ -1032,14 +1133,25 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
         if discount == "INVALID":
             discount = None
 
+        tokens = {}
+        for col, _, _ in TOKEN_COLUMN_DEFS:
+            csv_col = token_cols.get(col)
+            value = _parse_tokens(row.get(csv_col)) if csv_col else None
+            if value == "INVALID":
+                log(f"WARNING: non-numeric {col} '{row.get(csv_col)}' in {path}")
+                value = None
+            tokens[col] = value
+
         # Enterprise aggregate (backward-compatible)
         eg = ent_groups.setdefault(day, {
             "total": Decimal("0"), "counted": 0,
             "gross": Decimal("0"), "gross_counted": 0,
             "discount": Decimal("0"), "discount_counted": 0,
             "users": set(), "models": set(), "rows": 0,
+            "tokens": _new_token_sums(),
         })
         eg["rows"] += 1
+        _add_tokens(eg, tokens)
         if cost is not None:
             eg["total"] += cost
             eg["counted"] += 1
@@ -1057,8 +1169,10 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
         # Per-user aggregate
         ug = user_groups.setdefault((day, username_key, model_key), {
             "total": Decimal("0"), "counted": 0, "rows": 0, "cost_center": None,
+            "tokens": _new_token_sums(),
         })
         ug["rows"] += 1
+        _add_tokens(ug, tokens)
         if cost is not None:
             ug["total"] += cost
             ug["counted"] += 1
@@ -1068,8 +1182,10 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
         # Per-model aggregate (no identities)
         mg = model_groups.setdefault((day, model_key), {
             "total": Decimal("0"), "counted": 0, "users": set(), "rows": 0,
+            "tokens": _new_token_sums(),
         })
         mg["rows"] += 1
+        _add_tokens(mg, tokens)
         if cost is not None:
             mg["total"] += cost
             mg["counted"] += 1
@@ -1114,6 +1230,7 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
             "cost_rows_counted": g["counted"],
             "user_count": len(g["users"]) if user_col else None,
             "model_count": len(g["models"]) if model_col else None,
+            **_token_fields(g, token_cols),
             "generated_at": generated,
             "source_run_id": run_id or None,
             "source_repository": repo or None,
@@ -1131,6 +1248,7 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
             "total_cost_usd": (str(g["total"]) if cost_col is not None and g["counted"] else None),
             "cost_rows_counted": g["counted"],
             "row_count": g["rows"],
+            **_token_fields(g, token_cols),
             "generated_at": generated,
             "source_run_id": run_id or None,
             "source_repository": repo or None,
@@ -1146,6 +1264,7 @@ def summarize_billing(path: str, run_id: str, repo: str, enterprise: str) -> dic
             "total_cost_usd": (str(g["total"]) if cost_col is not None and g["counted"] else None),
             "user_count": len(g["users"]) if user_col else None,
             "row_count": g["rows"],
+            **_token_fields(g, token_cols),
             "generated_at": generated,
             "source_run_id": run_id or None,
             "source_repository": repo or None,
