@@ -8,7 +8,7 @@ toc: true
 # Copilot Metrics & Billing Dashboards in Grafana
 {:.no_toc}
 
-*Last updated: July 16, 2026*
+*Last updated: August 17, 2026*
 
 ---
 
@@ -275,15 +275,22 @@ loader's docstring):
 | Table | Holds | Identities? |
 |---|---|---|
 | `copilot_usage` (+ `copilot_usage_ide` / `_feature` / `_model_feature` / `_language_model` / `_language_feature` / `_adoption_phase`) | per-day usage totals and aggregate breakdowns | no |
-| `copilot_billing` | enterprise spend per day (net/gross/discount) | no |
-| `copilot_billing_model` | spend per model per day | no |
-| `copilot_billing_user` | spend per user/model/day | **yes (usernames)** |
+| `copilot_billing` | enterprise spend per day (net/gross/discount) + token totals | no |
+| `copilot_billing_model` | spend and tokens per model per day | no |
+| `copilot_billing_user` | spend and tokens per user/model/day | **yes (usernames)** |
 | `copilot_enterprise_users` | SCIM username→email map (for email labels) | **yes (emails)** |
 | `copilot_billing_raw` | one row per billing CSV row, full row as JSONB | **yes (highest fidelity)** |
 
 Aggregate tables are safe for broad dashboards. The last three
 (`copilot_billing_user`, `copilot_enterprise_users`, `copilot_billing_raw`) are
 identifiable — treat them as sensitive.
+
+The three spend tables also carry `input_tokens`, `output_tokens`,
+`cache_read_tokens`, and `cache_write_tokens`, summed from the report's token
+columns. Put them next to cost and you can see which models burn tokens rather
+than just dollars; on agent-heavy days cache reads dwarf everything else. Days
+collected before those columns existed keep them `NULL`, so a flat line there
+means the data was never collected.
 
 ---
 
