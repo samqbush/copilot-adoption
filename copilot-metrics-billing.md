@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: August 17, 2026*
+*Last updated: August 26, 2026*
 
 ---
 
@@ -18,9 +18,8 @@ GitHub only retains Copilot usage metrics for about 28 days, so if you want a
 longer adoption history (or billing data for chargeback) you have to pull it
 yourself and keep your own copy. The whole job:
 
-1. **Set up two credentials** (they can't be shared):
-   - an **Enterprise GitHub App** for **usage metrics**, and
-   - a **billing-manager classic PAT** for **billing data**.
+1. **Set up one Enterprise GitHub App** with read access to both **Copilot
+   metrics** and **enterprise billing**.
 2. **Run two pulls once a day** against the prior complete day, each using the
    **pre-aggregated report** endpoints so the whole thing is under ten API calls.
 3. **Drop the files into your data lake** before the 28-day window rolls off.
@@ -32,6 +31,11 @@ you can adapt it.
 > [!NOTE]
 > This applies to GitHub Enterprise Cloud (including EMU). The endpoints are
 > enterprise-scoped against `api.github.com`.
+>
+> GitHub App access to enterprise billing became available on August 26, 2026.
+> Older implementations used a billing-manager PAT because Apps could not call
+> these endpoints. See
+> [GitHub Apps can now access enterprise billing data](https://github.blog/changelog/2026-08-26-github-apps-can-now-access-enterprise-billing-data).
 
 ---
 
@@ -42,42 +46,41 @@ you can adapt it.
 | What it is | Engagement/adoption — active users, completions, chat | Consumption/cost — AI Credits, quantities, dollar amounts |
 | Endpoint family | `/enterprises/{ent}/copilot/metrics/reports/...` | `/enterprises/{ent}/settings/billing/reports` |
 | Dollar amounts | ❌ none | ✅ yes |
-| Auth | Enterprise GitHub App *(or PAT `read:enterprise`)* | Classic PAT `manage_billing:enterprise` |
+| Auth | Enterprise GitHub App: **Enterprise Copilot metrics (read)** | Same App: **Enterprise billing (read)** |
 
 Usage metrics tell you *who is using Copilot and how much*. Billing tells you
-*what it costs*. They come from different APIs with different auth, so you collect
-them separately and join them later in your warehouse (on `username` / `date`).
+*what it costs*. They come from different APIs, so you collect them separately and join them
+later in your warehouse (on `username` / `date`). One App installation token
+can authorize both calls when the App has both permissions.
 
 ---
 
-## Why two credentials
+## One App, two permissions
 
-This trips people up, so it's worth stating plainly: **GitHub Apps and
-fine-grained PATs cannot read billing endpoints.** Billing requires a **classic
-PAT with `manage_billing:enterprise`**, held by an enterprise owner or billing
-manager which is assigned by IDP.
+The App needs one read permission for each API family:
 
-Usage metrics, by contrast, work well with an **Enterprise GitHub App**. You get
-a 15,000 req/hr limit and short-lived (1-hour) installation tokens instead of a
-long-lived PAT.
+| App permission | Used for |
+|---|---|
+| **Enterprise Copilot metrics: Read-only** | Adoption and engagement reports |
+| **Enterprise billing: Read-only** | Usage summaries and billing report exports |
 
-| | Usage metrics | Billing |
-|---|---|---|
-| Enterprise GitHub App | ✅ *View Enterprise Copilot Metrics* | ❌ not supported |
-| Fine-grained PAT | ⚠️ documented, not yet in the UI | ❌ not supported |
-| Classic PAT scope | `read:enterprise` or `manage_billing:copilot` | `manage_billing:enterprise` |
+The billing export starts with a `POST`, but it only requests creation of a
+read-only report. GitHub's
+[App permission matrix](https://docs.github.com/en/enterprise-cloud@latest/rest/authentication/permissions-required-for-github-apps?apiVersion=2026-03-10#enterprise-permissions-for-enterprise-billing)
+classifies the create, poll, and list report endpoints as **read**. Do not grant
+write access to a collection App; write is for changing budgets and cost
+centers.
 
-The [setup below](#set-up-the-two-credentials) creates both.
+The scripts still accept a classic PAT for compatibility, but the App is the
+recommended unattended credential: installation tokens expire after one hour,
+aren't tied to an employee, and receive the higher App rate limit.
 
 ---
 
-## Set up the two credentials {#set-up-the-two-credentials}
+## Set up the Enterprise GitHub App {#set-up-the-two-credentials}
 
-Two one-time setups, one per data domain. You need **enterprise owner** access
-(to create the App and the billing PAT and to enable the usage-metrics policy),
-plus `openssl`, `curl`, and `jq` locally.
-
-### Enterprise GitHub App (usage metrics)
+You need **enterprise owner** access to create and install the App and enable the
+usage-metrics policy, plus `openssl`, `curl`, and `jq` locally.
 
 1. **Enable the policy.** The metrics endpoints only return data when **Copilot
    usage metrics** is **Enabled everywhere** (**Settings → Policies → Copilot**).
@@ -88,8 +91,9 @@ plus `openssl`, `curl`, and `jq` locally.
    ([registering a GitHub App](https://docs.github.com/en/enterprise-cloud@latest/apps/creating-github-apps/registering-a-github-app/registering-a-github-app)).
    The choices that matter for this example:
    - **Enterprise permissions → View Enterprise Copilot Metrics: Read-only.**
-     Add **Organization permissions → Organization Copilot metrics: Read-only**
-     too if you'll pull org-level reports (the `--org` flag).
+   - **Enterprise permissions → Enterprise billing: Read-only.**
+   - **Organization permissions → Organization Copilot metrics: Read-only**
+     (optional) if you'll pull org-level reports with `--org`.
    - **Webhook → Active: unchecked** — no events needed.
    - **Only on this account.**
 
@@ -107,22 +111,26 @@ plus `openssl`, `curl`, and `jq` locally.
 The scripts mint the installation token themselves from the App ID, installation
 ID, and key.
 
-### Billing classic PAT (billing metrics)
+### Migrating an existing App
 
-Create a **classic** PAT with the `manage_billing:enterprise` scope, owned by an
-enterprise owner or billing manager, at
-[github.com/settings/tokens](https://github.com/settings/tokens)
-([creating a classic PAT](https://docs.github.com/en/enterprise-cloud@latest/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic)).
-There is no GitHub App or fine-grained PAT equivalent today. Keep it separate
-from the App key.
+If you followed an older version of this guide, add **Enterprise billing:
+Read-only** to the existing App. Then review the enterprise installation and
+approve the updated permission if GitHub prompts you. For enterprise-owned Apps,
+some permission updates are accepted automatically; confirm the installation
+shows billing read access before removing `GH_BILLING_TOKEN`.
+
+The installation continues using its old permissions until the update is
+accepted. That is the first thing to check if the App can read Copilot metrics
+but billing returns an authorization error. See
+[Approving updated permissions for a GitHub App](https://docs.github.com/en/enterprise-cloud@latest/apps/using-github-apps/approving-updated-permissions-for-a-github-app).
 
 ---
 
-## Verify each credential {#verify-each-credential}
+## Verify both permissions {#verify-each-credential}
 
-Before automating, confirm each credential works on its own by pulling the
-**last 28 days** to a file you can read. Download only the script you're testing —
-no clone required.
+Before automating, confirm both App permissions work by pulling the **last 28
+days** to files you can read. Download only the script you're testing — no clone
+required.
 
 **Usage metrics (GitHub App):**
 
@@ -142,22 +150,23 @@ jq '.report' usage-last-28-days.json      # the metrics rows
 > Enterprise Copilot Metrics** permission, or the usage-metrics policy isn't
 > enabled yet. Fix it, then re-accept the updated permissions on the installation.
 
-**Billing (classic PAT):**
+**Billing (same GitHub App):**
 
 ```bash
-export ENTERPRISE=<your-enterprise> GH_BILLING_TOKEN=ghp_xxx
+export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY=./app.pem
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
 curl -fsSLO "$base/copilot-billing-export.sh" && chmod +x copilot-billing-export.sh
 
-./copilot-billing-export.sh "$ENTERPRISE" --last-28-days --out billing-last-28-days.csv
+./copilot-billing-export.sh "$ENTERPRISE" --last-28-days \
+  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
+  --out billing-last-28-days.csv
 head billing-last-28-days.csv             # or open it in a spreadsheet
 ```
 
 > [!NOTE]
-> A `404` on the `/reports` endpoints means the token is missing
-> `manage_billing:enterprise`. The other billing endpoints (`/usage/summary`,
-> `/ai_credit/usage`) work with just the enterprise role, but the bulk CSV export
-> needs this scope.
+> A `403` or `404` on the `/reports` endpoints usually means the App is missing
+> **Enterprise billing: Read-only**, or the updated installation has not been
+> accepted. Fix the permission and confirm the installation, then try again.
 
 The two 28-day outputs aren't the same shape: usage is a single **rolling
 aggregate report** (with its own `report_start_day`/`report_end_day`), while
@@ -268,7 +277,7 @@ and then [automate the daily pull](#automate).
 | Script | What it does | Key flags |
 |--------|--------------|-----------|
 | `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. | `--day YYYY-MM-DD`, `--org`, `--28day` (alias `--last-28-days`), `--app-id`, `--installation-id`, `--private-key` |
-| `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. Classic PAT auth. | `--start`/`--end`, `--last-28-days`, `--report-type` (default `ai_credit`), `--out`, `--poll-timeout` |
+| `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. App auth recommended; PAT fallback supported. | `--start`/`--end`, `--last-28-days`, `--report-type` (default `ai_credit`), `--out`, `--poll-timeout`, `--app-id`, `--installation-id`, `--private-key` |
 
 For the daily job you want the single day (`--day`, defaulting to yesterday); the
 28-day flags are for an ad-hoc snapshot or an initial backfill. They need `bash`,
@@ -291,24 +300,21 @@ variables → Actions**:
 | Variable | `COPILOT_APP_ID` | the App ID |
 | Variable | `COPILOT_INSTALLATION_ID` | the installation ID |
 | Secret | `COPILOT_APP_PRIVATE_KEY` | the App's `.pem` contents |
-| Secret | `GH_BILLING_TOKEN` | the classic PAT (`manage_billing:enterprise`) |
 
 App ID and installation ID are identifiers, not credentials, so they go in
-**variables**; the private key and PAT go in **secrets**. Set all five from the
-terminal with `gh` (it encrypts the secrets locally before upload):
+**variables**; the private key goes in **secrets**. Set all four from the
+terminal with `gh` (it encrypts the secret locally before upload):
 
 ```bash
 gh variable set ENTERPRISE              --body "$ENTERPRISE"
 gh variable set COPILOT_APP_ID          --body "$APP_ID"
 gh variable set COPILOT_INSTALLATION_ID --body "$INSTALLATION_ID"
 gh secret   set COPILOT_APP_PRIVATE_KEY < ./app.pem
-gh secret   set GH_BILLING_TOKEN <<< "$GH_BILLING_TOKEN"
 ```
 
 `gh` targets the repo in the current directory; add `--repo <owner>/<repo>` to
-point elsewhere. Both secrets are read from stdin rather than an argument, so the
-token and key never land in your shell history or the process list. If you can't
-use `gh`, the
+point elsewhere. The key is read from stdin rather than an argument, so it never
+lands in your shell history or the process list. If you can't use `gh`, the
 [Actions secrets REST API](https://docs.github.com/en/enterprise-cloud@latest/rest/actions/secrets?apiVersion=2026-03-10#create-or-update-a-repository-secret)
 does the same — you seal each value against the repo's public key yourself.
 
@@ -323,7 +329,7 @@ git push
 
 The workflow runs daily (and on demand via **Run workflow**), collects the prior
 day, and uploads the files as a **workflow artifact**. Usage and billing run as
-separate steps, so one credential failing still lets the other collect.
+separate steps, so one API failing still lets the other collect.
 
 ---
 
@@ -361,21 +367,22 @@ append-only history you can rebuild dashboards from at any time.
 
 | Auth method | Rate limit |
 |-------------|-----------|
-| Classic PAT | 5,000 req/hr |
 | GitHub App (installation token) | 15,000 req/hr |
+| Classic PAT fallback | 5,000 req/hr |
 
-A full daily collection is under ten calls, so either budget is plenty — the App
-is just the better choice for usage metrics because of its short-lived tokens.
+A full daily collection is under ten calls, so either budget is plenty. The App
+is the better unattended choice because its tokens are short-lived and not tied
+to a person.
 
-- The App private key and the billing PAT **never** go into the repository —
-  only into variables and secrets.
+- The App private key **never** goes into the repository — only into an Actions
+  secret.
 - Installation tokens and billing download URLs expire in **~1 hour**.
-- Both tokens are **read-only** with respect to your code; they can't modify
-  repositories or PRs.
+- The App has read-only enterprise permissions and no repository write
+  permission; it can't modify repositories, budgets, or cost centers.
 - If a credential is compromised, revoke it and reissue.
-- `GH_BILLING_TOKEN` grants enterprise-wide billing access. Host the workflow in
-  a dedicated private repo with a protected default branch and minimal write
-  access, so no one can add a step that exfiltrates it.
+- The App key can mint tokens that read enterprise-wide usage and billing data.
+  Host the workflow in a dedicated private repo with a protected default branch
+  and minimal write access, so no one can add a step that exfiltrates it.
 
 ---
 
@@ -389,6 +396,9 @@ is just the better choice for usage metrics because of its short-lived tokens.
   multi-enterprise customers run the collection once per enterprise.
 - **Usage-metrics policy must be on.** Without **Copilot usage metrics → Enabled
   everywhere**, the report endpoints return no data.
+- **Updated App permissions may need approval.** After adding enterprise billing
+  read access to an existing App, confirm the enterprise installation accepted
+  it before deleting the old PAT secret.
 - **Run against the prior complete day.** "Today" isn't fully processed yet;
   default to yesterday (UTC).
 
