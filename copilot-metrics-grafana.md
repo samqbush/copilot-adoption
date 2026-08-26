@@ -8,7 +8,7 @@ toc: true
 # Copilot Metrics & Billing Dashboards in Grafana
 {:.no_toc}
 
-*Last updated: August 17, 2026*
+*Last updated: August 26, 2026*
 
 ---
 
@@ -29,7 +29,7 @@ building your own BI layer.
 
 ```
 GitHub Actions (daily cron)
-  ├─ collect job   (holds the App key + billing PAT)
+  ├─ collect job   (holds the App key)
   │    ├─ usage report JSON  +  billing CSV
   │    └─ upload as a 90-day artifact (backup only)
   └─ load-to-postgres job   (NO GitHub creds — only DATABASE_URL)
@@ -39,9 +39,15 @@ Postgres (Neon)  ──SELECT──▶  Grafana dashboards
 ```
 
 The Action **writes** to Postgres and Grafana only ever **reads** from it, so
-**Grafana never holds a GitHub credential** — no App key, no PAT. The sensitive
-GitHub credentials stay in the `collect` job; the `load-to-postgres` job sees
-only the already-collected files and the database connection string.
+**Grafana never holds a GitHub credential**. The App key stays in the `collect`
+job; the `load-to-postgres` job sees only the already-collected files and the
+database connection string.
+
+> [!NOTE]
+> [GitHub App access to enterprise billing](https://github.blog/changelog/2026-08-26-github-apps-can-now-access-enterprise-billing-data)
+> became available on August 26, 2026. The release simplifies collection
+> authentication; it does not change the Postgres schema, loader, retention
+> model, or dashboard.
 
 > [!NOTE]
 > The base guide's [`scripts/`](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/scripts)
@@ -54,9 +60,9 @@ only the already-collected files and the database connection string.
 
 ## Prerequisites
 
-You need the **two credentials from the base guide** — the Enterprise GitHub App
-(usage metrics) and the billing classic PAT. If you haven't created them, do
-that first: [Set up the two credentials](copilot-metrics-billing.md#set-up-the-two-credentials).
+You need the **Enterprise GitHub App from the base guide** with read access to
+Copilot metrics and enterprise billing. If you haven't created it, start with
+[Set up the Enterprise GitHub App](copilot-metrics-billing.md#set-up-the-two-credentials).
 This page adds one thing on top: a Postgres database.
 
 > [!NOTE]
@@ -116,8 +122,8 @@ Two Neon quirks worth knowing up front:
 ## 2. Set the secrets {#secrets}
 
 In the repo that will host the workflow: **Settings → Secrets and variables →
-Actions**. The App ID / installation ID are identifiers (Variables); the key,
-PAT, and connection string are sensitive (Secrets).
+Actions**. The App ID / installation ID are identifiers (Variables); the key
+and connection string are sensitive (Secrets).
 
 | Kind | Name | Value |
 |------|------|-------|
@@ -125,7 +131,6 @@ PAT, and connection string are sensitive (Secrets).
 | Variable | `COPILOT_APP_ID` | the App ID |
 | Variable | `COPILOT_INSTALLATION_ID` | the installation ID |
 | Secret | `COPILOT_APP_PRIVATE_KEY` | the App's `.pem` contents |
-| Secret | `GH_BILLING_TOKEN` | classic PAT (`manage_billing:enterprise`) |
 | Secret | `DATABASE_URL` | the Neon connection string from step 1 |
 
 ```bash
@@ -133,15 +138,15 @@ gh variable set ENTERPRISE              --body "$ENTERPRISE"
 gh variable set COPILOT_APP_ID          --body "$APP_ID"
 gh variable set COPILOT_INSTALLATION_ID --body "$INSTALLATION_ID"
 gh secret   set COPILOT_APP_PRIVATE_KEY < ./app.pem
-gh secret   set GH_BILLING_TOKEN <<< "$GH_BILLING_TOKEN"
 gh secret   set DATABASE_URL     <<< "$DATABASE_URL"
 ```
 
 > [!IMPORTANT]
-> `GH_BILLING_TOKEN` grants enterprise-wide billing access, and the **90-day
-> artifact still contains the raw per-user billing CSV**. Host this workflow in a
-> **dedicated private repo** with a protected default branch and minimal write
-> access, and restrict who can download its artifacts.
+> The App key can mint tokens that read enterprise-wide metrics, billing, and
+> optional SCIM data. The **90-day artifact contains the raw per-user billing
+> CSV**. Host this workflow in a **dedicated private repo** with a protected
+> default branch and minimal write access, and restrict who can download its
+> artifacts.
 
 ---
 

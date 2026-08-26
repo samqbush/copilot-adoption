@@ -63,6 +63,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+APP_ARG_COUNT=0
+[[ -n "$APP_ID" ]] && APP_ARG_COUNT=$((APP_ARG_COUNT + 1))
+[[ -n "$INSTALLATION_ID" ]] && APP_ARG_COUNT=$((APP_ARG_COUNT + 1))
+[[ -n "$PRIVATE_KEY" ]] && APP_ARG_COUNT=$((APP_ARG_COUNT + 1))
+if (( APP_ARG_COUNT > 0 && APP_ARG_COUNT < 3 )); then
+  echo "ERROR: App auth requires --app-id, --installation-id, and --private-key together." >&2
+  exit 1
+fi
+
 # Default day: yesterday (UTC) — the most recent complete day.
 if [[ -z "$DAY" ]]; then
   DAY=$(date -u -v-1d +%Y-%m-%d 2>/dev/null || date -u -d "1 day ago" +%Y-%m-%d)
@@ -104,7 +113,7 @@ generate_installation_token() {
 }
 
 # Auth setup
-if [[ -n "$APP_ID" && -n "$INSTALLATION_ID" && -n "$PRIVATE_KEY" ]]; then
+if (( APP_ARG_COUNT == 3 )); then
   echo "Authenticating via GitHub App (App ID: $APP_ID)..." >&2
   TOKEN=$(generate_installation_token "$APP_ID" "$INSTALLATION_ID" "$PRIVATE_KEY") || exit 1
   echo "Installation token acquired (expires in 1 hour)." >&2

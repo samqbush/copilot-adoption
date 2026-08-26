@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: July 20, 2026*
+*Last updated: August 26, 2026*
 
 This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
@@ -47,6 +47,30 @@ Full definitions live in [Budgets for usage-based billing](https://docs.github.c
 
 Set controls against the team structure you already manage instead of thousands of individual users. Four steps, in order — all four are now in the billing UI. The `gh api` calls under steps 2 and 3 are there for scripting the same controls across many cost centers at once.
 
+### Authenticate scripted changes
+
+For one-off administration, the examples below use the account already signed in
+through `gh auth login`; that account must be an enterprise owner or billing
+manager.
+
+For unattended automation, use a separate enterprise-owned GitHub App with
+**Enterprise billing: Read and write**. Do not add write permission to the
+read-only App that collects metrics and billing reports. Mint a short-lived
+installation token for the automation App and expose it to GitHub CLI as
+`GH_TOKEN`; the `gh api` commands below then work unchanged.
+
+```bash
+export GH_TOKEN="<automation App installation token>"
+```
+
+Installation tokens expire after one hour. Generate one at the start of each
+job using
+[GitHub's installation-token flow](https://docs.github.com/en/enterprise-cloud@latest/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app).
+[GitHub App access to enterprise billing](https://github.blog/changelog/2026-08-26-github-apps-can-now-access-enterprise-billing-data)
+became available on August 26, 2026. The
+[Enterprise billing permission matrix](https://docs.github.com/en/enterprise-cloud@latest/rest/authentication/permissions-required-for-github-apps?apiVersion=2026-03-10#enterprise-permissions-for-enterprise-billing)
+lists budget and cost-center mutations as write operations.
+
 ### Step 1 — Attribute enterprise teams to cost centers
 
 Add an enterprise team as a resource on a cost center. Every member's usage attributes there automatically, and membership follows the team as people join or leave — whether the team is IdP-synced or managed manually, there's no per-user reassignment.
@@ -69,7 +93,7 @@ To apply the same cap to many cost centers at once, create it against the [Creat
 First, look up the cost center ID from its name:
 
 ```bash
-# Requires an enterprise admin or billing manager token (gh auth login --scopes 'manage_billing:enterprise').
+# Uses interactive gh auth or GH_TOKEN set to the App installation token above.
 ENTERPRISE="your-enterprise-slug"
 NAME="Platform Engineering"
 
@@ -136,7 +160,7 @@ To enable the cap on many cost centers at once, PATCH each one against the [cost
 
 ```bash
 # Cap a cost center's included usage to what its own licenses fund.
-# Requires an enterprise admin or billing manager token (gh auth login --scopes 'manage_billing:enterprise').
+# Uses interactive gh auth or GH_TOKEN set to the App installation token above.
 ENTERPRISE="your-enterprise-slug"
 COST_CENTER_ID="the-cost-center-id"   # look it up by name as in step 2
 

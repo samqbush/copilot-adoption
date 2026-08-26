@@ -3,9 +3,9 @@
 # Copy this file into YOUR OWN repository at
 # .github/workflows/copilot-metrics-collection.yml, together with the two
 # collector scripts at scripts/ (see SCRIPTS_DIR below). It pulls the prior
-# day's Copilot usage metrics (GitHub App) and billing data (classic PAT) and
-# uploads them as a workflow artifact — zero extra infrastructure to see it
-# working.
+# day's Copilot usage metrics and billing data with one Enterprise GitHub App,
+# then uploads them as a workflow artifact — zero extra infrastructure to see
+# it working.
 #
 # One-time configuration in the repo that hosts this workflow
 # (Settings -> Secrets and variables -> Actions):
@@ -17,14 +17,14 @@
 #
 #   Secrets    (sensitive — masked in logs)
 #     COPILOT_APP_PRIVATE_KEY  the App's .pem contents (paste the whole file)
-#     GH_BILLING_TOKEN         classic PAT with manage_billing:enterprise
 #
-# See https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
-# for how to create the App and the billing PAT.
+# Existing PAT deployment? Add "Enterprise billing: read" to the App, approve
+# the updated enterprise installation, then remove GH_BILLING_TOKEN. See:
+# https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
 #
-# Security note: GH_BILLING_TOKEN grants enterprise-wide billing access. Host
-# this workflow in a dedicated private repository with a protected default
-# branch and minimal write access, so no one can add a step that exfiltrates it.
+# Security note: the App key can mint tokens for enterprise-wide Copilot metrics
+# and billing data. Host this workflow in a dedicated private repository with a
+# protected default branch and minimal write access.
 
 name: Copilot metrics & billing collection
 
@@ -92,22 +92,29 @@ jobs:
           mv "$RUNNER_TEMP/usage.json" \
             "copilot-data/usage-enterprise-${{ vars.ENTERPRISE }}-$DAY.json"
 
-      - name: Collect billing (classic PAT)
-        # Run even if the usage step failed (independent credential), as long as
+      - name: Collect billing (GitHub App)
+        # Run even if the usage step failed (independent API call), as long as
         # the day resolved — but don't run on cancellation.
         if: ${{ !cancelled() && steps.day.outcome == 'success' }}
         env:
-          GH_BILLING_TOKEN: ${{ secrets.GH_BILLING_TOKEN }}
+          COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
           mkdir -p copilot-data
+          KEY_FILE="$RUNNER_TEMP/copilot-app.pem"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
           DAY='${{ steps.day.outputs.day }}'
           bash "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
             --start "$DAY" --end "$DAY" \
+            --app-id '${{ vars.COPILOT_APP_ID }}' \
+            --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
+            --private-key "$KEY_FILE" \
             --out "copilot-data/billing-ai_credit-${{ vars.ENTERPRISE }}-$DAY.csv"
 
       - name: Upload collected data as an artifact
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: copilot-data-${{ steps.day.outputs.day }}

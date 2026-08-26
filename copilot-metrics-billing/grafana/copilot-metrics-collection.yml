@@ -3,8 +3,8 @@
 # Copy this file into YOUR OWN repository at
 # .github/workflows/copilot-metrics-collection.yml, together with the three
 # scripts at scripts/ (the two collectors + load_metrics.py — see SCRIPTS_DIR
-# below). It pulls the prior day's Copilot usage metrics (GitHub App) and
-# billing data (classic PAT), uploads them as a workflow artifact (backup), and
+# below). It pulls the prior day's Copilot usage metrics and billing data with
+# one Enterprise GitHub App, uploads them as a workflow artifact (backup), and
 # then loads durable per-day summaries into Postgres for Grafana to read.
 #
 # Resulting layout in your repo:
@@ -23,7 +23,6 @@
 #
 #   Secrets    (sensitive — masked in logs)
 #     COPILOT_APP_PRIVATE_KEY  the App's .pem contents (paste the whole file)
-#     GH_BILLING_TOKEN         classic PAT with manage_billing:enterprise
 #     DATABASE_URL             Postgres (e.g. Neon) connection string
 #
 # To display EMAILS instead of usernames in the dashboards, also grant the
@@ -33,11 +32,14 @@
 # missing the SCIM step just warns and the dashboards fall back to usernames.
 #
 # See https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-grafana.md
-# for the full walkthrough (App + billing PAT + Neon + Grafana).
+# for the full walkthrough (App + Neon + Grafana).
 #
-# Security note: GH_BILLING_TOKEN grants enterprise-wide billing access. Host
-# this workflow in a dedicated private repository with a protected default
-# branch and minimal write access, so no one can add a step that exfiltrates it.
+# Existing PAT deployment? Add "Enterprise billing: read" to the App, approve
+# the updated enterprise installation, then remove GH_BILLING_TOKEN.
+#
+# Security note: the App key can mint tokens for enterprise-wide Copilot
+# metrics, billing, and optional SCIM data. Host this workflow in a dedicated
+# private repository with a protected default branch and minimal write access.
 
 name: Copilot metrics & billing collection
 
@@ -78,8 +80,8 @@ jobs:
     # billing export (up to --poll-timeout 900). Give it room beyond the billing
     # poll so a backfill doesn't hit the job timeout.
     timeout-minutes: 30
-    # This job holds the sensitive App key + billing PAT, so it stays read-only
-    # and never pushes to the repo.
+    # This job holds the sensitive App key, so it stays read-only and never
+    # pushes to the repo.
     permissions:
       contents: read
     outputs:
@@ -152,15 +154,19 @@ jobs:
           done
           exit $rc
 
-      - name: Collect billing (classic PAT)
-        # Run even if the usage step failed (independent credential), as long as
+      - name: Collect billing (GitHub App)
+        # Run even if the usage step failed (independent API call), as long as
         # the day(s) resolved — but don't run on cancellation.
         if: ${{ !cancelled() && steps.day.outcome == 'success' }}
         env:
-          GH_BILLING_TOKEN: ${{ secrets.GH_BILLING_TOKEN }}
+          COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
         run: |
           set -uo pipefail
           mkdir -p copilot-data
+          KEY_FILE="$RUNNER_TEMP/copilot-app.pem"
+          trap 'rm -f "$KEY_FILE"' EXIT
+          printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
           # ONE ranged export for the whole window (create/poll/download once).
           # The billing CSV carries a per-row date column, so the loader groups
           # it back into one summary row per day — no need to export per day.
@@ -170,6 +176,9 @@ jobs:
           OUT="copilot-data/billing-ai_credit-${{ vars.ENTERPRISE }}-${START}_to_${END}.csv"
           if bash "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
                --start "$START" --end "$END" --out "$OUT" \
+               --app-id '${{ vars.COPILOT_APP_ID }}' \
+               --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
+               --private-key "$KEY_FILE" \
                --poll-timeout 900; then
             echo "billing: collected $START -> $END"
           else
@@ -207,7 +216,7 @@ jobs:
           fi
 
       - name: Upload collected data as an artifact
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: copilot-data-${{ github.run_id }}
@@ -230,7 +239,7 @@ jobs:
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # SECURITY: no repo write access and NO GitHub App key / billing PAT here.
+    # SECURITY: no repo write access and NO GitHub App key here.
     # This job only sees the already-collected data (usage aggregates + the
     # billing CSV, which the loader stores as both aggregates and identifiable
     # per-user detail, plus the SCIM username->email snapshot) plus the Postgres
