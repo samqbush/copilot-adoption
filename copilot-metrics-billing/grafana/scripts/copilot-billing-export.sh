@@ -126,6 +126,7 @@ generate_installation_token() {
   response=$(curl -sS -X POST \
     -H "Authorization: Bearer $jwt" \
     -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: $API_VERSION" \
     "https://api.github.com/app/installations/$installation_id/access_tokens")
   token=$(echo "$response" | jq -r '.token // empty')
   if [[ -z "$token" ]]; then
