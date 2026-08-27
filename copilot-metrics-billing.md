@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: August 26, 2026*
+*Last updated: August 27, 2026*
 
 ---
 
@@ -20,8 +20,9 @@ yourself and keep your own copy. The whole job:
 
 1. **Set up one Enterprise GitHub App** with read access to both **Copilot
    metrics** and **enterprise billing**.
-2. **Run two pulls once a day** against the prior complete day, each using the
-   **pre-aggregated report** endpoints so the whole thing is under ten API calls.
+2. **Pull four usage report families plus one billing export each day** against
+   the prior complete day. This preserves aggregate, user, team, repository, and
+   cost data in roughly a dozen data requests.
 3. **Drop the files into your data lake** before the 28-day window rolls off.
 
 The [example scripts](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/scripts)
@@ -48,10 +49,11 @@ you can adapt it.
 | Dollar amounts | ❌ none | ✅ yes |
 | Auth | Enterprise GitHub App: **Enterprise Copilot metrics (read)** | Same App: **Enterprise billing (read)** |
 
-Usage metrics tell you *who is using Copilot and how much*. Billing tells you
-*what it costs*. They come from different APIs, so you collect them separately and join them
-later in your warehouse (on `username` / `date`). One App installation token
-can authorize both calls when the App has both permissions.
+Usage metrics tell you *how Copilot is being used*. The aggregate report has no
+user identity; the separate user report includes `user_id` and `user_login`.
+Billing tells you *what it costs*. Collect both API families separately, then
+join usage `user_login` to billing `username` for the same date. One App
+installation token can authorize every call when the App has both permissions.
 
 ---
 
@@ -139,10 +141,13 @@ export ENTERPRISE=<your-enterprise> APP_ID=<id> INSTALLATION_ID=<id> PRIVATE_KEY
 base=https://raw.githubusercontent.com/samqbush/copilot-adoption/main/copilot-metrics-billing/scripts
 curl -fsSLO "$base/copilot-usage-metrics.sh" && chmod +x copilot-usage-metrics.sh
 
-./copilot-usage-metrics.sh "$ENTERPRISE" --last-28-days \
-  --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
-  > usage-last-28-days.json
-jq '.report' usage-last-28-days.json      # the metrics rows
+day=$(date -u -v-1d +%F 2>/dev/null || date -u -d '1 day ago' +%F)
+for report in aggregate users user-teams repos; do
+  ./copilot-usage-metrics.sh "$ENTERPRISE" --day "$day" --report-type "$report" \
+    --app-id "$APP_ID" --installation-id "$INSTALLATION_ID" --private-key "$PRIVATE_KEY" \
+    > "usage-$report-$day.json"
+done
+jq '.report | length' usage-*-"$day".json
 ```
 
 > [!NOTE]
@@ -168,28 +173,27 @@ head billing-last-28-days.csv             # or open it in a spreadsheet
 > **Enterprise billing: Read-only**, or the updated installation has not been
 > accepted. Fix the permission and confirm the installation, then try again.
 
-The two 28-day outputs aren't the same shape: usage is a single **rolling
-aggregate report** (with its own `report_start_day`/`report_end_day`), while
-billing is **per-day detail rows**. Their end dates can differ slightly because of
-reporting lag.
+The usage files are not interchangeable: each report family covers a different
+slice of the same day. Billing is per-day detail and can lag usage slightly.
 
 ---
 
 ## Minimizing API calls
 
-These endpoints do the aggregation for you. Use the
-**report** endpoints, not per-user or per-day loops:
+These endpoints package each dataset for you. Use the **report** endpoints, not
+one API request per user or repository:
 
-- **Usage metrics:** one request returns a signed `download_links` URL to an
-  NDJSON file with the whole day's aggregated metrics. Download it. **~2 calls.**
+- **Usage metrics:** each of the four report requests returns signed
+  `download_links` to NDJSON. Request and download every family. **~8 calls.**
 - **Billing:** the **bulk CSV export** returns *every* user, day, and model in a
   single file via create → poll → download. **~3–5 calls.** This is far cheaper
   than calling `/ai_credit/usage?user=X` once per user, and it's the *only* way
   to get per-user fields (`username`, `total_monthly_quota`, `cost_center_name`)
   without already knowing every username.
 
-A full daily collection is **under ten API calls**. Run it once a day against the
-prior complete UTC day and you'll never come close to a rate limit.
+A full daily collection is typically **11–13 data requests**, plus the App token
+exchange. Run it once a day against the prior complete UTC day and it remains
+well below the App rate limit.
 
 > [!IMPORTANT]
 > Don't use the legacy `GET /enterprises/{ent}/copilot/metrics` endpoint. It was
@@ -202,19 +206,20 @@ prior complete UTC day and you'll never come close to a rate limit.
 
 ### Usage metrics (engagement)
 
-Call **one** report endpoint per run. Enterprise-level is the primary target; use
-the org-level row only if you need per-org breakdowns or you only have org
-access. Each returns `download_links` to an NDJSON report you then download.
+Pull all four single-day report families. The aggregate report does not contain
+the rows from the other three.
 
-| What you want | Endpoint to call | Docs |
+| Report | Enterprise endpoint | What it preserves |
 |---|---|---|
-| Enterprise, single day | `GET /enterprises/{ent}/copilot/metrics/reports/enterprise-1-day?day=YYYY-MM-DD` | [Enterprise, specific day](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics#get-copilot-enterprise-usage-metrics-for-a-specific-day) |
-| Org, single day | `GET /orgs/{org}/copilot/metrics/reports/organization-1-day?day=YYYY-MM-DD` | [Org, specific day](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics#get-copilot-organization-usage-metrics-for-a-specific-day) |
+| Aggregate | `GET /enterprises/{ent}/copilot/metrics/reports/enterprise-1-day?day=YYYY-MM-DD` | Daily totals and aggregate breakdowns |
+| Users | `GET /enterprises/{ent}/copilot/metrics/reports/users-1-day?day=YYYY-MM-DD` | Per-user usage |
+| User teams | `GET /enterprises/{ent}/copilot/metrics/reports/user-teams-1-day?day=YYYY-MM-DD` | Daily user-to-team membership used to attribute user usage |
+| Repositories | `GET /enterprises/{ent}/copilot/metrics/reports/repos-1-day?day=YYYY-MM-DD` | Repository usage detail |
 
-Pull the **single-day** report each day. There are also 28-day rolling report
-endpoints, but you don't need them here: once you're archiving the daily files,
-you reconstruct any window (7, 28, 90 days) from your own data instead of asking
-GitHub to re-roll it.
+The script's `--org` flag switches to organization scope. GitHub also publishes
+28-day rolling reports for aggregate and user data, but not for user-team or
+repository data. The daily archive is the recommended path because you can
+rebuild longer windows from it.
 
 Requires the **Copilot usage metrics** policy to be **Enabled everywhere**.
 GitHub only retains this data for about 28 days, so pull it daily and archive it
@@ -276,13 +281,13 @@ and then [automate the daily pull](#automate).
 
 | Script | What it does | Key flags |
 |--------|--------------|-----------|
-| `copilot-usage-metrics.sh` | Pulls the enterprise (or `--org`) usage report → JSON. App or PAT auth. | `--day YYYY-MM-DD`, `--org`, `--28day` (alias `--last-28-days`), `--app-id`, `--installation-id`, `--private-key` |
+| `copilot-usage-metrics.sh` | Pulls one enterprise (or `--org`) usage report family → JSON. The workflow calls it four times daily. | `--report-type aggregate\|users\|user-teams\|repos`, `--day YYYY-MM-DD`, `--org`, `--28day`, `--app-id`, `--installation-id`, `--private-key` |
 | `copilot-billing-export.sh` | Creates, polls, and downloads the `ai_credit` billing CSV. App auth recommended; PAT fallback supported. | `--start`/`--end`, `--last-28-days`, `--report-type` (default `ai_credit`), `--out`, `--poll-timeout`, `--app-id`, `--installation-id`, `--private-key` |
 
-For the daily job you want the single day (`--day`, defaulting to yesterday); the
-28-day flags are for an ad-hoc snapshot or an initial backfill. They need `bash`,
-`curl`, `jq`, and (for App auth) `openssl`, and set the `2026-03-10` billing API
-version header for you.
+For the daily job, request all four report types for one day (`--day`, defaulting
+to yesterday). The 28-day flag is only for ad-hoc aggregate or user snapshots.
+The scripts need `bash`, `curl`, `jq`, and (for App auth) `openssl`, and set the
+`2026-03-10` API version header for you.
 
 ---
 
@@ -327,9 +332,10 @@ git commit -m "Add Copilot metrics & billing collection workflow"
 git push
 ```
 
-The workflow runs daily (and on demand via **Run workflow**), collects the prior
-day, and uploads the files as a **workflow artifact**. Usage and billing run as
-separate steps, so one API failing still lets the other collect.
+The workflow runs daily (and on demand via **Run workflow**), collects all four
+usage reports plus billing for the prior day, and uploads the files as a
+**workflow artifact**. Each report has its own filename. A failed usage report
+is surfaced without deleting successful files, and billing still runs.
 
 ---
 
@@ -340,7 +346,7 @@ entry run the same two scripts just as well.
 
 Artifacts expire, so to keep a long-term history land the files in your data
 lake. Point the scripts at an output directory
-(`copilot-usage-metrics.sh … > dir/usage-<day>.json` and
+(`copilot-usage-metrics.sh … > dir/usage-<report>-<day>.json` and
 `copilot-billing-export.sh … --out dir/billing-<day>.csv`), then sync that
 directory to object storage with whatever you already use:
 
@@ -351,10 +357,11 @@ az storage blob upload-batch -d copilot/$(date -u +%F) -s ./copilot-data       #
 gcloud storage cp ./copilot-data/* gs://my-bucket/copilot/$(date -u +%F)/      # GCS
 ```
 
-Once the JSON and CSV are in your lake, load them into your warehouse and join on
-`username` and `date` to put adoption next to cost. The shape of that warehouse
-is your call. Partition the raw files by date and your daily pull becomes an
-append-only history you can rebuild dashboards from at any time.
+Once the JSON and CSV are in your lake, load them into your warehouse. Join the
+user report's `user_login` to billing `username` for the same date; do not expect
+identity fields in the aggregate report. Join the daily user report to the daily
+user-team report on `user_id` before rolling up team metrics. Partition raw files
+by date and report family so the daily pull becomes append-only history.
 
 > [!NOTE]
 > Keep the raw files. GitHub only retains usage metrics for ~28 days (billing for
@@ -370,9 +377,9 @@ append-only history you can rebuild dashboards from at any time.
 | GitHub App (installation token) | 15,000 req/hr |
 | Classic PAT fallback | 5,000 req/hr |
 
-A full daily collection is under ten calls, so either budget is plenty. The App
-is the better unattended choice because its tokens are short-lived and not tied
-to a person.
+A full daily collection is roughly a dozen data requests, so either budget is
+plenty. The App is the better unattended choice because its tokens are
+short-lived and not tied to a person.
 
 - The App private key **never** goes into the repository — only into an Actions
   secret.
@@ -392,6 +399,14 @@ to a person.
   while one is running returns `409`. The daily cadence avoids this.
 - **Download URLs expire in ~1 hour.** Fetch the file immediately (the scripts
   do).
+- **Usage reports can be multipart.** Download every URL in `download_links`;
+  the script combines all parts.
+- **User and user-team reports are identifiable.** Protect their raw files and
+  artifacts like other enterprise usage records.
+- **Small teams are omitted.** Teams with fewer than five seated Copilot users
+  do not appear in the user-team report. Their members' activity remains in the
+  user report, so team totals can be lower than enterprise totals. See
+  [Team-level Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/copilot-usage-metrics/team-level-metrics).
 - **Single-enterprise scope.** Each call targets one enterprise, so
   multi-enterprise customers run the collection once per enterprise.
 - **Usage-metrics policy must be on.** Without **Copilot usage metrics → Enabled

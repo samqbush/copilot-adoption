@@ -8,7 +8,7 @@ toc: true
 # Copilot Metrics & Billing Dashboards in Grafana
 {:.no_toc}
 
-*Last updated: August 26, 2026*
+*Last updated: August 27, 2026*
 
 ---
 
@@ -30,10 +30,12 @@ building your own BI layer.
 ```
 GitHub Actions (daily cron)
   ├─ collect job   (holds the App key)
-  │    ├─ usage report JSON  +  billing CSV
+  │    ├─ aggregate, user, user-team, and repository usage JSON
+  │    ├─ billing CSV
   │    └─ upload as a 90-day artifact (backup only)
   └─ load-to-postgres job   (NO GitHub creds — only DATABASE_URL)
-       └─ load_metrics.py distills one row per day → UPSERT into Postgres
+       ├─ normalize aggregate rows for Grafana
+       └─ retain every usage and billing source row
 
 Postgres (Neon)  ──SELECT──▶  Grafana dashboards
 ```
@@ -91,11 +93,12 @@ builds history indefinitely — nothing to host.
 
 > [!NOTE]
 > "No expiry" is not "unlimited space." The free tier has a fixed storage cap
-> (currently ~0.5 GB). The daily aggregate rows are tiny, but `copilot_billing_raw`
-> keeps a full copy of every billing CSV row and grows with your user count.
+> (currently ~0.5 GB). The daily aggregate rows are tiny, but
+> `copilot_usage_raw` and `copilot_billing_raw` keep every source row and grow
+> with your user count.
 > Watch your database size in the Neon console; if it climbs, set a retention
-> policy on the detail tables `copilot_billing_raw` and `copilot_billing_user`
-> (see [Privacy](#privacy)).
+> policy on `copilot_usage_raw`, `copilot_billing_raw`, and
+> `copilot_billing_user` (see [Privacy](#privacy)).
 
 ---
 
@@ -143,10 +146,10 @@ gh secret   set DATABASE_URL     <<< "$DATABASE_URL"
 
 > [!IMPORTANT]
 > The App key can mint tokens that read enterprise-wide metrics, billing, and
-> optional SCIM data. The **90-day artifact contains the raw per-user billing
-> CSV**. Host this workflow in a **dedicated private repo** with a protected
-> default branch and minimal write access, and restrict who can download its
-> artifacts.
+> optional SCIM data. The **90-day artifact contains identifiable user usage,
+> team membership, and per-user billing data**. Host this workflow in a
+> **dedicated private repo** with a protected default branch and minimal write
+> access, and restrict who can download its artifacts.
 
 ---
 
@@ -197,8 +200,9 @@ gh workflow run copilot-metrics-collection.yml -f backfill_days=28
 > repo's **default branch**. Merge to default first, or dispatch against your
 > branch with `gh workflow run … --ref <branch>`.
 
-After the run, the nightly cron (05:17 UTC) collects yesterday and history grows.
-Re-running any day just upserts — no duplicates.
+After the run, the nightly cron (05:17 UTC) collects all four usage report
+families plus billing for yesterday. Re-running any day replaces that report
+family's raw rows and upserts its inventory and aggregate rows.
 
 ---
 
@@ -280,15 +284,27 @@ loader's docstring):
 | Table | Holds | Identities? |
 |---|---|---|
 | `copilot_usage` (+ `copilot_usage_ide` / `_feature` / `_model_feature` / `_language_model` / `_language_feature` / `_adoption_phase`) | per-day usage totals and aggregate breakdowns | no |
+| `copilot_usage_report` | collection inventory and metadata by day/report family | no |
+| `copilot_usage_raw` | every aggregate, user, user-team, and repository source row as JSONB | **yes** |
 | `copilot_billing` | enterprise spend per day (net/gross/discount) + token totals | no |
 | `copilot_billing_model` | spend and tokens per model per day | no |
 | `copilot_billing_user` | spend and tokens per user/model/day | **yes (usernames)** |
 | `copilot_enterprise_users` | SCIM username→email map (for email labels) | **yes (emails)** |
 | `copilot_billing_raw` | one row per billing CSV row, full row as JSONB | **yes (highest fidelity)** |
 
-Aggregate tables are safe for broad dashboards. The last three
-(`copilot_billing_user`, `copilot_enterprise_users`, `copilot_billing_raw`) are
-identifiable — treat them as sensitive.
+The user, user-team, and repository report families are retained for downstream
+analysis but are not normalized into new dashboard panels here. Aggregate tables
+and `copilot_usage_report` are safe for broad dashboards. `copilot_usage_raw`,
+`copilot_billing_user`, `copilot_enterprise_users`, and `copilot_billing_raw`
+are identifiable; treat them as sensitive.
+
+If you already created the `grafana_ro` role from an older version of this
+guide, grant access to the new inventory table after the next workflow run:
+
+```sql
+GRANT SELECT ON copilot_usage_report TO grafana_ro;
+REVOKE ALL ON copilot_usage_raw FROM grafana_ro;
+```
 
 The three spend tables also carry `input_tokens`, `output_tokens`,
 `cache_read_tokens`, and `cache_write_tokens`, summed from the report's token
@@ -301,10 +317,9 @@ means the data was never collected.
 
 ## Privacy {#privacy}
 
-This pipeline **deliberately stores identifiable per-user billing detail** so an
-admin can spot power users and their spend. Enabling emails (via SCIM) adds
-members' **email addresses** in `copilot_enterprise_users`. That's a conscious
-choice — handle it accordingly.
+This pipeline deliberately stores identifiable user usage, team membership, and
+per-user billing detail. Enabling emails through SCIM adds member email
+addresses in `copilot_enterprise_users`. Handle all of these tables accordingly.
 
 The bundled dashboard's power-user panels and the `User` / `Cost center`
 variables **read `copilot_billing_user`** (and, for email labels,
@@ -319,17 +334,18 @@ CREATE ROLE grafana_ro LOGIN PASSWORD 'choose-a-strong-password';
 GRANT CONNECT ON DATABASE <dbname> TO grafana_ro;
 GRANT USAGE ON SCHEMA public TO grafana_ro;
 
--- Everything the dashboard needs, EXCEPT copilot_billing_raw:
+-- Everything the dashboard and coverage checks need, except the raw tables:
 GRANT SELECT ON
-  copilot_usage, copilot_usage_ide, copilot_usage_feature,
+  copilot_usage, copilot_usage_report,
+  copilot_usage_ide, copilot_usage_feature,
   copilot_usage_model_feature, copilot_usage_language_model,
   copilot_usage_language_feature, copilot_usage_adoption_phase,
   copilot_billing, copilot_billing_model, copilot_billing_user,
   copilot_enterprise_users
 TO grafana_ro;
 
--- Never expose the raw per-user JSONB, and don't auto-grant future tables:
-REVOKE ALL ON copilot_billing_raw FROM grafana_ro;
+-- Never expose raw usage or billing JSONB, and don't auto-grant future tables:
+REVOKE ALL ON copilot_usage_raw, copilot_billing_raw FROM grafana_ro;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM grafana_ro;
 ```
 
@@ -346,13 +362,13 @@ credentials.
 - **Emails are PII.** `copilot_enterprise_users` also carries each member's SCIM
   display name and external ID. Limit who can read it, and set a retention policy
   if you don't need to keep the mapping.
-- **Never point Grafana at `copilot_billing_raw`.** It stores *every* CSV column
-  as JSONB, so any field GitHub adds later (e.g. an email) silently widens
-  exposure. Review it periodically and set a retention policy if you don't need
-  unlimited per-user history.
-- **Artifacts carry the same data.** The 90-day workflow artifact now also
-  includes the SCIM email snapshot alongside the raw per-user billing CSV —
-  restrict who can download it.
+- **Never point Grafana at either raw table.** `copilot_usage_raw` and
+  `copilot_billing_raw` preserve every source field as JSONB, so fields GitHub
+  adds later can silently widen exposure. Review them periodically and set a
+  retention policy if you do not need unlimited identifiable history.
+- **Artifacts carry the same data.** The 90-day workflow artifact includes raw
+  usage reports, the per-user billing CSV, and the SCIM email snapshot when
+  enabled. Restrict who can download it.
 
 ---
 
@@ -370,6 +386,9 @@ credentials.
   filter to every query).
 - **Run against the prior complete day.** "Today" isn't fully processed; the
   workflow defaults to yesterday (UTC).
+- **A green aggregate report does not prove full coverage.** Check
+  `copilot_usage_report` for aggregate, user, user-team, and repository inventory;
+  the workflow reports a failure if any family could not be collected.
 - **Usage vs. billing model names differ** (`claude-opus-4.6` vs.
   `Auto: GPT-5.3-Codex`). They're separate axes — don't join them; the `Model`
   filter is sourced from billing only.
