@@ -3,9 +3,8 @@
 # Copy this file into YOUR OWN repository at
 # .github/workflows/copilot-metrics-collection.yml, together with the two
 # collector scripts at scripts/ (see SCRIPTS_DIR below). It pulls the prior
-# day's Copilot usage metrics and billing data with one Enterprise GitHub App,
-# then uploads them as a workflow artifact — zero extra infrastructure to see
-# it working.
+# day's aggregate, user, user-team, and repository usage reports plus billing
+# data with one Enterprise GitHub App, then uploads them as a workflow artifact.
 #
 # One-time configuration in the repo that hosts this workflow
 # (Settings -> Secrets and variables -> Actions):
@@ -23,8 +22,9 @@
 # https://github.com/samqbush/copilot-adoption/blob/main/copilot-metrics-billing.md
 #
 # Security note: the App key can mint tokens for enterprise-wide Copilot metrics
-# and billing data. Host this workflow in a dedicated private repository with a
-# protected default branch and minimal write access.
+# and billing data. User and user-team reports are identifiable. Host this
+# workflow in a dedicated private repository with a protected default branch
+# and minimal write access.
 
 name: Copilot metrics & billing collection
 
@@ -73,24 +73,35 @@ jobs:
       - name: Collect usage metrics (GitHub App)
         env:
           COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
+          ENTERPRISE: ${{ vars.ENTERPRISE }}
+          COPILOT_APP_ID: ${{ vars.COPILOT_APP_ID }}
+          COPILOT_INSTALLATION_ID: ${{ vars.COPILOT_INSTALLATION_ID }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           mkdir -p copilot-data
           KEY_FILE="$RUNNER_TEMP/copilot-app.pem"
           trap 'rm -f "$KEY_FILE"' EXIT
           printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
           DAY='${{ steps.day.outputs.day }}'
-          # Write to a temp file first so a failure never leaves a partial JSON
-          # in the artifact directory.
-          bash "$SCRIPTS_DIR/copilot-usage-metrics.sh" '${{ vars.ENTERPRISE }}' \
-            --day "$DAY" \
-            --app-id '${{ vars.COPILOT_APP_ID }}' \
-            --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
-            --private-key "$KEY_FILE" \
-            > "$RUNNER_TEMP/usage.json"
-          mv "$RUNNER_TEMP/usage.json" \
-            "copilot-data/usage-enterprise-${{ vars.ENTERPRISE }}-$DAY.json"
+          rc=0
+          for REPORT_TYPE in aggregate users user-teams repos; do
+            if bash "$SCRIPTS_DIR/copilot-usage-metrics.sh" "$ENTERPRISE" \
+                 --day "$DAY" \
+                 --report-type "$REPORT_TYPE" \
+                 --app-id "$COPILOT_APP_ID" \
+                 --installation-id "$COPILOT_INSTALLATION_ID" \
+                 --private-key "$KEY_FILE" \
+                 > "$RUNNER_TEMP/usage-$REPORT_TYPE-$DAY.json"; then
+              mv "$RUNNER_TEMP/usage-$REPORT_TYPE-$DAY.json" \
+                "copilot-data/usage-$REPORT_TYPE-$ENTERPRISE-$DAY.json"
+              echo "usage/$REPORT_TYPE: collected $DAY"
+            else
+              echo "::warning::usage/$REPORT_TYPE collection failed for $DAY; skipping that report."
+              rc=1
+            fi
+          done
+          exit $rc
 
       - name: Collect billing (GitHub App)
         # Run even if the usage step failed (independent API call), as long as
@@ -98,6 +109,9 @@ jobs:
         if: ${{ !cancelled() && steps.day.outcome == 'success' }}
         env:
           COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
+          ENTERPRISE: ${{ vars.ENTERPRISE }}
+          COPILOT_APP_ID: ${{ vars.COPILOT_APP_ID }}
+          COPILOT_INSTALLATION_ID: ${{ vars.COPILOT_INSTALLATION_ID }}
         run: |
           set -euo pipefail
           mkdir -p copilot-data
@@ -106,12 +120,12 @@ jobs:
           printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
           DAY='${{ steps.day.outputs.day }}'
-          bash "$SCRIPTS_DIR/copilot-billing-export.sh" '${{ vars.ENTERPRISE }}' \
+          bash "$SCRIPTS_DIR/copilot-billing-export.sh" "$ENTERPRISE" \
             --start "$DAY" --end "$DAY" \
-            --app-id '${{ vars.COPILOT_APP_ID }}' \
-            --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
+            --app-id "$COPILOT_APP_ID" \
+            --installation-id "$COPILOT_INSTALLATION_ID" \
             --private-key "$KEY_FILE" \
-            --out "copilot-data/billing-ai_credit-${{ vars.ENTERPRISE }}-$DAY.csv"
+            --out "copilot-data/billing-ai_credit-$ENTERPRISE-$DAY.csv"
 
       - name: Upload collected data as an artifact
         if: ${{ !cancelled() }}

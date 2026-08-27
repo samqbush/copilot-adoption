@@ -7,9 +7,9 @@ several Postgres tables (e.g. free Neon serverless Postgres). Grafana then reads
 those tables via its native Postgres datasource — no GitHub credential lives in
 Grafana.
 
-It writes both enterprise-level aggregates AND identifiable per-user billing
-detail (see Privacy). Grafana should read the aggregate tables / restricted
-views, NOT the raw table.
+It writes enterprise-level aggregates plus lossless, identifiable usage and
+billing detail (see Privacy). Grafana should read only the aggregate/report
+tables or restricted views, never the raw tables.
 
 Usage tables written:
     - copilot_usage          — one row per (scope, slug, day) with active/engaged
@@ -19,12 +19,15 @@ Usage tables written:
       _language_feature / _adoption_phase — aggregate breakdowns from the report's
                                totals_by_* arrays (NO identities; safe for Grafana),
                                one row per dimension-combo per day.
+    - copilot_usage_report   — one inventory row per collected report family/day
+                               (metadata and row count; no report identities).
+    - copilot_usage_raw      — every source row from aggregate, user, user-team,
+                               and repository reports as JSONB (IDENTIFIABLE).
 
 Design notes
 ------------
-* Privacy: the billing CSV contains per-user rows (username, cost_center_name,
-  quotas). This loader INTENTIONALLY stores identifiable per-user billing detail
-  so a Copilot admin can identify power users and their spend:
+* Privacy: user usage reports and the billing CSV contain identities. This loader
+  intentionally stores that detail losslessly for downstream analysis:
     - copilot_billing        — enterprise aggregate per day (no identities).
                                total_cost_usd is the actual billed amount
                                (net_amount); gross_cost_usd / discount_cost_usd
@@ -40,10 +43,10 @@ Design notes
   volume behind each model's AI credits without reading the raw table. They stay
   NULL when the export predates those columns.
   This is a deliberate reversal of the original "aggregate only" stance. Treat
-  copilot_billing_user / copilot_billing_raw as sensitive: serve dashboards from
-  aggregates or restricted views, use a least-privilege Grafana DB role, and set
-  a retention policy. Dry-run output withholds per-user/raw rows by default
-  (they contain usernames / full CSV cells) unless --show-raw is passed locally.
+  copilot_usage_raw / copilot_billing_user / copilot_billing_raw as sensitive:
+  serve dashboards from aggregates or restricted views, use a least-privilege
+  Grafana DB role, and set a retention policy. Dry-run output never prints
+  input-derived values or identifiable rows.
   Quota columns are NOT summed into the aggregate tables (their semantics vary);
   inspect copilot_billing_raw.raw for quota detail.
 * Idempotency: aggregate rows (copilot_usage, copilot_billing) are keyed by a
@@ -61,8 +64,8 @@ Design notes
   BILLING_*_COLUMN env overrides, against a real payload if a field lands NULL or
   the wrong column is picked. Multi-row days sum additive counters only; unique
   user-counts/medians are taken from the first row (see extract_usage_scalars).
-* Dry run: with no --database-url / DATABASE_URL, computed aggregates are printed
-  as JSON and nothing is written — handy for local testing without a database.
+* Dry run: with no --database-url / DATABASE_URL, inputs are parsed but only
+  fixed status text is printed and nothing is written.
 
 Usage:
   load_metrics.py --data-dir copilot-data \
@@ -153,6 +156,30 @@ CREATE TABLE IF NOT EXISTS copilot_usage (
     source_run_id       text,
     source_repository   text,
     PRIMARY KEY (scope, slug, day)
+);
+CREATE TABLE IF NOT EXISTS copilot_usage_report (
+    day                 date        NOT NULL,
+    scope               text        NOT NULL,
+    slug                text        NOT NULL,
+    report_type         text        NOT NULL,
+    report_rows         integer     NOT NULL,
+    report_meta         jsonb,
+    generated_at        timestamptz,
+    source_run_id       text,
+    source_repository   text,
+    PRIMARY KEY (scope, slug, day, report_type)
+);
+CREATE TABLE IF NOT EXISTS copilot_usage_raw (
+    day                 date        NOT NULL,
+    scope               text        NOT NULL,
+    slug                text        NOT NULL,
+    report_type         text        NOT NULL,
+    row_hash            text        NOT NULL,
+    raw                 jsonb       NOT NULL,
+    generated_at        timestamptz,
+    source_run_id       text,
+    source_repository   text,
+    PRIMARY KEY (scope, slug, day, report_type, row_hash)
 );
 CREATE TABLE IF NOT EXISTS copilot_billing (
     day                 date        NOT NULL,
@@ -267,6 +294,38 @@ ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS input_tokens bigint;
 ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS output_tokens bigint;
 ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS cache_read_tokens bigint;
 ALTER TABLE copilot_billing_model ADD COLUMN IF NOT EXISTS cache_write_tokens bigint;
+"""
+
+UPSERT_USAGE_REPORT = """
+INSERT INTO copilot_usage_report (
+    day, scope, slug, report_type, report_rows, report_meta,
+    generated_at, source_run_id, source_repository
+) VALUES (
+    %(day)s, %(scope)s, %(slug)s, %(report_type)s, %(report_rows)s,
+    %(report_meta)s, %(generated_at)s, %(source_run_id)s, %(source_repository)s
+)
+ON CONFLICT (scope, slug, day, report_type) DO UPDATE SET
+    report_rows = EXCLUDED.report_rows,
+    report_meta = EXCLUDED.report_meta,
+    generated_at = EXCLUDED.generated_at,
+    source_run_id = EXCLUDED.source_run_id,
+    source_repository = EXCLUDED.source_repository;
+"""
+
+DELETE_USAGE_RAW = """
+DELETE FROM copilot_usage_raw
+WHERE scope = %(scope)s AND slug = %(slug)s AND day = %(day)s
+  AND report_type = %(report_type)s;
+"""
+
+INSERT_USAGE_RAW = """
+INSERT INTO copilot_usage_raw (
+    day, scope, slug, report_type, row_hash, raw,
+    generated_at, source_run_id, source_repository
+) VALUES (
+    %(day)s, %(scope)s, %(slug)s, %(report_type)s, %(row_hash)s, %(raw)s,
+    %(generated_at)s, %(source_run_id)s, %(source_repository)s
+);
 """
 
 # UPSERT_USAGE is generated from USAGE_METRIC_DEFS further down (build_usage_sql)
@@ -531,6 +590,9 @@ BREAKDOWN_DEFS = [
             ("avg_pull_requests_created", "avg_pull_requests_created", "numeric"),
             ("avg_pull_requests_merged", "avg_pull_requests_merged", "numeric"),
             ("avg_pull_requests_median_minutes_to_merge", "avg_pull_requests_median_minutes_to_merge", "numeric"),
+            ("avg_pull_requests_minutes_to_review", "avg_pull_requests_minutes_to_review", "numeric"),
+            ("avg_pull_requests_review_cycles", "avg_pull_requests_review_cycles", "numeric"),
+            ("total_pull_requests_merged", "total_pull_requests_merged", "bigint"),
         ],
     },
 ]
@@ -609,7 +671,21 @@ def build_breakdown_sql():
 
 
 # Wire the generated DDL/DML into the module-level SQL used by load_to_postgres.
-CREATE_SQL = CREATE_SQL + "\n" + _build_usage_ddl() + "\n" + _build_breakdown_ddl() + "\n"
+CREATE_SQL = (
+    CREATE_SQL
+    + "\n"
+    + _build_usage_ddl()
+    + "\n"
+    + _build_breakdown_ddl()
+    + """
+ALTER TABLE copilot_usage_adoption_phase
+    ADD COLUMN IF NOT EXISTS avg_pull_requests_minutes_to_review numeric;
+ALTER TABLE copilot_usage_adoption_phase
+    ADD COLUMN IF NOT EXISTS avg_pull_requests_review_cycles numeric;
+ALTER TABLE copilot_usage_adoption_phase
+    ADD COLUMN IF NOT EXISTS total_pull_requests_merged bigint;
+"""
+)
 UPSERT_USAGE = _build_usage_upsert()
 BREAKDOWN_SQL = build_breakdown_sql()
 
@@ -853,6 +929,54 @@ def summarize_usage(path: str, run_id: str, repo: str) -> "dict | None":
         return None
 
     rows = _report_rows(report)
+    scope = doc.get("scope")
+    slug = doc.get("slug")
+    report_type = doc.get("report_type") or (
+        "organization-1-day" if scope == "org" else "enterprise-1-day"
+    )
+    generated = now_iso()
+    report_record = {
+        "day": day,
+        "scope": scope,
+        "slug": slug,
+        "report_type": report_type,
+        "report_rows": len(rows),
+        "report_meta": meta,
+        "generated_at": generated,
+        "source_run_id": run_id or None,
+        "source_repository": repo or None,
+    }
+    raw_records = []
+    for ordinal, row in enumerate(rows):
+        raw_json = json.dumps(row, sort_keys=True, ensure_ascii=False)
+        raw_records.append({
+            # Raw rows belong to this collected report snapshot. Any per-event
+            # day remains available inside raw JSON.
+            "day": day,
+            "scope": scope,
+            "slug": slug,
+            "report_type": report_type,
+            "row_hash": hashlib.sha256(
+                f"{report_type}|{day}|{ordinal}|{raw_json}".encode("utf-8")
+            ).hexdigest(),
+            "raw": raw_json,
+            "generated_at": generated,
+            "source_run_id": run_id or None,
+            "source_repository": repo or None,
+        })
+
+    # Non-aggregate report families remain lossless without being forced into
+    # the aggregate schema used by the dashboard.
+    if report_type not in ("enterprise-1-day", "organization-1-day"):
+        return {
+            "usage": None,
+            "breakdowns": {},
+            "present": set(),
+            "key": (scope, slug, day),
+            "report_record": report_record,
+            "raw_records": raw_records,
+        }
+
     if len(rows) > 1:
         log(f"WARNING: {path} has {len(rows)} report rows for {day}; summing "
             f"additive counters but taking unique-user counts/medians from the "
@@ -868,8 +992,6 @@ def summarize_usage(path: str, run_id: str, repo: str) -> "dict | None":
         log(f"WARNING: no active/engaged totals matched in {path}. "
             f"Adjust ACTIVE_USER_KEYS/ENGAGED_USER_KEYS to the real schema.")
 
-    scope = doc.get("scope")
-    slug = doc.get("slug")
     record = {
         "day": day,
         "scope": scope,
@@ -880,7 +1002,7 @@ def summarize_usage(path: str, run_id: str, repo: str) -> "dict | None":
         "total_active_users": active,
         "total_engaged_users": engaged,
         "report_rows": len(rows),
-        "generated_at": now_iso(),
+        "generated_at": generated,
         "source_run_id": run_id or None,
         "source_repository": repo or None,
     }
@@ -893,6 +1015,8 @@ def summarize_usage(path: str, run_id: str, repo: str) -> "dict | None":
         "breakdowns": breakdown_rows,
         "present": present,
         "key": (scope, slug, day),
+        "report_record": report_record,
+        "raw_records": raw_records,
     }
 
 
@@ -1379,12 +1503,18 @@ def collect_rows(data_dir, run_id, repo, enterprise):
     # never replaced/wiped by the loader).
     usage_breakdowns = {d["table"]: {"rows": [], "present_keys": set()}
                         for d in BREAKDOWN_DEFS}
+    usage_reports = {"reports": [], "raw": []}
     billing = {"enterprise": [], "user": [], "model": [], "raw": [], "days": set()}
     for path in sorted(glob.glob(os.path.join(data_dir, "usage-*.json"))):
         result = summarize_usage(path, run_id, repo)
         if not result:
             continue
+        usage_reports["reports"].append(result["report_record"])
+        usage_reports["raw"].extend(result["raw_records"])
         rec = result["usage"]
+        if rec is None:
+            log("Non-aggregate usage input retained.")
+            continue
         usage.append(rec)
         log(f"usage {rec['day']}: active={rec['total_active_users']} "
             f"engaged={rec['total_engaged_users']} rows={rec['report_rows']}")
@@ -1412,7 +1542,7 @@ def collect_rows(data_dir, run_id, repo, enterprise):
     scim_users = []
     for path in sorted(glob.glob(os.path.join(data_dir, "scim-users-*.json"))):
         scim_users.extend(summarize_scim(path, run_id, repo, enterprise))
-    return usage, usage_breakdowns, billing, scim_users
+    return usage, usage_breakdowns, usage_reports, billing, scim_users
 
 
 def _decimal_or_zero(value):
@@ -1440,7 +1570,8 @@ def reconcile_billing(billing) -> None:
                 f"raw={raw_sum}). Check column detection/grouping.")
 
 
-def load_to_postgres(database_url, usage, usage_breakdowns, billing, scim_users):
+def load_to_postgres(database_url, usage, usage_breakdowns, usage_reports, billing,
+                     scim_users):
     try:
         import psycopg
         from psycopg.types.json import Jsonb
@@ -1448,6 +1579,18 @@ def load_to_postgres(database_url, usage, usage_breakdowns, billing, scim_users)
         log("ERROR: psycopg not installed. `pip install 'psycopg[binary]'`.")
         return 1
 
+    try:
+        return _load_to_postgres(
+            psycopg, Jsonb, database_url, usage, usage_breakdowns, usage_reports,
+            billing, scim_users
+        )
+    except psycopg.Error:
+        log("ERROR: database load failed; details withheld to protect sensitive data.")
+        return 1
+
+
+def _load_to_postgres(psycopg, Jsonb, database_url, usage, usage_breakdowns,
+                      usage_reports, billing, scim_users):
     reconcile_billing(billing)
 
     # Only replace days that actually produced parsed rows. A day absent from
@@ -1461,6 +1604,13 @@ def load_to_postgres(database_url, usage, usage_breakdowns, billing, scim_users)
             # Aggregate tables: idempotent upsert.
             for rec in usage:
                 cur.execute(UPSERT_USAGE, rec)
+            for rec in usage_reports["reports"]:
+                params = {**rec, "report_meta": Jsonb(rec["report_meta"])}
+                cur.execute(UPSERT_USAGE_REPORT, params)
+                cur.execute(DELETE_USAGE_RAW, rec)
+            for rec in usage_reports["raw"]:
+                params = {**rec, "raw": Jsonb(json.loads(rec["raw"]))}
+                cur.execute(INSERT_USAGE_RAW, params)
             for rec in billing["enterprise"]:
                 cur.execute(UPSERT_BILLING, rec)
             # Usage breakdown tables: delete-then-insert scoped to the exact
@@ -1531,15 +1681,19 @@ def main() -> int:
     ap.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY", ""))
     ap.add_argument("--enterprise", default=os.environ.get("ENTERPRISE", ""))
     ap.add_argument("--show-raw", action="store_true",
-                    help="LOCAL USE ONLY: include identifiable per-user/raw rows "
-                         "in dry-run output. Never enable in CI — it would write "
-                         "usernames and full CSV rows to the job log.")
+                    help="Deprecated: identifiable records are never written "
+                         "to process output.")
     args = ap.parse_args()
 
-    usage, usage_breakdowns, billing, scim_users = collect_rows(
+    if args.show_raw:
+        log("ERROR: --show-raw is disabled because identifiable records must "
+            "not be written to process output.")
+        return 2
+
+    usage, usage_breakdowns, usage_reports, billing, scim_users = collect_rows(
         args.data_dir, args.run_id, args.repository, args.enterprise)
 
-    if not usage and not billing["enterprise"] and not billing["raw"] \
+    if not usage_reports["reports"] and not billing["enterprise"] and not billing["raw"] \
             and not scim_users:
         log("No usage-*.json, billing-*.csv, or scim-users-*.json inputs found; "
             "nothing to load.")
@@ -1557,39 +1711,17 @@ def main() -> int:
     if not args.database_url:
         log("DRY RUN (no --database-url/DATABASE_URL).")
         reconcile_billing(billing)
-        # Default output is PII-safe: aggregates + counts only. The per-user and
-        # raw rows contain usernames / full CSV cells and are withheld unless
-        # --show-raw is passed for local inspection. Usage breakdowns are
-        # aggregate (no identities), so their counts are always safe to show.
-        # SCIM email-mapping rows are PII (emails), so they're withheld too.
         summary = {
-            "usage": usage,
-            "billing_enterprise": billing["enterprise"],
-            "billing_model": billing["model"],
-            "usage_breakdown_counts": {
-                t: len(b["rows"]) for t, b in usage_breakdowns.items()},
-            "counts": {
-                "billing_user_rows": len(billing["user"]),
-                "billing_raw_rows": len(billing["raw"]),
-                "enterprise_user_rows": len(scim_users),
-                "days": sorted(billing["days"]),
-            },
+            "status": "dry-run",
+            "message": "Inputs parsed; no database writes performed.",
+            "identifiable_data": "withheld",
         }
-        if args.show_raw:
-            summary["billing_user"] = billing["user"]
-            summary["billing_raw"] = billing["raw"]
-            summary["enterprise_users"] = scim_users
-            summary["usage_breakdowns"] = {
-                t: b["rows"] for t, b in usage_breakdowns.items()}
-        else:
-            log("Per-user, raw, and email-mapping rows withheld from output "
-                "(contain usernames / emails / full CSV cells). Pass --show-raw "
-                "locally to include them.")
+        log("Identifiable and input-derived values withheld from dry-run output.")
         print(json.dumps(summary, indent=2))
         return 0
 
-    return load_to_postgres(args.database_url, usage, usage_breakdowns, billing,
-                            scim_users)
+    return load_to_postgres(args.database_url, usage, usage_breakdowns,
+                            usage_reports, billing, scim_users)
 
 
 if __name__ == "__main__":

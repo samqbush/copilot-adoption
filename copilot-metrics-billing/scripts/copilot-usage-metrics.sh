@@ -7,15 +7,15 @@
 # data — active users, completions, chat, etc.) for an enterprise or org and
 # writes it as JSON to stdout. Usage metrics contain NO billing amounts.
 #
-# It calls the "report" endpoint, which returns short-lived download_links to an
-# NDJSON file, then downloads and emits that file. ~2 API calls per run.
+# It calls one report endpoint, which returns short-lived download_links to one
+# or more NDJSON files, then downloads and combines every part.
 #
 # Usage: ./copilot-usage-metrics.sh <enterprise> [options]
 #        ./copilot-usage-metrics.sh <org> --org [options]
 #
 # Options:
-#   --org                    Treat the slug as an ORG (organization-1-day) instead
-#                            of an enterprise (enterprise-1-day, the default).
+#   --org                    Treat the slug as an organization.
+#   --report-type TYPE       Aggregate report (default), users, user-teams, or repos.
 #   --day YYYY-MM-DD         Day to pull (default: yesterday, UTC).
 #   --28day                  Pull the 28-day rolling report instead of a single day.
 #                            (Alias: --last-28-days.)
@@ -40,11 +40,12 @@ set -euo pipefail
 
 API_VERSION="2026-03-10"
 
-SLUG="${1:?Usage: $0 <enterprise|org> [--org] [--day YYYY-MM-DD] [--28day] [--app-id ID --installation-id ID --private-key PATH]}"
+SLUG="${1:?Usage: $0 <enterprise|org> [--org] [--report-type TYPE] [--day YYYY-MM-DD] [--28day] [--app-id ID --installation-id ID --private-key PATH]}"
 shift
 
 # Parse optional flags
 SCOPE="enterprise"
+REPORT_TYPE="aggregate"
 DAY=""
 ROLLING=""
 APP_ID=""
@@ -54,6 +55,7 @@ PRIVATE_KEY=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --org) SCOPE="org"; shift ;;
+    --report-type) REPORT_TYPE="$2"; shift 2 ;;
     --day) DAY="$2"; shift 2 ;;
     --28day|--last-28-days) ROLLING="1"; shift ;;
     --app-id) APP_ID="$2"; shift 2 ;;
@@ -62,6 +64,11 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
+
+case "$REPORT_TYPE" in
+  aggregate|users|user-teams|repos) ;;
+  *) echo "ERROR: --report-type must be aggregate, users, user-teams, or repos." >&2; exit 1 ;;
+esac
 
 APP_ARG_COUNT=0
 [[ -n "$APP_ID" ]] && APP_ARG_COUNT=$((APP_ARG_COUNT + 1))
@@ -128,19 +135,27 @@ if [[ -z "${TOKEN:-}" ]]; then
   exit 1
 fi
 
-# Build the report endpoint URL
-if [[ "$SCOPE" == "org" ]]; then
-  if [[ -n "$ROLLING" ]]; then
-    REPORT_PATH="/orgs/$SLUG/copilot/metrics/reports/organization-28-day/latest"
+# Build the report endpoint URL. Daily collection fetches every non-overlapping
+# report family; the 28-day option remains limited to reports GitHub publishes.
+if [[ -n "$ROLLING" ]]; then
+  if [[ "$REPORT_TYPE" == "aggregate" ]]; then
+    TYPE_SUFFIX=$([[ "$SCOPE" == "org" ]] && echo "organization-28-day" || echo "enterprise-28-day")
+  elif [[ "$REPORT_TYPE" == "users" ]]; then
+    TYPE_SUFFIX="users-28-day"
   else
-    REPORT_PATH="/orgs/$SLUG/copilot/metrics/reports/organization-1-day?day=$DAY"
+    echo "ERROR: --28day is only available for aggregate and users reports." >&2
+    exit 1
   fi
+  BASE_PATH=$([[ "$SCOPE" == "org" ]] && echo "/orgs/$SLUG" || echo "/enterprises/$SLUG")
+  REPORT_PATH="$BASE_PATH/copilot/metrics/reports/$TYPE_SUFFIX/latest"
 else
-  if [[ -n "$ROLLING" ]]; then
-    REPORT_PATH="/enterprises/$SLUG/copilot/metrics/reports/enterprise-28-day/latest"
+  if [[ "$REPORT_TYPE" == "aggregate" ]]; then
+    TYPE_SUFFIX=$([[ "$SCOPE" == "org" ]] && echo "organization-1-day" || echo "enterprise-1-day")
   else
-    REPORT_PATH="/enterprises/$SLUG/copilot/metrics/reports/enterprise-1-day?day=$DAY"
+    TYPE_SUFFIX="$REPORT_TYPE-1-day"
   fi
+  BASE_PATH=$([[ "$SCOPE" == "org" ]] && echo "/orgs/$SLUG" || echo "/enterprises/$SLUG")
+  REPORT_PATH="$BASE_PATH/copilot/metrics/reports/$TYPE_SUFFIX?day=$DAY"
 fi
 
 echo "Requesting usage metrics report: $REPORT_PATH" >&2
@@ -152,7 +167,27 @@ api() {
     "$@"
 }
 
-RESPONSE=$(api "https://api.github.com${REPORT_PATH}")
+RESPONSE_FILE=$(mktemp)
+LINKS_FILE=$(mktemp)
+REPORT_FILE=$(mktemp)
+trap 'rm -f "$RESPONSE_FILE" "$LINKS_FILE" "$REPORT_FILE"' EXIT
+HTTP_STATUS=$(api -o "$RESPONSE_FILE" -w '%{http_code}' \
+  "https://api.github.com${REPORT_PATH}")
+RESPONSE=$(cat "$RESPONSE_FILE")
+
+# Some report families return 204 when there was no activity. Preserve that
+# successful empty observation so downstream systems can distinguish it from a
+# failed or missing collection.
+if [[ "$HTTP_STATUS" == "204" ]]; then
+  jq -n \
+    --arg scope "$SCOPE" \
+    --arg slug "$SLUG" \
+    --arg report_type "$TYPE_SUFFIX" \
+    --arg day "$DAY" \
+    --argjson rolling "$([[ -n "$ROLLING" ]] && echo true || echo false)" \
+    '{scope: $scope, slug: $slug, report_type: $report_type, day: $day, rolling: $rolling, report_meta: {http_status: 204}, report: []}'
+  exit 0
+fi
 
 # Surface API errors clearly
 if echo "$RESPONSE" | jq -e '.message? // empty' >/dev/null 2>&1; then
@@ -160,25 +195,45 @@ if echo "$RESPONSE" | jq -e '.message? // empty' >/dev/null 2>&1; then
   echo "  (Check the 'Copilot usage metrics' policy is enabled and the token has the right permission.)" >&2
   exit 1
 fi
+if [[ ! "$HTTP_STATUS" =~ ^2[0-9][0-9]$ ]]; then
+  echo "ERROR: API returned HTTP $HTTP_STATUS: $RESPONSE" >&2
+  exit 1
+fi
 
-# Pull the first download link (signed, short-lived) and fetch the NDJSON report.
-LINK=$(echo "$RESPONSE" | jq -r '.download_links[0] // empty')
-if [[ -z "$LINK" ]]; then
+# Extract every signed download link. Large reports can be split across parts.
+if ! echo "$RESPONSE" | jq -er \
+    '.download_links | select(type == "array" and length > 0)[]' \
+    > "$LINKS_FILE"; then
   echo "ERROR: No download_links in response: $RESPONSE" >&2
   exit 1
 fi
 
 echo "Downloading and assembling report file..." >&2
 
+# Download first so a network/HTTP failure or malformed report cannot be hidden
+# by process-substitution exit semantics.
+: > "$REPORT_FILE"
+PART_COUNT=0
+while IFS= read -r LINK; do
+  [[ -n "$LINK" ]] || continue
+  curl -fLsS "$LINK" >> "$REPORT_FILE"
+  printf '\n' >> "$REPORT_FILE"
+  PART_COUNT=$((PART_COUNT + 1))
+done < "$LINKS_FILE"
+
+if (( PART_COUNT == 0 )) || [[ ! -s "$REPORT_FILE" ]] \
+    || ! jq -e -s 'length > 0' "$REPORT_FILE" >/dev/null; then
+  echo "ERROR: Downloaded usage report is not valid NDJSON." >&2
+  exit 1
+fi
+
 # Emit a single JSON object: request metadata + the report rows as an array.
-# We stream the download straight into jq (no intermediate shell variable) so
-# large reports aren't held in memory twice and the raw bytes aren't reinterpreted
-# by echo. NDJSON rows are slurped into .report; empty lines are ignored.
 jq -n \
   --arg scope "$SCOPE" \
   --arg slug "$SLUG" \
+  --arg report_type "$TYPE_SUFFIX" \
   --arg day "$DAY" \
   --argjson rolling "$([[ -n "$ROLLING" ]] && echo true || echo false)" \
-  --argjson meta "$(echo "$RESPONSE" | jq '{report_day, report_start_day, report_end_day}')" \
-  --slurpfile rows <(curl -sS "$LINK" | jq -c 'select(length>0)') \
-  '{scope: $scope, slug: $slug, day: $day, rolling: $rolling, report_meta: $meta, report: $rows}'
+  --argjson meta "$(echo "$RESPONSE" | jq 'del(.download_links)')" \
+  --slurpfile rows "$REPORT_FILE" \
+  '{scope: $scope, slug: $slug, report_type: $report_type, day: $day, rolling: $rolling, report_meta: $meta, report: $rows}'

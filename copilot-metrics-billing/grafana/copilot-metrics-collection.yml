@@ -3,9 +3,9 @@
 # Copy this file into YOUR OWN repository at
 # .github/workflows/copilot-metrics-collection.yml, together with the three
 # scripts at scripts/ (the two collectors + load_metrics.py — see SCRIPTS_DIR
-# below). It pulls the prior day's Copilot usage metrics and billing data with
-# one Enterprise GitHub App, uploads them as a workflow artifact (backup), and
-# then loads durable per-day summaries into Postgres for Grafana to read.
+# below). It pulls the prior day's aggregate, user, user-team, and repository
+# usage reports plus billing data with one Enterprise GitHub App, uploads them
+# as a workflow artifact (backup), and then loads durable history into Postgres.
 #
 # Resulting layout in your repo:
 #   .github/workflows/copilot-metrics-collection.yml   (this file)
@@ -38,8 +38,9 @@
 # the updated enterprise installation, then remove GH_BILLING_TOKEN.
 #
 # Security note: the App key can mint tokens for enterprise-wide Copilot
-# metrics, billing, and optional SCIM data. Host this workflow in a dedicated
-# private repository with a protected default branch and minimal write access.
+# metrics, billing, and optional SCIM data. User and user-team reports are
+# identifiable. Host this workflow in a dedicated private repository with a
+# protected default branch and minimal write access.
 
 name: Copilot metrics & billing collection
 
@@ -127,6 +128,10 @@ jobs:
       - name: Collect usage metrics (GitHub App)
         env:
           COPILOT_APP_PRIVATE_KEY: ${{ secrets.COPILOT_APP_PRIVATE_KEY }}
+          ENTERPRISE: ${{ vars.ENTERPRISE }}
+          COPILOT_APP_ID: ${{ vars.COPILOT_APP_ID }}
+          COPILOT_INSTALLATION_ID: ${{ vars.COPILOT_INSTALLATION_ID }}
+          COLLECTION_DAYS: ${{ steps.day.outputs.days }}
         run: |
           set -uo pipefail
           mkdir -p copilot-data
@@ -135,22 +140,25 @@ jobs:
           printf '%s' "$COPILOT_APP_PRIVATE_KEY" > "$KEY_FILE"
           chmod 600 "$KEY_FILE"
           rc=0
-          for DAY in ${{ steps.day.outputs.days }}; do
-            # Write to a temp file first so a failed day never leaves a partial
-            # JSON in the artifact directory; one bad day doesn't abort the rest.
-            if bash "$SCRIPTS_DIR/copilot-usage-metrics.sh" '${{ vars.ENTERPRISE }}' \
-                 --day "$DAY" \
-                 --app-id '${{ vars.COPILOT_APP_ID }}' \
-                 --installation-id '${{ vars.COPILOT_INSTALLATION_ID }}' \
-                 --private-key "$KEY_FILE" \
-                 > "$RUNNER_TEMP/usage-$DAY.json"; then
-              mv "$RUNNER_TEMP/usage-$DAY.json" \
-                "copilot-data/usage-enterprise-${{ vars.ENTERPRISE }}-$DAY.json"
-              echo "usage: collected $DAY"
-            else
-              echo "::warning::usage collection failed for $DAY; skipping that day."
-              rc=1
-            fi
+          for DAY in $COLLECTION_DAYS; do
+            for REPORT_TYPE in aggregate users user-teams repos; do
+              # Write to a temp file first so a failed report never leaves a
+              # partial JSON in the artifact directory.
+              if bash "$SCRIPTS_DIR/copilot-usage-metrics.sh" "$ENTERPRISE" \
+                   --day "$DAY" \
+                   --report-type "$REPORT_TYPE" \
+                   --app-id "$COPILOT_APP_ID" \
+                   --installation-id "$COPILOT_INSTALLATION_ID" \
+                   --private-key "$KEY_FILE" \
+                   > "$RUNNER_TEMP/usage-$REPORT_TYPE-$DAY.json"; then
+                mv "$RUNNER_TEMP/usage-$REPORT_TYPE-$DAY.json" \
+                  "copilot-data/usage-$REPORT_TYPE-$ENTERPRISE-$DAY.json"
+                echo "usage/$REPORT_TYPE: collected $DAY"
+              else
+                echo "::warning::usage/$REPORT_TYPE collection failed for $DAY; skipping that report."
+                rc=1
+              fi
+            done
           done
           exit $rc
 
