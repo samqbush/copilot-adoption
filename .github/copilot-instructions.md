@@ -76,3 +76,6 @@ When editing a page, reread the page if we are changing logic as this may impact
 - Use simple and straightforward language that is easy to understand. Avoid complex words or jargon that may confuse the reader.
 - Be specific. Provide specific details and examples to support your points.
 - When editing or writing content pages, run the humanizer skill on the new text before finalizing to remove AI writing patterns.
+
+### Development Practices
+- Never develop on the main branch directly. Always create a feature branch for your work and merge it back into the main branch through a pull request to ensure code review and maintain a clean history.
