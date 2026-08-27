@@ -20,9 +20,53 @@ LOAD_METRICS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(LOAD_METRICS)
 
 
+class RecordingCursor:
+    def __init__(self):
+        self.calls = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def execute(self, statement, params=None):
+        self.calls.append((statement, params))
+
+
+class RecordingConnection:
+    def __init__(self):
+        self.recording_cursor = RecordingCursor()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def cursor(self):
+        return self.recording_cursor
+
+    def commit(self):
+        pass
+
+
+class RecordingPsycopg:
+    def __init__(self):
+        self.connection = RecordingConnection()
+
+    def connect(self, database_url):
+        return self.connection
+
+
 class UsageRetentionTests(unittest.TestCase):
-    def write_report(self, directory, report_type, rows):
-        path = Path(directory) / f"usage-{report_type}.json"
+    def write_report(self, directory, report_type, rows, filename=None, metadata=None):
+        path = Path(directory) / (filename or f"usage-{report_type}.json")
+        report_meta = {
+            "report_day": "2026-08-26",
+            "future_metadata": "retained",
+        }
+        report_meta.update(metadata or {})
         path.write_text(
             json.dumps(
                 {
@@ -30,10 +74,7 @@ class UsageRetentionTests(unittest.TestCase):
                     "slug": "example",
                     "report_type": report_type,
                     "day": "2026-08-26",
-                    "report_meta": {
-                        "report_day": "2026-08-26",
-                        "future_metadata": "retained",
-                    },
+                    "report_meta": report_meta,
                     "report": rows,
                 }
             ),
@@ -59,10 +100,13 @@ class UsageRetentionTests(unittest.TestCase):
             )
 
         self.assertEqual(usage, [])
-        self.assertEqual(reports["reports"][0]["report_type"], "users-1-day")
-        self.assertEqual(reports["reports"][0]["report_meta"]["future_metadata"], "retained")
+        snapshot = reports["snapshots"][0]
+        self.assertEqual(snapshot["report"]["report_type"], "users-1-day")
         self.assertEqual(
-            json.loads(reports["raw"][0]["raw"])["future_metric"], {"nested": True}
+            snapshot["report"]["report_meta"]["future_metadata"], "retained"
+        )
+        self.assertEqual(
+            json.loads(snapshot["raw"][0]["raw"])["future_metric"], {"nested": True}
         )
 
     def test_rolling_raw_rows_use_snapshot_day_for_idempotent_replacement(self):
@@ -98,8 +142,198 @@ class UsageRetentionTests(unittest.TestCase):
             )
 
         self.assertEqual(len(usage), 1)
-        self.assertEqual(len(reports["reports"]), 4)
-        self.assertEqual(len(reports["raw"]), 4)
+        self.assertEqual(len(reports["snapshots"]), 4)
+        self.assertEqual(
+            sum(len(snapshot["raw"]) for snapshot in reports["snapshots"]), 4
+        )
+
+    def test_differing_duplicate_snapshots_use_later_filename_everywhere(self):
+        earlier = [
+            {
+                "day": "2026-08-26",
+                "daily_active_users": 1,
+                "totals_by_ide": [
+                    {
+                        "ide": "vscode",
+                        "user_initiated_interaction_count": 1,
+                    }
+                ],
+            }
+        ]
+        later = [
+            {
+                "day": "2026-08-26",
+                "daily_active_users": 2,
+                "totals_by_ide": [
+                    {
+                        "ide": "vscode",
+                        "user_initiated_interaction_count": 2,
+                    }
+                ],
+            }
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            self.write_report(
+                directory,
+                "enterprise-1-day",
+                earlier,
+                filename="usage-a.json",
+                metadata={"snapshot": "earlier"},
+            )
+            self.write_report(
+                directory,
+                "enterprise-1-day",
+                later,
+                filename="usage-z.json",
+                metadata={"snapshot": "later"},
+            )
+            usage, breakdowns, reports, _, _ = LOAD_METRICS.collect_rows(
+                directory, "run", "owner/repo", "example"
+            )
+
+        self.assertEqual(len(usage), 1)
+        self.assertEqual(usage[0]["total_active_users"], 2)
+        self.assertEqual(
+            breakdowns["copilot_usage_ide"]["rows"][0][
+                "user_initiated_interactions"
+            ],
+            2,
+        )
+        self.assertEqual(len(reports["snapshots"]), 1)
+        snapshot = reports["snapshots"][0]
+        self.assertEqual(snapshot["report"]["report_meta"]["snapshot"], "later")
+        self.assertEqual(json.loads(snapshot["raw"][0]["raw"]), later[0])
+
+    def test_identical_duplicate_snapshot_inserts_each_raw_hash_once(self):
+        row = {"day": "2026-08-26", "user_id": 42}
+        with tempfile.TemporaryDirectory() as directory:
+            for filename in ("usage-a.json", "usage-z.json"):
+                self.write_report(
+                    directory, "users-1-day", [row], filename=filename
+                )
+            usage, breakdowns, reports, billing, scim_users = (
+                LOAD_METRICS.collect_rows(
+                    directory, "run", "owner/repo", "example"
+                )
+            )
+
+        psycopg = RecordingPsycopg()
+        LOAD_METRICS._load_to_postgres(
+            psycopg,
+            lambda value: value,
+            "postgresql://example",
+            usage,
+            breakdowns,
+            reports,
+            billing,
+            scim_users,
+        )
+        inserted = [
+            params["row_hash"]
+            for statement, params in psycopg.connection.recording_cursor.calls
+            if statement == LOAD_METRICS.INSERT_USAGE_RAW
+        ]
+        self.assertEqual(len(inserted), 1)
+        self.assertEqual(len(inserted), len(set(inserted)))
+
+    def test_later_empty_snapshot_replaces_earlier_raw_rows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.write_report(
+                directory,
+                "users-1-day",
+                [{"day": "2026-08-26", "user_id": 42}],
+                filename="usage-a.json",
+            )
+            self.write_report(
+                directory,
+                "users-1-day",
+                [],
+                filename="usage-z.json",
+            )
+            usage, breakdowns, reports, billing, scim_users = LOAD_METRICS.collect_rows(
+                directory, "run", "owner/repo", "example"
+            )
+
+        self.assertEqual(len(reports["snapshots"]), 1)
+        self.assertEqual(reports["snapshots"][0]["report"]["report_rows"], 0)
+        self.assertEqual(reports["snapshots"][0]["raw"], [])
+
+        psycopg = RecordingPsycopg()
+        LOAD_METRICS._load_to_postgres(
+            psycopg,
+            lambda value: value,
+            "postgresql://example",
+            usage,
+            breakdowns,
+            reports,
+            billing,
+            scim_users,
+        )
+        usage_statements = [
+            statement
+            for statement, _ in psycopg.connection.recording_cursor.calls
+            if statement
+            in (
+                LOAD_METRICS.UPSERT_USAGE_REPORT,
+                LOAD_METRICS.DELETE_USAGE_RAW,
+                LOAD_METRICS.INSERT_USAGE_RAW,
+            )
+        ]
+        self.assertEqual(
+            usage_statements,
+            [LOAD_METRICS.UPSERT_USAGE_REPORT, LOAD_METRICS.DELETE_USAGE_RAW],
+        )
+
+    def test_usage_report_database_writes_are_grouped_by_snapshot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.write_report(
+                directory,
+                "users-1-day",
+                [{"day": "2026-08-26", "user_id": 42}],
+            )
+            self.write_report(
+                directory,
+                "repos-1-day",
+                [{"day": "2026-08-26", "repository": "owner/repo"}],
+            )
+            usage, breakdowns, reports, billing, scim_users = (
+                LOAD_METRICS.collect_rows(
+                    directory, "run", "owner/repo", "example"
+                )
+            )
+
+        psycopg = RecordingPsycopg()
+        LOAD_METRICS._load_to_postgres(
+            psycopg,
+            lambda value: value,
+            "postgresql://example",
+            usage,
+            breakdowns,
+            reports,
+            billing,
+            scim_users,
+        )
+        usage_statements = [
+            statement
+            for statement, _ in psycopg.connection.recording_cursor.calls
+            if statement
+            in (
+                LOAD_METRICS.UPSERT_USAGE_REPORT,
+                LOAD_METRICS.DELETE_USAGE_RAW,
+                LOAD_METRICS.INSERT_USAGE_RAW,
+            )
+        ]
+        self.assertEqual(
+            usage_statements,
+            [
+                LOAD_METRICS.UPSERT_USAGE_REPORT,
+                LOAD_METRICS.DELETE_USAGE_RAW,
+                LOAD_METRICS.INSERT_USAGE_RAW,
+                LOAD_METRICS.UPSERT_USAGE_REPORT,
+                LOAD_METRICS.DELETE_USAGE_RAW,
+                LOAD_METRICS.INSERT_USAGE_RAW,
+            ],
+        )
 
     def test_documented_adoption_fields_are_normalized(self):
         with tempfile.TemporaryDirectory() as directory:

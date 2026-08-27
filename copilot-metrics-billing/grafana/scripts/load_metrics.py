@@ -1503,14 +1503,29 @@ def collect_rows(data_dir, run_id, repo, enterprise):
     # never replaced/wiped by the loader).
     usage_breakdowns = {d["table"]: {"rows": [], "present_keys": set()}
                         for d in BREAKDOWN_DEFS}
-    usage_reports = {"reports": [], "raw": []}
+    usage_reports = {"snapshots": []}
     billing = {"enterprise": [], "user": [], "model": [], "raw": [], "days": set()}
+    selected_usage = {}
+    duplicate_usage = 0
     for path in sorted(glob.glob(os.path.join(data_dir, "usage-*.json"))):
         result = summarize_usage(path, run_id, repo)
         if not result:
             continue
-        usage_reports["reports"].append(result["report_record"])
-        usage_reports["raw"].extend(result["raw_records"])
+        report = result["report_record"]
+        key = (report["scope"], report["slug"], report["day"], report["report_type"])
+        if key in selected_usage:
+            duplicate_usage += 1
+        selected_usage[key] = result
+
+    if duplicate_usage:
+        log(f"WARNING: found {duplicate_usage} duplicate usage snapshot(s); "
+            f"the last file in filename order was retained.")
+
+    for result in selected_usage.values():
+        usage_reports["snapshots"].append({
+            "report": result["report_record"],
+            "raw": result["raw_records"],
+        })
         rec = result["usage"]
         if rec is None:
             log("Non-aggregate usage input retained.")
@@ -1518,13 +1533,12 @@ def collect_rows(data_dir, run_id, repo, enterprise):
         usage.append(rec)
         log(f"usage {rec['day']}: active={rec['total_active_users']} "
             f"engaged={rec['total_engaged_users']} rows={rec['report_rows']}")
-        key = result["key"]
+        breakdown_key = result["key"]
         for table, rows in result["breakdowns"].items():
             usage_breakdowns[table]["rows"].extend(rows)
             if table in result["present"]:
-                usage_breakdowns[table]["present_keys"].add(key)
-    # Merge breakdown rows across files so duplicate (scope,slug,day) inputs can
-    # never collide on a breakdown primary key when inserted.
+                usage_breakdowns[table]["present_keys"].add(breakdown_key)
+    # Merge any duplicate dimensions produced within selected snapshots.
     _defn_by_table = {d["table"]: d for d in BREAKDOWN_DEFS}
     for table, bucket in usage_breakdowns.items():
         bucket["rows"] = merge_breakdown_rows(_defn_by_table[table], bucket["rows"])
@@ -1604,13 +1618,17 @@ def _load_to_postgres(psycopg, Jsonb, database_url, usage, usage_breakdowns,
             # Aggregate tables: idempotent upsert.
             for rec in usage:
                 cur.execute(UPSERT_USAGE, rec)
-            for rec in usage_reports["reports"]:
+            for snapshot in usage_reports["snapshots"]:
+                rec = snapshot["report"]
                 params = {**rec, "report_meta": Jsonb(rec["report_meta"])}
                 cur.execute(UPSERT_USAGE_REPORT, params)
                 cur.execute(DELETE_USAGE_RAW, rec)
-            for rec in usage_reports["raw"]:
-                params = {**rec, "raw": Jsonb(json.loads(rec["raw"]))}
-                cur.execute(INSERT_USAGE_RAW, params)
+                for raw_rec in snapshot["raw"]:
+                    params = {
+                        **raw_rec,
+                        "raw": Jsonb(json.loads(raw_rec["raw"])),
+                    }
+                    cur.execute(INSERT_USAGE_RAW, params)
             for rec in billing["enterprise"]:
                 cur.execute(UPSERT_BILLING, rec)
             # Usage breakdown tables: delete-then-insert scoped to the exact
@@ -1693,7 +1711,7 @@ def main() -> int:
     usage, usage_breakdowns, usage_reports, billing, scim_users = collect_rows(
         args.data_dir, args.run_id, args.repository, args.enterprise)
 
-    if not usage_reports["reports"] and not billing["enterprise"] and not billing["raw"] \
+    if not usage_reports["snapshots"] and not billing["enterprise"] and not billing["raw"] \
             and not scim_users:
         log("No usage-*.json, billing-*.csv, or scim-users-*.json inputs found; "
             "nothing to load.")
