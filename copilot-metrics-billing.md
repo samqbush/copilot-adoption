@@ -8,7 +8,7 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: August 27, 2026*
+*Last updated: October 20, 2026*
 
 ---
 
@@ -50,10 +50,15 @@ you can adapt it.
 | Auth | Enterprise GitHub App: **Enterprise Copilot metrics (read)** | Same App: **Enterprise billing (read)** |
 
 Usage metrics tell you *how Copilot is being used*. The aggregate report has no
-user identity; the separate user report includes `user_id` and `user_login`.
-Billing tells you *what it costs*. Collect both API families separately, then
-join usage `user_login` to billing `username` for the same date. One App
-installation token can authorize every call when the App has both permissions.
+user identity; the separate user report includes `user_id`, `user_login`, and
+`ai_credits_used`, each user's credit total for the day
+([added June 19, 2026](https://github.blog/changelog/2026-06-19-ai-credits-consumed-per-user-now-in-the-copilot-usage-metrics-api/)).
+That's enough to spot heavy users, but GitHub documents it as a consumption
+metric rather than an invoicing total, so reconcile spend against billing.
+Billing tells you *what it costs*, in dollars and by model. Collect both API
+families separately, then join usage `user_login` to billing `username` for the
+same date. One App installation token can authorize every call when the App has
+both permissions.
 
 ---
 
@@ -262,6 +267,13 @@ won't tell you. Field definitions are in the
 > `GET /enterprises/{ent}/settings/billing/usage/summary?product=Copilot`
 > ([docs](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/usage?apiVersion=2026-03-10#get-billing-usage-summary-for-an-enterprise)).
 > One call, aggregated totals, but no per-user breakdown.
+>
+> To check one user, call
+> `GET /enterprises/{ent}/settings/billing/ai_credit/usage?user={login}`
+> ([docs](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/usage?apiVersion=2026-03-10#get-billing-ai-credit-usage-report-for-an-enterprise)).
+> It returns that user's month-to-date spend by model. Add `&day=20` (day of the
+> current month, `1`–`31`) to narrow it to one day, including today's usage so
+> far, which the daily export doesn't cover yet.
 
 ---
 

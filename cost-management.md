@@ -8,7 +8,7 @@ toc: true
 # Managing Copilot usage-based billing
 {:.no_toc}
 
-*Last updated: August 26, 2026*
+*Last updated: October 20, 2026*
 
 This page is a worked example: one concrete, runnable way to run cost-center spend controls for Copilot at enterprise scale and keep developers unblocked. [GitHub Docs](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing) cover what each budget control does; the [Well-Architected Framework](https://wellarchitected.github.com/library/governance/recommendations/managing-ai-credits/) covers the governance model and design trade-offs. This guide adds a concrete implementation with real numbers and the exact API calls. Treat it as one reference implementation and adapt it to your own enterprise.
 
@@ -319,10 +319,22 @@ After August 2026 the arbitrage disappears: both tiers include credits proportio
 
 Start with one question: **does the shared pool still have credits?** It splits the diagnosis in two.
 
-- **Pool still has credits.** The block is almost always a user-level budget. Check the scopes most-restrictive-first — Individual (IUB), then cost center (CCULB), then Universal (UULB) — and raise the one that's binding. If none are, check whether that user's cost center hit its own [included usage cap](#step-3--enable-the-cost-center-included-usage-cap): a cost center can exhaust its included share while the enterprise pool still has room.
+- **Pool still has credits.** The block is almost always a user-level budget. Check the scopes most-restrictive-first — Individual (IUB), then cost center (CCULB), then Universal (UULB) — and raise the one that's binding. If none are, check whether that user's cost center hit its own [included usage cap](#step-3-optional--enable-the-cost-center-included-usage-cap): a cost center can exhaust its included share while the enterprise pool still has room.
 - **Pool depleted.** User-level budgets still bind in the metered phase, so check them in the same order first. Past them, the [enterprise backstop](#step-4--put-an-enterprise-budget-backstop-behind-it-all) is what caps total overage — raise it if that's the limit that fired.
 
 A user can be stopped by any scope that applies to them, even when a lower-priority budget still has room. The most specific scope wins ([precedence rules](https://docs.github.com/en/enterprise-cloud@latest/copilot/concepts/billing/budgets-for-usage-based-billing)). Nine times out of ten it's a user-level budget.
+
+To find the binding budget in one call, [list the budgets](https://docs.github.com/en/enterprise-cloud@latest/rest/billing/budgets?apiVersion=2026-03-10#get-all-budgets) filtered to the user. The response's `effective_budget` is the user-level budget GitHub enforces for them, already resolved by precedence. This prints it with the user's month-to-date spend, in dollars:
+
+```bash
+ENTERPRISE="your-enterprise-slug"
+USER_LOGIN="octocat"
+
+gh api "/enterprises/$ENTERPRISE/settings/billing/budgets?user=$USER_LOGIN&per_page=100" \
+  --jq '.effective_budget.id as $id | .budgets[] | select(.id == $id) | {budget_scope, budget_entity_name, budget_amount, consumed_amount}'
+```
+
+`budget_scope` tells you which control it is: `user` is the IUB, `multi_user_cost_center` a CCULB, and `multi_user_customer` the UULB. If `consumed_amount` has reached `budget_amount`, that budget is the block; raise it. A CCULB the user gets through an enterprise team ([Step 1](#step-1--attribute-enterprise-teams-to-cost-centers)) may not be reflected here. If their cost center is team-attributed, open its budget in **Budgets and alerts** too; it shows per-user usage.
 
 ### Configuration habits that prevent blocks
 
