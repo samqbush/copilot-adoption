@@ -104,7 +104,7 @@ jobs:
               echo "::error::backfill_days must be a positive integer (1-28)."; exit 1
             fi
             if (( BF > 28 )); then
-              echo "::warning::GitHub retains only ~28 days of Copilot metrics; capping to 28."
+              echo "::warning::Backfill is limited to 28 days per run; capping to 28. Collect older days with the day input."
               BF=28
             fi
             DAYS=""
@@ -232,7 +232,7 @@ jobs:
           if-no-files-found: error
           # Artifacts are a zero-setup starting point, NOT a durable archive —
           # they expire. Download them or sync to your data lake for the long
-          # term (GitHub only retains usage metrics for ~28 days).
+          # term (GitHub serves aggregate and user reports for up to a year).
           retention-days: 90
 
       # --- Grafana integration -----------------------------------------------

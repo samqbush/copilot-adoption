@@ -8,22 +8,23 @@ toc: true
 # Pulling Copilot Metrics & Billing Into Your Data Lake
 {:.no_toc}
 
-*Last updated: August 27, 2026*
+*Last updated: October 20, 2026*
 
 ---
 
 ## What it takes
 
-GitHub only retains Copilot usage metrics for about 28 days, so if you want a
-longer adoption history (or billing data for chargeback) you have to pull it
-yourself and keep your own copy. The whole job:
+GitHub serves the aggregate and user usage reports for up to a year, so if you
+want a longer adoption history (or billing data for chargeback) you have to pull
+it yourself and keep your own copy. The whole job:
 
 1. **Set up one Enterprise GitHub App** with read access to both **Copilot
    metrics** and **enterprise billing**.
 2. **Pull four usage report families plus one billing export each day** against
    the prior complete day. This preserves aggregate, user, team, repository, and
    cost data in roughly a dozen data requests.
-3. **Drop the files into your data lake** before the 28-day window rolls off.
+3. **Drop the files into your data lake** so the history outlives GitHub's
+   retention.
 
 The [example scripts](https://github.com/samqbush/copilot-adoption/tree/main/copilot-metrics-billing/scripts)
 do exactly this. The rest of this page explains the model and walks the setup so
@@ -222,8 +223,9 @@ repository data. The daily archive is the recommended path because you can
 rebuild longer windows from it.
 
 Requires the **Copilot usage metrics** policy to be **Enabled everywhere**.
-GitHub only retains this data for about 28 days, so pull it daily and archive it
-yourself. Reference page:
+GitHub serves the aggregate and user reports for up to one year back and doesn't
+document retention for the user-team and repository reports. Pull all four daily
+and archive them yourself. Reference page:
 [REST API endpoints for Copilot usage metrics](https://docs.github.com/en/enterprise-cloud@latest/rest/copilot/copilot-usage-metrics).
 
 ### Billing (cost)
@@ -364,9 +366,9 @@ user-team report on `user_id` before rolling up team metrics. Partition raw file
 by date and report family so the daily pull becomes append-only history.
 
 > [!NOTE]
-> Keep the raw files. GitHub only retains usage metrics for ~28 days (billing for
-> 24 months), so your archived daily pulls become the long-term record. For usage
-> metrics, they're the *only* record once you're past the 28-day window.
+> Keep the raw files. GitHub serves the aggregate and user usage reports for up
+> to a year and billing for 24 months, so your archived daily pulls become the
+> long-term record.
 
 ---
 

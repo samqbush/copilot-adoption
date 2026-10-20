@@ -136,7 +136,7 @@ jobs:
           if-no-files-found: error
           # Artifacts are a zero-setup starting point, NOT a durable archive —
           # they expire. Download them or sync to your data lake for the long
-          # term (GitHub only retains usage metrics for ~28 days).
+          # term (GitHub serves aggregate and user reports for up to a year).
           retention-days: 90
 
       # --- Want dashboards instead of a raw artifact? ----------------------

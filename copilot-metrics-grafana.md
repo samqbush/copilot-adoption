@@ -8,7 +8,7 @@ toc: true
 # Copilot Metrics & Billing Dashboards in Grafana
 {:.no_toc}
 
-*Last updated: August 27, 2026*
+*Last updated: October 20, 2026*
 
 ---
 
@@ -191,7 +191,7 @@ The `load-to-postgres` job **creates the tables on first run** — the database
 stays empty until then. Seed history once, then let the nightly cron take over:
 
 ```bash
-# one-time: backfill the last 28 days (GitHub retains ~28 days of usage metrics)
+# one-time: backfill the last 28 days (the most one run collects)
 gh workflow run copilot-metrics-collection.yml -f backfill_days=28
 ```
 
